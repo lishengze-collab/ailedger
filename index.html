@@ -292,7 +292,7 @@ function prompt(ctx){
  '一句话可以包含多笔操作，按顺序全部输出。普通支出/收入只要求可靠金额；账户、商户、分类、时间、商品等可以结合历史和常识推断，没有必要时留空。不得编造金额、账户或资金流向。',
  '当描述中出现一个新账户名称或截图显示新账户，应主动创建账户，不要只把名称放在交易备注里。返回 create_account，且给出 account、accountType、institution、last4、currency。若同一截图还显示明确的当前余额，再同时返回 balance_snapshot。已有账户应匹配已有账户，不要重复创建。',
  '账户必须区分类型：credit_card=信用卡，savings_card=储蓄卡，payment=支付宝/微信等支付账户，wallet=电子钱包，cash=现金，other=其他。银行名称放 institution，末四位放 last4。若账户名称只识别出银行+末四位，可用“银行名称 ****1234”作为账户名称。',
- '银行卡截图识别规则：识别银行/机构、账户名、账户末四位、账户类型、截图日期、币种、当前余额、可用余额、可用额度、信用额度、已用额度、账单应还。绝不能把信用额度、可用额度或最低还款额误当作储蓄余额。储蓄卡/支付账户只有明确当前余额才写 balance；信用卡若显示已欠/已用/当前应还，按负债记为负数 balance；若只有可用额度，则写 availableCredit，不要伪造账户余额。',
+ '银行卡截图识别规则：识别银行/机构、账户名、账户末四位、账户类型、截图日期、币种、当前余额、可用余额、可用额度、信用额度、已用额度、账单应还。绝不能把信用额度、可用额度或最低还款额误当作储蓄余额。储蓄卡/支付账户只有明确当前余额才写 balance；信用卡若显示已欠/已用/当前应还，按负债记为负数 balance；若只有可用额度，则写 availableCredit，不要伪造账户余额，也不要返回 balance_snapshot；仍然可以创建账户并记录额度信息。',
  '资金校准应创建或匹配账户，并保存 balance_snapshot。比较截图余额与本地账面余额、历史收支和上次校准的差异，给出差额解释、可能的遗漏流水和需要核实事项；不能仅凭差额自动制造收入或支出。识别到账户+余额后，必须确保数据库里存在账户记录，账户不存在时先自动创建。',
  '上传小票/支付截图：识别商户、金额、时间、商品、分类、支付账户；结合文字判断用户是想记录、查询还是仅分析。上传图后自动判断图像类型和用户意图。上传银行流水截图时，只有用户明确要求导入流水，才批量创建交易，避免把余额摘要重复记成交易。',
  '记录时间以用户本地时区为准。将今天、昨天、上周等自动换算为准确日期；没有时间时使用当前本地时间。occurredAt 输出带时区偏移的 ISO 8601 时间。禁止把 UTC 日期当作当地日期。',
@@ -323,6 +323,7 @@ function normalize(r){
   if(name)actions.push({type:'create_account',account:name,accountType:type,institution,last4,currency:meta.currency||'CNY',balance:null,amount:null,occurredAt:normalizeDate(meta.date||r.occurredAt),items:[],confidence:Number(meta.confidence||.8),note:'从账户信息中识别并创建'});
   if(name&&Number.isFinite(balance))actions.push({type:'balance_snapshot',account:name,accountType:type,institution,last4,balance,currency:meta.currency||'CNY',occurredAt:normalizeDate(meta.date||r.occurredAt),note:'从上传资料识别的账户余额'});
  }
+ actions.forEach(a=>{if(a.type==='create_account'&&actions.some(s=>s.type==='balance_snapshot'&&clean(s.account).toLowerCase()===clean(a.account).toLowerCase()))a.balance=null;});
  return{intent:clean(r.intent)||(actions.length?'record':'conversation'),answer:clean(r.answer),analysis:clean(r.analysis),needsClarification:!!r.needsClarification,clarification:clean(r.clarification),actions};
 }
 async function callAI(text,pics){
