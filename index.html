@@ -107,6 +107,21 @@ textarea{display:block;width:100%;min-height:106px;max-height:220px;resize:verti
 
 #page-home .message.show{position:fixed;z-index:45;left:50%;bottom:calc(82px + var(--safe));transform:translateX(-50%);width:min(560px,calc(100% - 30px));box-shadow:0 8px 28px rgba(0,0,0,.12)}
 .capture-input textarea,.overview-head,.overview-flow,.account-chip,.detail-totals,.item-main b,.item-right b,.modal-tx,.finance-analysis,.setting-row{font-size:calc(1em * var(--font-scale,1))}
+
+.upload-clear{height:48px;padding:0 12px;border:1px solid var(--line);border-radius:15px;background:transparent;color:var(--muted);font-size:11px}
+.overview-head{font-size:calc(11px * var(--font-scale,1))}
+.overview-flow small{font-size:calc(9px * var(--font-scale,1))}
+.overview-flow b{font-size:calc(12px * var(--font-scale,1))}
+.account-chip b{font-size:calc(10px * var(--font-scale,1))}
+.account-chip small{font-size:calc(9px * var(--font-scale,1))}
+.detail-totals small{font-size:calc(10px * var(--font-scale,1))}
+.detail-totals b{font-size:calc(14px * var(--font-scale,1))}
+.item-main b,.item-right b{font-size:calc(12px * var(--font-scale,1))}
+.item-main small,.item-right small{font-size:calc(10px * var(--font-scale,1))}
+.modal-tx{font-size:calc(11px * var(--font-scale,1))}
+.modal-tx b{font-size:calc(12px * var(--font-scale,1))}
+.finance-analysis{font-size:calc(12px * var(--font-scale,1))}
+.setting-row{font-size:calc(12px * var(--font-scale,1))}
 </style>
 </head>
 <body><div id="app">
@@ -129,6 +144,7 @@ textarea{display:block;width:100%;min-height:106px;max-height:220px;resize:verti
    <div class="attachments" id="attachments"></div>
    <div class="capture-actions">
     <button class="upload-action" id="pickImages"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/></svg><span>上传图片</span></button>
+    <button class="upload-clear" id="clearComposer" aria-label="清空输入">清空</button>
     <button class="send" id="analyzeText">分析</button>
    </div>
    <input type="file" id="imageInput" accept="image/*" multiple>
