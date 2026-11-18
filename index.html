@@ -252,10 +252,10 @@ function requiredIssues(actions){
  actions.forEach((a,i)=>{
   const n='第'+(i+1)+'项';
   if(['expense','income','transfer'].includes(a.type)&&!(Number.isFinite(a.amount)&&a.amount>0))issues.push(n+'需要金额');
-  if(a.type==='transfer'){if(!a.account)issues.push(n+'需要转出账户');if(!a.toAccount)issues.push(n+'需要转入账户');}
+  if(a.type==='transfer'&&(!a.account||!a.toAccount))issues.push(n+'需要确认从哪个账户转出、转入哪个账户');
   if(a.type==='create_account'&&!a.account)issues.push(n+'需要账户名称');
   if(a.type==='budget'&&!(Number.isFinite(a.budgetLimit??a.amount)&&(a.budgetLimit??a.amount)>0))issues.push(n+'需要预算额度');
-  if(a.type==='balance_snapshot'&&(!a.account||!Number.isFinite(a.balance)))issues.push(n+'需要账户名称和余额');
+  if(a.type==='balance_snapshot'&&(!a.account||!Number.isFinite(a.balance)))issues.push(n+'需要确认账户和余额');
   if(!['expense','income','transfer','create_account','budget','balance_snapshot'].includes(a.type))issues.push(n+'的操作类型暂不支持');
  });
  return issues;
