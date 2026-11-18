@@ -234,7 +234,8 @@ function showPending(result){
  pending=result;
  $('parsedFields').innerHTML=fieldsHtml(pending);
  $('parsedCard').classList.add('show');
- if(result.needsClarification)msg(escapeHtml(result.clarification||'有一项关键信息需要确认。可以直接补充一句，不用填写表格。'),'warn');
+ const issues=requiredIssues(result.actions);
+ if(result.needsClarification||issues.length)msg(escapeHtml(result.clarification||(issues.length?'只需要补充必要信息：'+issues.join('；')+'。其他信息不必补填。':'有一项关键信息需要确认。可以直接补充一句，不用填写表格。')),'warn');
  else msg('已理解 '+result.actions.length+' 项操作。未提及的非必要信息不会要求你补填，请核对后确认。');
 }
 function analyze(content,button){
