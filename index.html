@@ -6,158 +6,137 @@
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AI"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="./icon-192.png"><link rel="icon" type="image/png" href="./icon-192.png"><link rel="manifest" href="./manifest.webmanifest"><title>AI</title>
 <style>
-:root{color-scheme:light;--bg:#f4f4f6;--card:#fff;--surface:#f8f8fa;--soft:#ededf0;--text:#18181a;--muted:#898990;--line:#e5e5e9;--accent:#111113;--on:#fff;--shadow:0 8px 26px rgba(0,0,0,.045);--safe:env(safe-area-inset-bottom,0px)}
+:root{color-scheme:light;--bg:#f4f4f6;--card:#fff;--surface:#f8f8fa;--soft:#ededf0;--text:#18181a;--muted:#898990;--line:#e5e5e9;--accent:#111113;--on:#fff;--shadow:0 8px 26px rgba(0,0,0,.045);--safe:env(safe-area-inset-bottom,0px);--income:#249b68;--expense:#df4d52;--warn:#e08a1e;--font-scale:1}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;--bg:#080809;--card:#171719;--surface:#202023;--soft:#29292d;--text:#f4f4f5;--muted:#99999f;--line:#303034;--accent:#f4f4f5;--on:#111113;--shadow:0 12px 30px rgba(0,0,0,.25)}}
 :root[data-theme=dark]{color-scheme:dark;--bg:#080809;--card:#171719;--surface:#202023;--soft:#29292d;--text:#f4f4f5;--muted:#99999f;--line:#303034;--accent:#f4f4f5;--on:#111113}
 :root[data-theme=light]{color-scheme:light;--bg:#f4f4f6;--card:#fff;--surface:#f8f8fa;--soft:#ededf0;--text:#18181a;--muted:#898990;--line:#e5e5e9;--accent:#111113;--on:#fff}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC",sans-serif;-webkit-font-smoothing:antialiased}body{min-height:100dvh;overscroll-behavior:none}button,input,textarea{font:inherit;color:inherit}button{cursor:pointer}
-#app{max-width:760px;min-height:100dvh;margin:auto;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px calc(96px + var(--safe))}
-header{height:34px;display:flex;align-items:center;justify-content:space-between;margin:0 2px 13px}.date{font-size:12px;color:var(--muted);font-weight:600}.icon{width:36px;height:36px;border:1px solid var(--line);border-radius:50%;background:var(--card);display:grid;place-items:center}.icon svg{width:17px;height:17px}
-.page{display:none;animation:fade .2s ease}.page.active{display:block}@keyframes fade{from{opacity:.35;transform:translateY(4px)}to{opacity:1;transform:none}}
-.hero{background:var(--accent);color:var(--on);border-radius:25px;padding:19px 20px 17px;margin-bottom:12px;position:relative;overflow:hidden}.hero:after{content:"";position:absolute;width:190px;height:190px;border:1px solid rgba(255,255,255,.12);border-radius:100%;right:-70px;top:-110px;box-shadow:0 0 0 24px rgba(255,255,255,.025),0 0 0 50px rgba(255,255,255,.02)}
-.hero small{font-size:11px;opacity:.65}.balance{font-size:clamp(30px,8vw,42px);letter-spacing:-1.4px;font-weight:760;margin:7px 0 16px;font-variant-numeric:tabular-nums}.hero-foot{display:flex;gap:25px}.metric{display:grid;gap:4px}.metric span{font-size:10px;opacity:.62}.metric b{font-size:14px}
-.capture,.box{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:13px;margin-bottom:12px;box-shadow:var(--shadow)}
-textarea{display:block;width:100%;min-height:106px;max-height:220px;resize:vertical;border:0;outline:0;background:transparent;padding:7px;font-size:16px;line-height:1.55}textarea::placeholder{color:var(--muted)}
-.tools{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding:10px 2px 0}.toolset{display:flex;gap:7px}.tool{width:40px;height:39px;border:1px solid var(--line);border-radius:13px;background:var(--surface);display:grid;place-items:center}.tool svg{width:18px;height:18px}.send{height:39px;padding:0 17px;border-radius:13px;border:0;background:var(--accent);color:var(--on);font-size:12px;font-weight:700;display:flex;gap:7px;align-items:center}.send:disabled{opacity:.45}
-#imageInput,#importData{display:none}.attachments{display:flex;gap:8px;overflow:auto;padding-top:8px}.attachment{position:relative;width:58px;height:58px;flex:none;border:1px solid var(--line);border-radius:12px;overflow:hidden}.attachment img{width:100%;height:100%;object-fit:cover}.attachment button{position:absolute;top:3px;right:3px;background:#111;color:#fff;border:0;border-radius:50%;width:18px;height:18px}
-.message{display:none;padding:12px 14px;border-radius:14px;background:var(--soft);font-size:12px;line-height:1.55;margin-bottom:12px;white-space:pre-wrap}.message.show{display:block}.preview{display:none;padding:15px;background:var(--card);border:1px solid var(--line);border-radius:20px;margin-bottom:12px;box-shadow:var(--shadow)}.preview.show{display:block}
-.preview-head,.section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.preview-head b{font-size:14px}.preview-head span,.section-head button{font-size:11px;color:var(--muted);background:none;border:0}.ai-answer{font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:10px}
-.action{padding:11px 0;border-top:1px solid var(--line)}.action-title{font-size:12px;font-weight:700;margin-bottom:8px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.field{background:var(--surface);border-radius:11px;padding:9px;min-width:0}.field span{font-size:10px;color:var(--muted);display:block}.field b{font-size:12px;display:block;margin-top:4px;overflow-wrap:anywhere}
-.btnrow{display:flex;gap:8px;margin-top:12px}.btn{height:41px;padding:0 16px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:12px;font-weight:700}.btn.primary{background:var(--accent);color:var(--on);border-color:var(--accent)}.btn.flex{flex:1}
-.section-head{margin:17px 2px 9px}.section-head h2{font-size:15px;margin:0;font-weight:730;letter-spacing:-.2px}
-.list{background:var(--card);border:1px solid var(--line);border-radius:19px;padding:4px 13px;box-shadow:var(--shadow)}
-.item{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);min-width:0}.item:last-child{border-bottom:0}.symbol{width:36px;height:36px;border-radius:12px;background:var(--soft);display:grid;place-items:center;flex:none;font-size:15px}
-.item-main{flex:1;min-width:0}.item-main b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.item-main small{display:block;color:var(--muted);font-size:10px;margin-top:4px}.item-right{text-align:right;flex:none}.item-right b{font-size:12px}.item-right small{display:block;color:var(--muted);font-size:10px;margin-top:4px}.del{width:25px;height:30px;border:0;background:none;color:var(--muted);font-size:20px}.empty{text-align:center;padding:23px 8px;color:var(--muted);font-size:12px}
-.search{width:100%;height:42px;border:1px solid var(--line);border-radius:13px;background:var(--card);padding:0 12px;font-size:13px;margin-bottom:10px;outline:0}
-.chips,.ranges{display:flex;gap:5px;overflow:auto;scrollbar-width:none;margin:0 0 11px}.chips button,.ranges button{padding:8px 13px;border:1px solid transparent;border-radius:999px;background:transparent;color:var(--muted);font-size:11px;flex:none}.chips button.active,.ranges button.active{background:var(--accent);color:var(--on)}
-.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:11px}.stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px}.stat span{font-size:10px;color:var(--muted);display:block}.stat b{font-size:19px;display:block;margin-top:5px;letter-spacing:-.4px}
-.chart{background:var(--card);border:1px solid var(--line);border-radius:19px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}.chart h3{font-size:13px;margin:0 0 12px}.chart svg{width:100%;height:155px}.labels{display:flex;justify-content:space-between;color:var(--muted);font-size:9px}
-.category{display:flex;align-items:center;gap:16px}.donut{width:112px;height:112px;border-radius:50%;position:relative;flex:none;background:var(--soft)}.donut:after{content:"";position:absolute;inset:15px;background:var(--card);border-radius:50%}.donut-center{position:absolute;z-index:1;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9px;color:var(--muted)}.donut-center b{font-size:13px;color:var(--text);margin-top:3px}.legend{flex:1;display:grid;gap:7px;min-width:0}.legend div{display:flex;align-items:center;gap:6px;font-size:10px}.legend i{width:7px;height:7px;border-radius:50%;flex:none}.legend span{flex:1;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.account{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:12px}.account:last-child{border:0}.account small{display:block;color:var(--muted);font-size:10px;margin-top:4px}
-.setting{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px;margin-bottom:10px;box-shadow:var(--shadow)}.setting h3{font-size:13px;margin:0 0 11px}.label{display:block;font-size:10px;color:var(--muted);margin:10px 0 5px}.input{height:42px;width:100%;border:1px solid var(--line);border-radius:11px;background:var(--surface);padding:0 10px;font-size:13px;outline:0}.note{font-size:10px;color:var(--muted);line-height:1.5;margin-top:10px}.setting-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:12px}.themes{display:flex;gap:6px}.themes button{flex:1;padding:9px 4px;border:1px solid var(--line);border-radius:11px;background:var(--surface);font-size:11px}.themes button.active{background:var(--accent);color:var(--on)}
-.token-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.token{padding:9px;background:var(--surface);border-radius:11px}.token small{display:block;color:var(--muted);font-size:10px}.token b{display:block;font-size:15px;margin-top:4px}
-.dock-wrap{position:fixed;z-index:20;bottom:calc(9px + var(--safe));left:0;right:0;display:flex;justify-content:center;pointer-events:none}.dock{pointer-events:auto;width:min(420px,calc(100% - 28px));display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:7px;border-radius:23px;background:color-mix(in srgb,var(--card) 88%,transparent);border:1px solid var(--line);box-shadow:0 8px 26px rgba(0,0,0,.13),inset 0 1px 0 rgba(255,255,255,.35);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%)}
-.tab{height:50px;border:0;border-radius:16px;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:9px;font-weight:650}.tab svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.tab.active{background:var(--accent);color:var(--on)}
-.spinner{display:inline-block;width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
-@media(min-width:720px){#app{padding-left:22px;padding-right:22px}.home-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:12px}.hero,.capture{margin-bottom:0}.home-secondary{display:grid;grid-template-columns:1fr 1fr;gap:12px}}
-
-:root{--income:#249b68;--expense:#df4d52;--font-scale:1}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC",sans-serif;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+body{min-height:100dvh;overscroll-behavior:none}
+button,input,textarea{font:inherit;color:inherit}button{cursor:pointer}
+#app{max-width:760px;min-height:100dvh;margin:auto;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px calc(96px + var(--safe))}
 .income-text{color:var(--income)!important}.expense-text{color:var(--expense)!important}
-#app{padding-top:calc(env(safe-area-inset-top,0px) + 10px)}
-.page{padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
-#page-home.active{display:flex;flex-direction:column;gap:10px;height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 104px);min-height:520px;overflow:hidden}
-.home-overview{flex:0 0 25%;min-height:155px;max-height:235px;border-radius:24px;padding:13px 15px 11px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden}
-.overview-head{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:11px;font-weight:650}
-.overview-total{font-size:clamp(26px,6vw,36px);font-weight:780;letter-spacing:-1px;margin:4px 0 6px;font-variant-numeric:tabular-nums}
-.overview-flow{display:flex;gap:20px;align-items:center}
-.overview-flow>div{display:flex;flex-direction:column;gap:2px}.overview-flow small{font-size:9px;color:var(--muted)}.overview-flow b{font-size:12px}
-.account-strip{display:flex;gap:7px;overflow-x:auto;padding:8px 0 2px;margin-top:auto;scrollbar-width:none}
-.account-chip{min-width:104px;max-width:150px;padding:7px 9px;background:var(--surface);border:1px solid var(--line);border-radius:12px;text-align:left;flex:none}
-.account-chip b{display:block;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.account-chip small{display:block;color:var(--muted);font-size:9px;margin-top:3px}
-.capture{flex:1;min-height:0;margin:0!important;padding:0!important;display:grid;grid-template-rows:2fr 1fr;overflow:hidden;border-radius:23px}
-.capture-input{min-height:0;padding:14px 15px}
-.capture-input textarea{width:100%;height:100%;min-height:0;max-height:none;resize:none;font-size:calc(16px * var(--font-scale));line-height:1.6;padding:4px;overflow:auto}
-.capture-bottom{min-height:0;border-top:1px solid var(--line);padding:10px 12px 12px;display:flex;flex-direction:column;justify-content:space-between}
-.capture-actions{display:flex;align-items:center;gap:10px}
-.upload-action{height:48px;padding:0 15px;border:1px solid var(--line);border-radius:15px;background:var(--surface);display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;font-weight:650}
-.upload-action svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.capture-actions .send{height:48px;flex:1;justify-content:center;border-radius:15px;font-size:14px}
-.attachments{min-height:0;max-height:75px;overflow:auto}
+.page{display:none;animation:fade .2s ease;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}.page.active{display:block}
+@keyframes fade{from{opacity:.35;transform:translateY(4px)}to{opacity:1;transform:none}}
+.empty{text-align:center;padding:23px 8px;color:var(--muted);font-size:13px}
+.note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:10px}
+.btn{height:46px;padding:0 18px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:15px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
+.btn.primary{background:var(--accent);color:var(--on);border-color:var(--accent)}.btn.flex{flex:1}.btn.danger{background:var(--expense);color:#fff;border-color:var(--expense)}.btn:disabled{opacity:.5}
+.btnrow{display:flex;gap:8px;margin-top:12px}
+.spinner{display:inline-block;width:15px;height:15px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.skeleton{background:linear-gradient(90deg,var(--soft) 25%,var(--surface) 50%,var(--soft) 75%);background-size:200% 100%;animation:shine 1.2s linear infinite;border-radius:10px;color:transparent!important}@keyframes shine{to{background-position:-200% 0}}
+
+/* 首页 */
+#page-home.active{display:flex;flex-direction:column;gap:10px;height:calc(100dvh - env(safe-area-inset-top,0px) - var(--safe) - 104px);min-height:520px;overflow-y:auto;overflow-x:hidden}
+.home-overview{flex:0 0 auto;border-radius:24px;padding:14px 16px 12px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
+.overview-head{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:calc(13px*var(--font-scale));font-weight:650}
+.ov-right{display:flex;align-items:center;gap:8px}
+.eye{width:34px;height:34px;border:1px solid var(--line);border-radius:50%;background:var(--surface);font-size:15px;line-height:1;display:grid;place-items:center}
+.overview-total{font-size:clamp(28px,7vw,38px);font-weight:780;letter-spacing:-1px;margin:4px 0 2px}
+.overview-sub{font-size:calc(12px*var(--font-scale));color:var(--muted);min-height:16px;margin-bottom:8px}
+.overview-flow{display:flex;gap:26px}.overview-flow>div{display:flex;flex-direction:column;gap:3px}.overview-flow small{font-size:calc(12px*var(--font-scale));color:var(--muted)}.overview-flow b{font-size:calc(15px*var(--font-scale))}
+.account-strip{display:flex;gap:8px;overflow-x:auto;padding:12px 0 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}.account-strip::-webkit-scrollbar{display:none}
+.account-chip{min-width:124px;max-width:180px;padding:9px 11px 9px 13px;background:var(--surface);border:1px solid var(--line);border-radius:14px;text-align:left;flex:none;position:relative;overflow:hidden}
+.account-chip:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c,#8a929c)}
+.account-chip b{display:block;font-size:calc(13px*var(--font-scale));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.account-chip small{display:block;color:var(--muted);font-size:calc(12px*var(--font-scale));margin-top:3px;white-space:nowrap}
+.capture{flex:1 1 auto;min-height:260px;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:23px;box-shadow:var(--shadow);overflow:hidden}
+.capture-input{flex:1;min-height:90px;padding:14px 15px 6px}
+.capture-input textarea{display:block;width:100%;height:100%;min-height:0;resize:none;border:0;outline:0;background:transparent;padding:4px;font-size:calc(17px*var(--font-scale));line-height:1.6}
+textarea::placeholder{color:var(--muted)}
+.capture-bottom{border-top:1px solid var(--line);padding:10px 12px 12px;display:flex;flex-direction:column;gap:9px}
+.examples{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none}.examples::-webkit-scrollbar{display:none}
+.examples button{flex:none;padding:9px 13px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:13px;color:var(--muted)}
+.attachments{display:flex;gap:8px;overflow:auto;max-height:72px}.attachments:empty{display:none}
+.attachment{position:relative;width:58px;height:58px;flex:none;border:1px solid var(--line);border-radius:12px;overflow:hidden}.attachment img{width:100%;height:100%;object-fit:cover}.attachment button{position:absolute;top:2px;right:2px;background:#111;color:#fff;border:0;border-radius:50%;width:22px;height:22px;font-size:14px;line-height:1}
+.message{display:none;padding:8px 11px;border-radius:12px;background:var(--soft);font-size:calc(13px*var(--font-scale));line-height:1.5;white-space:pre-wrap;max-height:76px;overflow:auto}.message.show{display:block}.message.error{color:var(--expense)}
+.capture-actions{display:flex;align-items:center;gap:9px}
+.upload-action{height:52px;padding:0 16px;border:1px solid var(--line);border-radius:16px;background:var(--surface);display:flex;align-items:center;gap:8px;font-size:15px;font-weight:650}
+.upload-action svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.upload-clear{height:52px;padding:0 15px;border:1px solid var(--line);border-radius:16px;background:transparent;color:var(--muted);font-size:14px}
+.send{height:52px;flex:1;border-radius:16px;border:0;background:var(--accent);color:var(--on);font-size:17px;font-weight:700;display:flex;gap:7px;align-items:center;justify-content:center}.send:disabled{opacity:.55}
 #imageInput,#importData{display:none}
-.setting-row label[for="importData"]{display:inline-flex;align-items:center;justify-content:center;line-height:1;white-space:nowrap;cursor:pointer;vertical-align:middle}
-#preview{display:none!important}
-.message{flex:none}
-#page-transactions,#page-analytics,#page-settings{min-height:calc(100dvh - 94px);padding-bottom:calc(86px + var(--safe));}
-.detail-summary{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:11px 13px;margin-bottom:10px;box-shadow:var(--shadow)}
-.detail-summary .ranges{margin-bottom:6px}
-.detail-totals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.detail-totals>div{display:flex;flex-direction:column;gap:4px}
-.detail-totals small{color:var(--muted);font-size:10px}.detail-totals b{font-size:14px;font-variant-numeric:tabular-nums}
-.item-right b.expense-text{color:var(--expense)!important}.item-right b.income-text{color:var(--income)!important}
-.swipe-shell{position:relative;overflow:hidden;border-bottom:1px solid var(--line);border-radius:2px}
-.swipe-shell:last-child{border-bottom:0}
-.swipe-delete{position:absolute;right:0;top:0;bottom:0;width:76px;border:0;background:var(--expense);color:white;font-size:11px;font-weight:700}
-.swipe-content{position:relative;background:var(--card);transition:transform .18s ease;touch-action:pan-y}
-.swipe-shell.open .swipe-content{transform:translateX(-76px)}
-.swipe-content .item{border:0}
-.account-button{width:100%;text-align:left;background:transparent;border:0;cursor:pointer}
-.account-type{font-size:9px;color:var(--muted);margin-top:3px}
-.finance-analysis{font-size:12px;line-height:1.8;white-space:pre-wrap;color:var(--text);min-height:50px}
-.modal-backdrop{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.38);backdrop-filter:blur(7px);display:flex;align-items:flex-end;justify-content:center;padding:12px}
-.modal-backdrop[hidden]{display:none}
-.modal-sheet{width:min(620px,100%);max-height:82dvh;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:25px;padding:12px 17px calc(20px + var(--safe));box-shadow:0 12px 50px rgba(0,0,0,.2)}
-.modal-handle{width:34px;height:4px;background:var(--muted);opacity:.4;border-radius:9px;margin:0 auto 14px}
-.modal-head{display:flex;justify-content:space-between;align-items:center}
-.modal-head b{display:block;font-size:16px}.modal-head small{display:block;color:var(--muted);font-size:10px;margin-top:4px}
-.modal-balance{font-size:27px;font-weight:760;margin:14px 0}
-.modal-section-title{font-size:12px;font-weight:700;padding:10px 0;border-top:1px solid var(--line)}
-.modal-transactions{display:grid;gap:0}
-.modal-tx{display:grid;grid-template-columns:58px minmax(0,1fr) auto;gap:9px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);font-size:11px}
-.modal-tx time{font-size:10px;color:var(--muted)}.modal-tx b{font-size:12px}.modal-tx small{display:block;color:var(--muted);font-size:10px;margin-top:3px}
-.reset-card{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-top:1px solid var(--line)}
-.reset-card b{font-size:12px;display:block}.reset-card small{font-size:10px;color:var(--muted);display:block;margin-top:4px}
-.reset-confirm{padding:12px;border-radius:14px;background:var(--surface);font-size:11px;line-height:1.5}
-.reset-confirm[hidden]{display:none}.reset-confirm>div{display:flex;gap:8px;margin-top:10px}
-.btn.danger{background:var(--expense);color:#fff;border-color:var(--expense)}
+
+/* 通用区块 */
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 2px 10px}.section-head h2{font-size:18px;margin:0;font-weight:730;letter-spacing:-.2px}.section-head h3{margin:0;font-size:15px}.section-head button{font-size:14px;color:var(--muted);background:none;border:0;padding:6px}
+.chips,.ranges{display:flex;gap:5px;overflow:auto;scrollbar-width:none;margin:0 0 11px}.chips button,.ranges button{padding:9px 15px;border:1px solid transparent;border-radius:999px;background:transparent;color:var(--muted);font-size:14px;flex:none}.chips button.active,.ranges button.active{background:var(--accent);color:var(--on)}
+.search{width:100%;height:46px;border:1px solid var(--line);border-radius:14px;background:var(--card);padding:0 13px;font-size:16px;margin-bottom:10px;outline:0}
+.list{background:var(--card);border:1px solid var(--line);border-radius:19px;padding:2px 13px;box-shadow:var(--shadow);margin-bottom:10px}
+.day-head{display:flex;justify-content:space-between;align-items:baseline;margin:14px 4px 6px;font-size:13px;color:var(--muted);font-weight:650}
+.item{display:flex;align-items:center;gap:11px;padding:12px 0;min-width:0;min-height:56px}
+.symbol{width:40px;height:40px;border-radius:13px;background:var(--soft);display:grid;place-items:center;flex:none;font-size:18px}
+.item-main{flex:1;min-width:0}.item-main b{display:block;font-size:calc(15px*var(--font-scale));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.item-main small{display:block;color:var(--muted);font-size:calc(12px*var(--font-scale));margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-right{text-align:right;flex:none}.item-right b{font-size:calc(15px*var(--font-scale))}.item-right small{display:block;color:var(--muted);font-size:calc(12px*var(--font-scale));margin-top:4px}
+.swipe-shell{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}.swipe-shell:last-child{border-bottom:0}
+.swipe-delete{position:absolute;right:0;top:0;bottom:0;width:80px;border:0;background:var(--expense);color:#fff;font-size:14px;font-weight:700}
+.swipe-content{position:relative;background:var(--card);transition:transform .18s ease;touch-action:pan-y}.swipe-shell.open .swipe-content{transform:translateX(-80px)}
+.detail-summary{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:11px 13px;margin-bottom:10px;box-shadow:var(--shadow)}.detail-summary .ranges{margin-bottom:6px}
+.detail-totals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.detail-totals>div{display:flex;flex-direction:column;gap:4px}.detail-totals small{color:var(--muted);font-size:12px}.detail-totals b{font-size:16px}
+
+/* 分析 */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:11px}.stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px}.stat span{font-size:12px;color:var(--muted);display:block}.stat b{font-size:20px;display:block;margin-top:5px;letter-spacing:-.4px}.stat em{font-style:normal;font-size:11px;color:var(--muted);display:block;margin-top:3px;min-height:13px}
+.chart{background:var(--card);border:1px solid var(--line);border-radius:19px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}.chart h3{font-size:15px;margin:0 0 12px}
+.chart svg{width:100%;height:160px;display:block}.labels{display:flex;justify-content:space-between;color:var(--muted);font-size:12px}.trend-info{font-size:13px;color:var(--muted);margin-top:8px;min-height:18px}
+.category{display:flex;align-items:center;gap:16px}.donut{width:118px;height:118px;border-radius:50%;position:relative;flex:none;background:var(--soft)}.donut:after{content:"";position:absolute;inset:16px;background:var(--card);border-radius:50%}
+.donut-center{position:absolute;z-index:1;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;color:var(--muted);padding:0 20px;text-align:center}.donut-center b{font-size:14px;color:var(--text);margin-top:3px}
+.legend{flex:1;display:grid;gap:4px;min-width:0}.legend button{display:flex;align-items:center;gap:7px;font-size:13px;background:none;border:0;padding:6px 4px;border-radius:9px;text-align:left}.legend button.sel{background:var(--soft)}.legend i{width:9px;height:9px;border-radius:50%;flex:none}.legend span{flex:1;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acct-card{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:12px 13px 12px 16px;margin-bottom:8px;position:relative;overflow:hidden}.acct-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c,#8a929c)}
+.acct-top{display:flex;justify-content:space-between;align-items:center;gap:10px}.acct-top b{font-size:15px}.acct-top small{display:block;color:var(--muted);font-size:12px;margin-top:4px}
+.bar{height:7px;background:var(--soft);border-radius:9px;overflow:hidden;margin-top:10px}.bar i{display:block;height:100%;background:var(--accent);border-radius:9px}.bar.hot i{background:var(--expense)}.bar-note{font-size:12px;color:var(--muted);margin-top:6px}
+.budget{padding:9px 0;border-bottom:1px solid var(--line)}.budget:last-child{border:0}.budget-row{display:flex;justify-content:space-between;font-size:14px}
+.finance-analysis{font-size:calc(14px*var(--font-scale));line-height:1.8;white-space:pre-wrap;min-height:50px}
+
+/* 设置 */
+.setting{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px;margin-bottom:10px;box-shadow:var(--shadow)}.setting h3{font-size:15px;margin:0 0 11px}
+.label{display:block;font-size:12px;color:var(--muted);margin:10px 0 5px}.input{height:46px;width:100%;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:0 11px;font-size:16px;outline:0}
+textarea.input{height:96px;padding:10px 11px;line-height:1.5;resize:vertical}
+.setting-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;font-size:calc(15px*var(--font-scale))}
+.themes{display:flex;gap:6px}.themes button{flex:1;padding:12px 4px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:14px}.themes button.active{background:var(--accent);color:var(--on)}
+.token-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.token{padding:10px;background:var(--surface);border-radius:12px}.token small{display:block;color:var(--muted);font-size:12px}.token b{display:block;font-size:17px;margin-top:4px}
 .font-control{margin-top:12px}.font-control input{width:100%;accent-color:var(--accent)}
-#accountAnalytics .account{cursor:pointer}
-@media(max-height:690px){.home-overview{min-height:145px}.overview-total{font-size:26px}.capture-bottom{padding:7px 10px}.upload-action,.capture-actions .send{height:42px}}
-@media(min-width:720px){#page-home.active{max-width:760px;margin:0 auto}.home-overview{padding:14px 18px}.account-chip{min-width:120px}}
+.switch{position:relative;width:52px;height:32px;flex:none}.switch input{opacity:0;width:100%;height:100%;position:absolute;margin:0;z-index:2}.switch span{position:absolute;inset:0;background:var(--soft);border-radius:99px;transition:.2s}.switch span:after{content:"";position:absolute;left:3px;top:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);transition:.2s}.switch input:checked+span{background:var(--income)}.switch input:checked+span:after{transform:translateX(20px)}
+.reset-card{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-top:1px solid var(--line)}.reset-card b{font-size:15px;display:block}.reset-card small{font-size:12px;color:var(--muted);display:block;margin-top:4px}
+.reset-confirm{padding:12px;border-radius:14px;background:var(--surface);font-size:13px;line-height:1.5}.reset-confirm[hidden]{display:none}.reset-confirm>div{display:flex;gap:8px;margin-top:10px}
+.setting-row label.btn{cursor:pointer}
 
+/* 弹层 */
+.modal-backdrop{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.38);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);display:flex;align-items:flex-end;justify-content:center;padding:12px}.modal-backdrop[hidden]{display:none}
+.modal-sheet{width:min(620px,100%);max-height:86dvh;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:25px;padding:10px 17px calc(14px + var(--safe));box-shadow:0 12px 50px rgba(0,0,0,.2)}
+.modal-handle{width:36px;height:4px;background:var(--muted);opacity:.4;border-radius:9px;margin:0 auto 12px;flex:none}
+.modal-head{display:flex;justify-content:space-between;align-items:center;flex:none}.modal-head b{display:block;font-size:18px}.modal-head small{display:block;color:var(--muted);font-size:12px;margin-top:4px}
+.icon{width:40px;height:40px;border:1px solid var(--line);border-radius:50%;background:var(--card);font-size:20px;display:grid;place-items:center}
+.sheet-body{overflow:auto;padding:12px 0 4px;flex:1;min-height:0}.sheet-foot{display:flex;gap:8px;padding-top:10px;flex:none}
+.ai-text{font-size:15px;line-height:1.75;white-space:pre-wrap;margin-bottom:10px}
+.acard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:10px}
+.acard-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.tag{font-size:12px;font-weight:700;padding:4px 10px;border-radius:99px;background:var(--accent);color:var(--on)}.tag.t-expense{background:var(--expense);color:#fff}.tag.t-income,.tag.t-refund{background:var(--income);color:#fff}
+.conf{font-size:12px;color:var(--warn)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.fld{display:block;min-width:0}.fld span{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.f-input{width:100%;height:44px;border:1px solid var(--line);border-radius:11px;background:var(--card);padding:0 10px;font-size:16px;outline:0;min-width:0}
+.meta{font-size:12px;color:var(--muted);margin-top:9px;line-height:1.5}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:14px}.kv span{color:var(--muted);flex:none}.kv b{text-align:right;overflow-wrap:anywhere}
+.warn{font-size:12px;color:var(--warn);margin-top:8px}
+.modal-balance{font-size:30px;font-weight:760;margin:6px 0 12px}
+.modal-tx{display:grid;grid-template-columns:50px minmax(0,1fr) auto;gap:9px;align-items:center;padding:11px 0;border-top:1px solid var(--line);font-size:13px}.modal-tx time{font-size:12px;color:var(--muted)}.modal-tx small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
 
-#page-home .message.show{position:fixed;z-index:45;left:50%;bottom:calc(82px + var(--safe));transform:translateX(-50%);width:min(560px,calc(100% - 30px));box-shadow:0 8px 28px rgba(0,0,0,.12)}
-.capture-input textarea,.overview-head,.overview-flow,.account-chip,.detail-totals,.item-main b,.item-right b,.modal-tx,.finance-analysis,.setting-row{font-size:calc(1em * var(--font-scale,1))}
-
-.upload-clear{height:48px;padding:0 12px;border:1px solid var(--line);border-radius:15px;background:transparent;color:var(--muted);font-size:11px}
-.overview-head{font-size:calc(11px * var(--font-scale,1))}
-.overview-flow small{font-size:calc(9px * var(--font-scale,1))}
-.overview-flow b{font-size:calc(12px * var(--font-scale,1))}
-.account-chip b{font-size:calc(10px * var(--font-scale,1))}
-.account-chip small{font-size:calc(9px * var(--font-scale,1))}
-.detail-totals small{font-size:calc(10px * var(--font-scale,1))}
-.detail-totals b{font-size:calc(14px * var(--font-scale,1))}
-.item-main b,.item-right b{font-size:calc(12px * var(--font-scale,1))}
-.item-main small,.item-right small{font-size:calc(10px * var(--font-scale,1))}
-.modal-tx{font-size:calc(11px * var(--font-scale,1))}
-.modal-tx b{font-size:calc(12px * var(--font-scale,1))}
-.finance-analysis{font-size:calc(12px * var(--font-scale,1))}
-.setting-row{font-size:calc(12px * var(--font-scale,1))}
-
-/* ===== UI 优化覆盖 ===== */
-/* 顶部账户总览：高度自适应，不再裁切账户条 */
-#page-home.active{overflow-y:auto;overflow-x:hidden}
-.home-overview{flex:0 0 auto;min-height:0;max-height:none;overflow:visible}
-.account-strip{flex:none;margin-top:10px;padding:2px 0 4px;max-width:100%;-webkit-overflow-scrolling:touch}
-.account-chip{min-width:112px;max-width:170px}
-/* 输入区：下半区高度自适应，提示信息放在输入框与按钮之间 */
-.capture{flex:1 1 auto;min-height:200px;grid-template-rows:minmax(0,1fr) auto}
-.capture-bottom{gap:8px;justify-content:flex-start}
-#page-home .message.show{position:static;left:auto;bottom:auto;transform:none;width:auto;box-shadow:none;margin:0;padding:7px 10px;max-height:66px;overflow:auto;font-size:calc(12px * var(--font-scale,1));line-height:1.5}
-/* 功能按钮放大 */
-.upload-action{font-size:15px;height:50px}
-.upload-action svg{width:21px;height:21px}
-.upload-clear{font-size:14px;height:50px;padding:0 14px}
-.capture-actions .send{font-size:17px;height:50px}
-.btn{font-size:14px;height:44px}
-.chips button,.ranges button{font-size:13px;padding:9px 15px}
-.themes button{font-size:13px;padding:11px 4px}
-.section-head button{font-size:13px}
-.swipe-delete{font-size:13px}
-.dock{grid-template-columns:repeat(4,1fr)}
-.tab{font-size:11px;height:54px}
-.tab svg{width:21px;height:21px}
-@media(max-height:690px){.home-overview{min-height:0}.upload-action,.capture-actions .send,.upload-clear{height:44px}}
+/* Toast / Dock */
+.toast{position:fixed;z-index:80;left:50%;bottom:calc(92px + var(--safe));transform:translateX(-50%);width:min(560px,calc(100% - 28px));display:flex;align-items:center;gap:12px;justify-content:space-between;padding:12px 14px;background:var(--accent);color:var(--on);border-radius:16px;font-size:14px;line-height:1.5;box-shadow:0 10px 30px rgba(0,0,0,.25);animation:fade .2s ease}.toast[hidden]{display:none}
+.toast button{flex:none;border:0;background:rgba(127,127,127,.28);color:inherit;border-radius:99px;padding:8px 14px;font-weight:700;font-size:14px}.toast button[hidden]{display:none}
+.dock-wrap{position:fixed;z-index:20;bottom:calc(9px + var(--safe));left:0;right:0;display:flex;justify-content:center;pointer-events:none}
+.dock{pointer-events:auto;width:min(420px,calc(100% - 28px));display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:7px;border-radius:23px;background:color-mix(in srgb,var(--card) 88%,transparent);border:1px solid var(--line);box-shadow:0 8px 26px rgba(0,0,0,.13),inset 0 1px 0 rgba(255,255,255,.35);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%)}
+.tab{height:54px;border:0;border-radius:16px;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12px;font-weight:650}.tab svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.tab.active{background:var(--accent);color:var(--on)}
+@media(max-height:690px){.capture{min-height:220px}.upload-action,.upload-clear,.send{height:46px}}
+@media(min-width:720px){#app{padding-left:22px;padding-right:22px}#page-home.active{max-width:760px;margin:0 auto}}
 </style>
 </head>
 <body><div id="app">
-
-
 <main>
 <section class="page active" id="page-home">
  <div class="home-overview">
-  <div class="overview-head"><span>账户总览</span><span id="overviewDate"></span></div>
+  <div class="overview-head"><span>净资产</span><span class="ov-right"><span id="overviewDate"></span><button class="eye" id="toggleHide" aria-label="隐藏或显示金额">👁</button></span></div>
   <div class="overview-total" id="heroAssets">¥0.00</div>
+  <div class="overview-sub" id="heroSub"></div>
   <div class="overview-flow">
    <div><small>本月收入</small><b class="income-text" id="heroIncome">¥0.00</b></div>
    <div><small>本月支出</small><b class="expense-text" id="heroExpense">¥0.00</b></div>
@@ -167,20 +146,22 @@ textarea{display:block;width:100%;min-height:106px;max-height:220px;resize:verti
  <div class="capture">
   <div class="capture-input"><textarea id="naturalInput" placeholder="描述一笔收支，或上传银行卡 / 支付截图……"></textarea></div>
   <div class="capture-bottom">
+   <div class="examples" id="examples">
+    <button data-ex="午饭 28 微信">午饭 28 微信</button><button data-ex="昨天打车 35">昨天打车 35</button><button data-ex="工资到账 12000 招行">工资到账 12000</button><button data-ex="本月餐饮花了多少">本月餐饮花了多少</button><button data-ex="把上一笔改成微信支付">改上一笔</button>
+   </div>
    <div class="attachments" id="attachments"></div>
    <div class="message" id="message"></div>
    <div class="capture-actions">
-    <button class="upload-action" id="pickImages"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/></svg><span>上传图片</span></button>
+    <button class="upload-action" id="pickImages"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/></svg><span>图片</span></button>
     <button class="upload-clear" id="clearComposer" aria-label="清空输入">清空</button>
     <button class="send" id="analyzeText">分析</button>
    </div>
    <input type="file" id="imageInput" accept="image/*" multiple>
   </div>
  </div>
- <div class="preview" id="preview"><div class="preview-head"><b id="previewTitle">AI 理解结果</b><span id="previewCount"></span></div><div class="ai-answer" id="aiAnswer"></div><div id="previewActions"></div><div class="btnrow"><button class="btn flex" id="discardPending">取消</button><button class="btn primary flex" id="confirmPending">确认保存</button></div></div>
 </section>
 <section class="page" id="page-transactions">
- <div class="section-head"><h2>明细</h2><span id="transactionCount" style="font-size:11px;color:var(--muted)"></span></div>
+ <div class="section-head"><h2>明细</h2><span id="transactionCount" style="font-size:13px;color:var(--muted)"></span></div>
  <div class="detail-summary">
   <div class="ranges" id="detailPeriodSwitch"><button data-detail-range="day" class="active">日</button><button data-detail-range="week">周</button><button data-detail-range="month">月</button></div>
   <div class="detail-totals">
@@ -189,22 +170,23 @@ textarea{display:block;width:100%;min-height:106px;max-height:220px;resize:verti
    <div><small>结余</small><b id="detailNet">¥0.00</b></div>
   </div>
  </div>
- <input id="transactionSearch" class="search" type="search" placeholder="搜索商户、账户或分类">
+ <input id="transactionSearch" class="search" type="search" placeholder="搜索商户、账户、分类或备注">
  <div class="chips" id="transactionFilters"><button class="active" data-filter="all">全部</button><button data-filter="expense">支出</button><button data-filter="income">收入</button><button data-filter="transfer">转账</button><button data-filter="balance_adjustment">校准</button></div>
- <div class="list" id="transactionList"><div class="empty">暂无记录</div></div>
+ <div id="transactionList"><div class="empty">暂无记录</div></div>
 </section>
 <section class="page" id="page-analytics">
- <div class="section-head"><h2>分析</h2><span id="analyticsPeriod" style="font-size:11px;color:var(--muted)"></span></div>
+ <div class="section-head"><h2>分析</h2><span id="analyticsPeriod" style="font-size:13px;color:var(--muted)"></span></div>
  <div class="ranges" id="periodSwitch"><button data-range="week">7日</button><button class="active" data-range="month">本月</button><button data-range="year">本年</button></div>
  <div class="stats">
-  <div class="stat"><span>净资产</span><b id="totalAssets">¥0.00</b></div><div class="stat"><span>净流入</span><b id="netFlow">¥0.00</b></div>
-  <div class="stat"><span>收入</span><b class="income-text" id="periodIncome">¥0.00</b></div><div class="stat"><span>支出</span><b class="expense-text" id="periodExpense">¥0.00</b></div>
+  <div class="stat"><span>净资产</span><b id="totalAssets">¥0.00</b><em></em></div><div class="stat"><span>净流入</span><b id="netFlow">¥0.00</b><em></em></div>
+  <div class="stat"><span>收入</span><b class="income-text" id="periodIncome">¥0.00</b><em id="incDlt"></em></div><div class="stat"><span>支出</span><b class="expense-text" id="periodExpense">¥0.00</b><em id="expDlt"></em></div>
+  <div class="stat"><span>资产</span><b id="assetsOnly">¥0.00</b><em></em></div><div class="stat"><span>负债（信用卡等）</span><b class="expense-text" id="liabOnly">¥0.00</b><em></em></div>
  </div>
- <div class="chart"><h3>收支趋势</h3><svg id="trendChart" viewBox="0 0 600 190" preserveAspectRatio="none"></svg><div class="labels" id="trendLabels"></div></div>
- <div class="chart"><h3>支出结构</h3><div class="category"><div class="donut" id="donut"><div class="donut-center"><span>总支出</span><b id="donutTotal">¥0</b></div></div><div class="legend" id="categoryLegend"><div class="empty">暂无数据</div></div></div></div>
- <div class="chart"><h3>账户余额</h3><div class="account-list" id="accountAnalytics"><div class="empty">暂无账户</div></div></div>
- <div class="chart"><div class="section-head"><h3>AI 财务分析</h3><button id="runFinanceAnalysis">生成分析</button></div><div class="finance-analysis" id="financeAnalysis">结合收入、支出、账户流水和预算，生成你的财务分析。</div></div>
- <div class="chart"><h3>预算</h3><div id="budgetList"><div class="empty">暂无预算</div></div></div>
+ <div class="chart"><h3>收支趋势（近6个月，点按查看）</h3><svg id="trendChart" viewBox="0 0 600 190" preserveAspectRatio="none"></svg><div class="labels" id="trendLabels"></div><div class="trend-info" id="trendInfo"></div></div>
+ <div class="chart"><h3>支出结构（点按分类）</h3><div class="category"><div class="donut" id="donut"><div class="donut-center"><span id="donutLabel">总支出</span><b id="donutTotal">¥0</b></div></div><div class="legend" id="categoryLegend"><div class="empty">暂无数据</div></div></div></div>
+ <div class="chart"><h3>账户</h3><div id="accountAnalytics"><div class="empty">暂无账户</div></div></div>
+ <div class="chart"><div class="section-head" style="margin:0 0 10px"><h3>AI 财务分析</h3><button id="runFinanceAnalysis">生成分析</button></div><div class="finance-analysis" id="financeAnalysis">结合收入、支出、账户流水和预算，生成你的财务分析。</div></div>
+ <div class="chart"><h3>本月预算</h3><div id="budgetList"><div class="empty">暂无预算，可对 AI 说“每月餐饮预算 2000”</div></div></div>
 </section>
 <section class="page" id="page-settings">
  <div class="section-head"><h2>设置</h2></div>
@@ -213,8 +195,14 @@ textarea{display:block;width:100%;min-height:106px;max-height:220px;resize:verti
   <label class="label" for="apiKey">API Key</label><input class="input" id="apiKey" type="password" autocomplete="off" placeholder="API Key">
   <label class="label" for="apiModel">模型</label><input class="input" id="apiModel" placeholder="模型名称">
   <div class="btnrow"><button class="btn flex" id="saveSettings">保存</button><button class="btn primary flex" id="testApi">测试连接</button></div>
-  <div class="message" id="apiTestMessage"></div>
+  <div class="message" id="apiTestMessage" style="margin-top:10px"></div>
   <div class="note">图片识别需要支持视觉输入的模型。Token 用量受模型服务商限制，应用不额外截断请求。</div>
+ </div>
+ <div class="setting"><h3>记账偏好</h3>
+  <label class="label" for="rulesInput">告诉 AI 你的习惯（会随每次请求发送）</label>
+  <textarea class="input" id="rulesInput" placeholder="例如：星巴克算餐饮；默认用招行信用卡；AA 只记我自己的部分；打车算交通。"></textarea>
+  <div class="setting-row" style="margin-top:6px"><span>高置信度时自动保存<br><small style="color:var(--muted);font-size:12px">保存后可一键撤销；修改、删除、校准始终需要确认</small></span><label class="switch"><input type="checkbox" id="autoSave"><span></span></label></div>
+  <div class="btnrow"><button class="btn primary flex" id="saveRules">保存偏好</button></div>
  </div>
  <div class="setting"><h3>外观</h3><div class="themes" id="themeSelect"><button data-theme="system" class="active">跟随系统</button><button data-theme="light">浅色</button><button data-theme="dark">深色</button></div>
   <div class="font-control"><div class="setting-row"><span>界面字体</span><b id="fontScaleLabel">100%</b></div><input id="fontScaleSlider" type="range" min="0.9" max="1.2" step="0.05" value="1"></div>
@@ -225,43 +213,70 @@ textarea{display:block;width:100%;min-height:106px;max-height:220px;resize:verti
   <div class="setting-row"><span>导入备份</span><label class="btn" for="importData">选择文件</label><input id="importData" type="file" accept="application/json"></div>
   <div class="reset-card"><div><b>重置账户与历史记录</b><small>清空所有账户、交易、预算与校准历史，保留 API 设置</small></div><button class="btn danger" id="resetRecords">重置</button></div>
   <div class="reset-confirm" id="resetConfirm" hidden><span>确认清空账户与所有历史记录？此操作无法撤销。</span><div><button class="btn" id="cancelReset">取消</button><button class="btn primary" id="confirmReset">确认重置</button></div></div>
-  <div class="note">记账描述、上传图片和相关账户上下文会发送到你配置的 API 服务商。</div>
+  <div class="note">记账描述、上传图片和相关账户上下文会发送到你配置的 API 服务商。数据只保存在本机浏览器中，建议定期导出备份。</div>
  </div>
 </section>
-</main><div class="modal-backdrop" id="accountModal" hidden><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-head"><div><b id="modalAccountName"></b><small id="modalAccountMeta"></small></div><button class="icon" id="closeAccountModal" aria-label="关闭">×</button></div><div class="modal-balance" id="modalAccountBalance"></div><div class="modal-section-title">近期资金流转</div><div class="modal-transactions" id="modalAccountTransactions"></div></div></div></div>
+</main>
+<div class="modal-backdrop" id="sheet" hidden><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-head"><div><b id="sheetTitle"></b><small id="sheetSub"></small></div><button class="icon" data-act="close" aria-label="关闭">×</button></div><div class="sheet-body" id="sheetBody"></div><div class="sheet-foot" id="sheetFoot"></div></div></div>
+<div class="toast" id="toast" hidden><span id="toastText"></span><button id="toastUndo" hidden>撤销</button></div>
 <nav class="dock-wrap"><div class="dock" role="tablist">
 <button class="tab active" data-page="home"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>记账</button>
 <button class="tab" data-page="transactions"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>明细</button>
 <button class="tab" data-page="analytics"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h17M8 15l4-5 3 2 5-7"/></svg>分析</button>
 <button class="tab" data-page="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 13.5a7.4 7.4 0 0 0 0-3l2-1.2-2-3.4-2.3.8a7.6 7.6 0 0 0-2.6-1.5L13.8 3h-3.9l-.4 2.2a7.6 7.6 0 0 0-2.6 1.5l-2.3-.8-2 3.4 2 1.2a7.4 7.4 0 0 0 0 3l-2 1.2 2 3.4 2.3-.8a7.6 7.6 0 0 0 2.6 1.5l.4 2.2h3.9l.4-2.2a7.6 7.6 0 0 0 2.6-1.5l2.3.8 2-3.4z"/></svg>设置</button>
 </div></nav>
+</div>
 <script>
 (function(){
 'use strict';
 const $=id=>document.getElementById(id),qa=s=>Array.from(document.querySelectorAll(s));
-const DB='ai-ledger-v1',VERSION=2,STORES=['accounts','transactions','budgets','tokenUsage','settings','reconciliations'];
-let db=null,pending=null,images=[],range='month',detailRange='day',filter='all',deferredInstall=null;
+const DB='ai-ledger-v1',VERSION=2,STORES=['accounts','transactions','budgets','tokenUsage','settings','reconciliations'],SNAP=['accounts','transactions','budgets','reconciliations'];
+const PLACEHOLDER='描述一笔收支，或上传银行卡 / 支付截图……';
+const MONEY=['expense','income','transfer','refund'];
+const TYPES=[...MONEY,'create_account','budget','balance_snapshot','update_transaction','delete_transaction','rename_account'];
+const SAFE=new Set(['expense','income','transfer','refund','create_account','budget']);
+const TYPE_COLOR={credit_card:'#e0733f',savings_card:'#3f7de0',debit_card:'#3f7de0',payment:'#2fa86a',wallet:'#8a5ae0',cash:'#c9a227',other:'#8a929c'};
+let db=null,pending=null,images=[],range='month',detailRange='day',filter='all',deferredInstall=null,undoSnap=null,selCat=null,trendSel=null,toastTimer=null,editId=null,busyAI=false;
+let hideAmt=localStorage.getItem('ledger.hide')==='1';
+let history=[];try{history=JSON.parse(sessionStorage.getItem('ledger.hist')||'[]');}catch(e){}
 const uid=()=>crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);
-const clean=v=>String(v==null?'':v).trim(),money=v=>new Intl.NumberFormat('zh-CN',{style:'currency',currency:'CNY',maximumFractionDigits:2}).format(Number(v||0));
+const clean=v=>String(v==null?'':v).trim();
 const r2=v=>Math.round((Number(v||0)+Number.EPSILON)*100)/100;
+function fmt(v,cur){cur=cur||'CNY';try{return new Intl.NumberFormat('zh-CN',{style:'currency',currency:cur,maximumFractionDigits:2}).format(Number(v||0));}catch(e){return cur+' '+Number(v||0).toFixed(2);}}
+const money=(v,cur)=>hideAmt?'••••':fmt(v,cur);
 const time=t=>{const n=Date.parse(t.occurredAt||'');return Number.isFinite(n)?n:Number(t.createdAt||Date.now());};
+const amt=t=>Number(t.amount||0);
+const pl=t=>!t.neutral&&(!t.currency||t.currency==='CNY');
+const expOf=l=>r2(l.reduce((s,t)=>pl(t)?(t.type==='expense'?s+amt(t):t.type==='refund'?s-amt(t):s):s,0));
+const incOf=l=>r2(l.reduce((s,t)=>pl(t)&&t.type==='income'?s+amt(t):s,0));
 function verifiedTime(a){const v=a&&a.verifiedAt;if(v==null||v==='')return 0;const n=Number(v);if(Number.isFinite(n))return n;const d=Date.parse(v);return Number.isFinite(d)?d:0;}
 function affectsBalanceAt(a,eventAt){const v=verifiedTime(a);return !v||eventAt>=v;}
 const when=t=>new Date(time(t)).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dayKey=ms=>{const d=new Date(ms);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+function catIcon(c,type){const s=clean(c);if(type==='transfer')return'⇄';if(type==='balance_adjustment')return'≈';if(type==='refund')return'↩';const m=[[/餐|饭|吃|咖啡|奶茶|外卖|零食|饮|早|午|晚/,'🍜'],[/交通|打车|地铁|公交|出行|油|停车|高铁|机票/,'🚇'],[/购物|服饰|衣|数码|网购|日用/,'🛍'],[/住|房|租|水电|物业|燃气|话费|网费/,'🏠'],[/娱乐|游戏|电影|会员|旅/,'🎮'],[/医|药|健康|健身/,'💊'],[/教育|学|书|培训/,'📚'],[/工资|薪|奖金|理财|利息/,'💰'],[/红包|礼|人情/,'🧧'],[/借|还|垫/,'🤝']];for(const[r,i]of m)if(r.test(s))return i;return type==='income'?'＋':'🧾';}
+
+/* ---------- 数据库 ---------- */
 function openDB(){return new Promise((ok,no)=>{const r=indexedDB.open(DB,VERSION);r.onupgradeneeded=()=>STORES.forEach(s=>{if(!r.result.objectStoreNames.contains(s))r.result.createObjectStore(s,{keyPath:'id'});});r.onsuccess=()=>{db=r.result;ok();};r.onerror=()=>no(r.error);});}
 function all(s){return new Promise((ok,no)=>{const r=db.transaction(s).objectStore(s).getAll();r.onsuccess=()=>ok(r.result||[]);r.onerror=()=>no(r.error);});}
 function put(s,x){return new Promise((ok,no)=>{const r=db.transaction(s,'readwrite').objectStore(s).put(x);r.onsuccess=()=>ok(x);r.onerror=()=>no(r.error);});}
 function del(s,id){return new Promise((ok,no)=>{const r=db.transaction(s,'readwrite').objectStore(s).delete(id);r.onsuccess=()=>ok();r.onerror=()=>no(r.error);});}
 function clear(s){return new Promise((ok,no)=>{const r=db.transaction(s,'readwrite').objectStore(s).clear();r.onsuccess=()=>ok();r.onerror=()=>no(r.error);});}
-function settings(){return{endpoint:localStorage.getItem('ledger.endpoint')||'https://api.deepseek.com/chat/completions',key:localStorage.getItem('ledger.key')||'',model:localStorage.getItem('ledger.model')||'deepseek-chat',rules:localStorage.getItem('ledger.rules')||''};}
+async function snapshot(){const o={};for(const s of SNAP)o[s]=await all(s);return o;}
+async function restore(o){for(const s of SNAP){await clear(s);for(const x of(o[s]||[]))await put(s,x);}}
+function settings(){return{endpoint:localStorage.getItem('ledger.endpoint')||'https://api.deepseek.com/chat/completions',key:localStorage.getItem('ledger.key')||'',model:localStorage.getItem('ledger.model')||'deepseek-chat',rules:localStorage.getItem('ledger.rules')||'',auto:localStorage.getItem('ledger.autosave')!=='0'};}
+
+/* ---------- 提示 ---------- */
 function message(s,type){const e=$('message');e.textContent=s||'';e.className='message'+(s?' show':'')+(type?' '+type:'');}
 function apiMessage(s,type){const e=$('apiTestMessage');e.textContent=s||'';e.className='message'+(s?' show':'')+(type?' '+type:'');}
+function toast(text,undo){const t=$('toast');$('toastText').textContent=text;$('toastUndo').hidden=!undo;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>{t.hidden=true;},undo?7000:4500);try{navigator.vibrate&&navigator.vibrate(10);}catch(e){}}
 function busy(b,on){if(on){b.dataset.prev=b.innerHTML;b.disabled=true;b.innerHTML='<span class="spinner"></span>';}else{b.disabled=false;if(b.dataset.prev){b.innerHTML=b.dataset.prev;delete b.dataset.prev;}}}
-function accountTypeName(type){
- const names={credit_card:'信用卡',savings_card:'储蓄卡',debit_card:'储蓄卡',payment:'支付账户',wallet:'电子钱包',cash:'现金',other:'其他账户'};
- return names[type]||'其他账户';
-}
+function showSheet(o){$('sheetTitle').textContent=o.title||'';$('sheetSub').textContent=o.sub||'';$('sheetBody').innerHTML=o.body||'';$('sheetFoot').innerHTML=o.foot||'';$('sheet').hidden=false;$('sheetBody').scrollTop=0;}
+function closeSheet(){$('sheet').hidden=true;}
+function pushHist(role,content){history.push({role,content:String(content).slice(0,1500)});history=history.slice(-8);try{sessionStorage.setItem('ledger.hist',JSON.stringify(history));}catch(e){}}
+
+/* ---------- 账户 ---------- */
+function accountTypeName(type){const names={credit_card:'信用卡',savings_card:'储蓄卡',debit_card:'储蓄卡',payment:'支付账户',wallet:'电子钱包',cash:'现金',other:'其他账户'};return names[type]||'其他账户';}
 function guessAccountType(name,explicit){
  if(explicit){const x=String(explicit).toLowerCase();if(/credit|信用|贷记/.test(x))return'credit_card';if(/saving|debit|储蓄|借记/.test(x))return'savings_card';if(/payment|支付|支付宝|微信/.test(x))return'payment';if(/wallet|钱包/.test(x))return'wallet';if(/cash|现金/.test(x))return'cash';if(['other','其他'].includes(x))return'other';}
  const n=String(name||'').toLowerCase();
@@ -279,72 +294,88 @@ async function account(name,meta){
  meta=meta||{};
  const embedded=clean(name).match(/(?:\*{2,}\s*|尾号\s*|末四位\s*|卡号\s*)(\d{4})\s*$/);
  const last4=clean(meta.last4||(embedded&&embedded[1])).replace(/\D/g,'').slice(-4),institution=accountKey(meta.institution);
- if(last4){
-  const matches=list.filter(a=>clean(a.last4).replace(/\D/g,'').slice(-4)===last4&&(!institution||accountKey(a.institution)===institution));
-  if(matches.length===1)return matches[0];
- }
+ if(last4){const matches=list.filter(a=>clean(a.last4).replace(/\D/g,'').slice(-4)===last4&&(!institution||accountKey(a.institution)===institution));if(matches.length===1)return matches[0];}
  return null;
 }
 async function ensureAccount(name,meta){
  const n=clean(name);if(!n)return null;meta=meta||{};
  let a=await account(n,meta);
- if(!a){
-  a={id:uid(),name:n,balance:0,accountType:guessAccountType(n,meta.accountType),institution:clean(meta.institution),last4:clean(meta.last4),currency:clean(meta.currency)||'CNY',createdAt:Date.now(),balanceInitialized:false};
- }else{
-  /* 已有账户：仅当识别出更具体的类型时才更新，避免普通记账把信用卡等降级为"其他账户" */
+ if(!a){a={id:uid(),name:n,balance:0,accountType:guessAccountType(n,meta.accountType),institution:clean(meta.institution),last4:clean(meta.last4),currency:clean(meta.currency)||'CNY',createdAt:Date.now(),balanceInitialized:false};}
+ else{
   const t=guessAccountType(n,meta.accountType||a.accountType);
   if(!a.accountType||t!=='other')a.accountType=t;
   if(meta.institution)a.institution=clean(meta.institution);
   if(meta.last4)a.last4=clean(meta.last4);
-  if(meta.currency)a.currency=clean(meta.currency);
+  if(meta.currency&&!a.balanceInitialized&&!a.verifiedAt)a.currency=clean(meta.currency);
   if(meta.creditLimit!=null)a.creditLimit=Number(meta.creditLimit);
   if(meta.availableCredit!=null)a.availableCredit=Number(meta.availableCredit);
  }
  await put('accounts',a);return a;
 }
-function localISO(){
- const d=new Date(),offset=-d.getTimezoneOffset(),sign=offset>=0?'+':'-',hh=String(Math.floor(Math.abs(offset)/60)).padStart(2,'0'),mm=String(Math.abs(offset)%60).padStart(2,'0');
- return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,19)+sign+hh+':'+mm;
-}
+function localISO(){const d=new Date(),offset=-d.getTimezoneOffset(),sign=offset>=0?'+':'-',hh=String(Math.floor(Math.abs(offset)/60)).padStart(2,'0'),mm=String(Math.abs(offset)%60).padStart(2,'0');return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,19)+sign+hh+':'+mm;}
 function normalizeDate(v){
  const s=clean(v);if(!s)return localISO();
  if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s+'T12:00:00'+localISO().slice(-6);
  if(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(s))return s+(s.length===16?':00':'')+localISO().slice(-6);
  return Number.isFinite(Date.parse(s))?new Date(Date.parse(s)).toISOString():localISO();
 }
+
+/* ---------- 余额影响（统一入口，支持多币种） ---------- */
+function calcDelta(acc,cur,amount,provided,oldDelta,keep){if(!acc)return null;if((acc.currency||'CNY')===cur)return amount;if(Number.isFinite(provided)&&provided>0)return r2(provided);if(keep&&oldDelta!=null&&oldDelta>0)return oldDelta;return 0;}
+async function applyEffect(t,sign){
+ const acs=await all('accounts'),at=time(t),af=t.fromDelta!=null?Number(t.fromDelta):amt(t),bt=t.toDelta!=null?Number(t.toDelta):amt(t),touched=new Map();
+ const upd=(id,d)=>{if(!id)return;const a=acs.find(x=>x.id===id);if(a&&affectsBalanceAt(a,at)){a.balance=r2(Number(a.balance||0)+sign*d);touched.set(a.id,a);}};
+ if(t.type==='expense')upd(t.accountId,-af);
+ else if(t.type==='income'||t.type==='refund')upd(t.accountId,af);
+ else if(t.type==='transfer'){upd(t.accountId,-af);upd(t.toAccountId,bt);}
+ for(const a of touched.values())await put('accounts',a);
+}
+
+/* ---------- AI 上下文与提示词 ---------- */
 async function context(){
- const [accounts,tx,budgets,reconciliations]=await Promise.all([all('accounts'),all('transactions'),all('budgets'),all('reconciliations')]);
+ const [accounts,tx,budgets,recs]=await Promise.all([all('accounts'),all('transactions'),all('budgets'),all('reconciliations')]);
  const now=new Date(),start=new Date(now.getFullYear(),now.getMonth(),1).getTime(),year=new Date(now.getFullYear(),0,1).getTime(),from=new Date(now.getFullYear(),now.getMonth()-11,1).getTime();
- const sum=list=>{const o={income:0,expense:0,categories:{},merchants:{}};list.forEach(t=>{let v=Number(t.amount||0);if(t.type==='income')o.income+=v;if(t.type==='expense'){o.expense+=v;let c=t.category||'其他',m=t.merchant||'未注明';o.categories[c]=(o.categories[c]||0)+v;o.merchants[m]=(o.merchants[m]||0)+v;}});o.net=o.income-o.expense;o.count=list.length;return o;};
- const months={};tx.filter(t=>time(t)>=from).forEach(t=>{let d=new Date(time(t)),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');(months[k]||(months[k]=[])).push(t);});
+ const sum=list=>{const o={income:incOf(list),expense:expOf(list),categories:{},merchants:{}};list.forEach(t=>{if(!pl(t))return;if(t.type==='expense'||t.type==='refund'){const sg=t.type==='refund'?-1:1,c=t.category||'其他',m=t.merchant||'未注明';o.categories[c]=r2((o.categories[c]||0)+sg*amt(t));o.merchants[m]=r2((o.merchants[m]||0)+sg*amt(t));}});o.merchants=Object.fromEntries(Object.entries(o.merchants).sort((a,b)=>b[1]-a[1]).slice(0,15));o.net=r2(o.income-o.expense);o.count=list.length;return o;};
+ const months={};tx.filter(t=>time(t)>=from).forEach(t=>{const d=new Date(time(t)),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');(months[k]||(months[k]=[])).push(t);});
  Object.keys(months).forEach(k=>months[k]=sum(months[k]));
+ const hm={},cc={};
+ tx.forEach(t=>{if(t.type!=='expense'&&t.type!=='income')return;if(t.category)cc[t.category]=(cc[t.category]||0)+1;const m=clean(t.merchant);if(!m)return;const h=hm[m]||(hm[m]={n:0,c:{},a:{}});h.n++;h.c[t.category||'']=(h.c[t.category||'']||0)+1;h.a[t.account||'']=(h.a[t.account||'']||0)+1;});
+ const top=o=>(Object.entries(o).sort((a,b)=>b[1]-a[1])[0]||[''])[0];
+ const habits=Object.entries(hm).sort((a,b)=>b[1].n-a[1].n).slice(0,40).map(([m,h])=>({merchant:m,category:top(h.c),account:top(h.a),count:h.n}));
+ const categories=Object.entries(cc).sort((a,b)=>b[1]-a[1]).slice(0,30).map(([name,count])=>({name,count}));
+ const monthTx=tx.filter(t=>time(t)>=start);
  return{
-  accounts:accounts.map(a=>({name:a.name,balance:a.balance,accountType:a.accountType||guessAccountType(a.name),institution:a.institution||'',last4:a.last4||'',verifiedAt:a.verifiedAt||null,availableCredit:a.availableCredit??null})),
-  recent:tx.sort((a,b)=>time(b)-time(a)).slice(0,30).map(t=>({type:t.type,amount:t.amount,account:t.account||'',toAccount:t.toAccount||'',merchant:t.merchant||'',category:t.category||'',occurredAt:t.occurredAt||''})),
-  thisMonth:sum(tx.filter(t=>time(t)>=start)),thisYear:sum(tx.filter(t=>time(t)>=year)),months,
-  calibrations:reconciliations.sort((a,b)=>b.createdAt-a.createdAt).slice(0,15).map(r=>({account:r.accountName,previous:r.previousBalance,statement:r.statementBalance,difference:r.difference,date:r.occurredAt,analysis:r.analysis||''})),
-  budgets:budgets.map(b=>({name:b.name,category:b.category||'',limit:b.limit}))
+  accounts:accounts.map(a=>({name:a.name,balance:a.balance,currency:a.currency||'CNY',accountType:a.accountType||guessAccountType(a.name),institution:a.institution||'',last4:a.last4||'',verifiedAt:a.verifiedAt||null,creditLimit:a.creditLimit??null,availableCredit:a.availableCredit??null})),
+  recent:tx.slice().sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0)).slice(0,30).map(t=>({id:t.id,type:t.type,amount:t.amount,currency:t.currency||'CNY',account:t.account||'',toAccount:t.toAccount||'',merchant:t.merchant||'',category:t.category||'',occurredAt:t.occurredAt||'',neutral:!!t.neutral})),
+  thisMonth:sum(monthTx),thisYear:sum(tx.filter(t=>time(t)>=year)),months,categories,habits,
+  calibrations:recs.slice().sort((a,b)=>b.createdAt-a.createdAt).slice(0,15).map(r=>({account:r.accountName,previous:r.previousBalance,statement:r.statementBalance,difference:r.difference,date:r.occurredAt,analysis:r.analysis||''})),
+  budgets:budgets.map(b=>({name:b.name,category:b.category||'',limit:b.limit,usedThisMonth:expOf(monthTx.filter(t=>!b.category||t.category===b.category))}))
  };
 }
 function prompt(ctx){
  return[
- '你是个人财务 AI 管家，必须像真正理解业务的财务助理一样执行，不是表单抽取器。理解任意自然语言、口语、简称、错别字、省略、上下文和连续多件事务。',
- '首先判断用户意图：记账、查询、创建账户、资金校准、解释或普通对话。不要把查询误当作交易。',
- '一句话可以包含多笔操作，按顺序全部输出。普通支出/收入只要求可靠金额；账户、商户、分类、时间、商品等可以结合历史和常识推断，没有必要时留空。不得编造金额、账户或资金流向。',
+ '你是个人财务 AI 管家，必须像真正理解业务的财务助理一样执行，不是表单抽取器。理解任意自然语言、口语、简称、错别字、省略、上下文、指代（“刚才那笔”“上一笔”“还是用招行”）和连续多件事务。你可以看到最近几轮对话，请结合它们理解当前这句话。',
+ '首先判断用户意图：记账(record)、查询(query)、创建账户、资金校准(reconcile)、修改或删除已有记录(manage)、解释或普通对话(conversation)。不要把查询误当作交易。',
+ '一句话可以包含多笔操作，按顺序全部输出。普通支出/收入只要求可靠金额；账户、商户、分类、时间、商品等可以结合历史习惯(habits)和常识推断，没有必要时留空。不得编造金额、账户或资金流向。',
+ '分类必须优先复用上下文 categories 里已有的分类名和 habits 里该商户的惯用分类与账户，只有确实没有合适分类时才新建，避免“餐饮/吃饭/饮食”这类同义分类并存。',
  '当描述中出现一个新账户名称或截图显示新账户，应主动创建账户，不要只把名称放在交易备注里。返回 create_account，且给出 account、accountType、institution、last4、currency。若同一截图还显示明确的当前余额，再同时返回 balance_snapshot。已有账户应匹配已有账户，不要重复创建。',
  '账户必须区分类型：credit_card=信用卡，savings_card=储蓄卡，payment=支付宝/微信等支付账户，wallet=电子钱包，cash=现金，other=其他。银行名称放 institution，末四位放 last4。若账户名称只识别出银行+末四位，可用“银行名称 ****1234”作为账户名称。',
- '银行卡截图识别规则：识别银行/机构、账户名、账户末四位、账户类型、截图日期、币种、当前余额、可用余额、可用额度、信用额度、已用额度、账单应还。绝不能把信用额度、可用额度或最低还款额误当作储蓄余额。储蓄卡/支付账户只有明确当前余额才写 balance；信用卡若显示已欠/已用/当前应还，按负债记为负数 balance；若只有可用额度，则写 availableCredit，不要伪造账户余额，也不要返回 balance_snapshot；仍然可以创建账户并记录额度信息。',
- '资金校准应创建或匹配账户，并保存 balance_snapshot。比较截图余额与本地账面余额、历史收支和上次校准的差异，给出差额解释、可能的遗漏流水和需要核实事项；不能仅凭差额自动制造收入或支出。识别到账户+余额后，必须确保数据库里存在账户记录，账户不存在时先自动创建。',
- '上传小票/支付截图：识别商户、金额、时间、商品、分类、支付账户；结合文字判断用户是想记录、查询还是仅分析。上传图后自动判断图像类型和用户意图。上传银行流水截图时，只有用户明确要求导入流水，才批量创建交易，避免把余额摘要重复记成交易。',
+ '银行卡截图识别规则：识别银行/机构、账户名、账户末四位、账户类型、截图日期、币种、当前余额、可用余额、可用额度、信用额度、已用额度、账单应还。绝不能把信用额度、可用额度或最低还款额误当作储蓄余额。储蓄卡/支付账户只有明确当前余额才写 balance；信用卡若显示已欠/已用/当前应还，按负债记为负数 balance；若只有可用额度，则写 availableCredit（有信用额度时同时写 creditLimit），不要伪造账户余额，也不要返回 balance_snapshot；仍然可以创建账户并记录额度信息。',
+ '资金校准应创建或匹配账户，并保存 balance_snapshot。比较截图余额与本地账面余额、历史收支和上次校准的差异，在 answer/analysis 里给出差额解释、可能的遗漏流水和需要核实事项；不能仅凭差额自动制造收入或支出。账户不存在时先自动创建。',
+ '上传小票/支付截图：识别商户、金额、时间、商品、分类、支付账户；结合文字判断用户是想记录、查询还是仅分析。上传银行流水截图时，只有用户明确要求导入流水，才批量创建交易，避免把余额摘要重复记成交易。',
  '记录时间以用户本地时区为准。将今天、昨天、上周等自动换算为准确日期；没有时间时使用当前本地时间。occurredAt 输出带时区偏移的 ISO 8601 时间。禁止把 UTC 日期当作当地日期。',
- '查询财务问题必须引用本地统计上下文作答。给出清晰结论、支出构成、变化、异常和建议；不得凭空补足没有记录的数字。分析账户时结合该账户近期交易和校准历史。',
- '只在金额或转账资金流向等关键事实缺失时追问一个最重要的问题。普通支出/收入账户缺失时：本地仅有一个账户则默认关联该账户；若有多个账户且无法可靠判断支付账户，应先追问账户名称，不得猜测扣款账户；若本地没有账户，可以保存未关联流水，但必须明确说明该笔不会改变账户余额。多个操作可部分保存，不能因为其中一项缺信息而丢弃其他有效操作。',
- '严格输出JSON：{"intent":"record|query|reconcile|conversation|clarify","answer":"","analysis":"","needsClarification":false,"clarification":"","actions":[{"type":"expense|income|transfer|create_account|budget|balance_snapshot","amount":null,"currency":"CNY","account":"","toAccount":"","merchant":"","category":"","items":[],"occurredAt":"","budgetName":"","budgetLimit":null,"balance":null,"accountType":"credit_card|savings_card|payment|wallet|cash|other","institution":"","last4":"","availableCredit":null,"creditLimit":null,"balanceKind":"","confidence":0.0,"note":""}]}。无操作时 actions 必须是空数组。所有金额字段必须数字或 null，不得输出格式化货币文本。',
- '本地时间：'+new Date().toLocaleString('zh-CN',{hour12:false})+'；时区：'+Intl.DateTimeFormat().resolvedOptions().timeZone+'；用户规则：'+(settings().rules||'无')+'；本地财务上下文：'+JSON.stringify(ctx)
+ '查询：优先用本地统计上下文作答。若回答需要上下文里没有的明细或统计（某商户/分类/账户在某时间段的合计与明细、排名、同比环比、最大一笔等），不要猜测，返回 intent="need_data" 并给出 dataRequest：{"type":"expense|income|refund|transfer|all","merchant":"","category":"","account":"","keyword":"","from":"YYYY-MM-DD","to":"YYYY-MM-DD","minAmount":null,"maxAmount":null,"groupBy":"none|category|merchant|account|day|month","sort":"amount_desc|date_desc","limit":15}。系统会在本地计算后把结果交还给你（最多两轮），你再据此在 answer 中给出清晰结论、构成、变化、异常和建议；不得凭空补足没有记录的数字。',
+ '修改/删除已有记录：用 recent 里的 id 作为 targetId（“上一笔”指 recent 第一条）。修改返回 update_transaction，changes 只包含要改的字段(amount/account/toAccount/merchant/category/note/occurredAt)；删除返回 delete_transaction。找不到唯一对应记录时先追问。账户改名返回 rename_account（account=旧名，newName=新名）。预算返回 budget（budgetName、category、budgetLimit；同名预算会被更新）。',
+ '特殊场景：①退款返回 refund（金额为正，尽量带上原交易 targetId，会自动冲减对应支出）；②信用卡还款=transfer，从付款账户转入该信用卡账户；③借入/借出/收回借款/代付垫付/AA 中别人应承担的部分，这类不属于自己的真实收支，设 neutral=true（余额照常变动，但不计入收支统计）；AA 时自己的份额记正常支出，其余垫付部分记 neutral 支出；④工资、报销到账等是 income。',
+ '币种：默认 CNY。若交易币种与所用账户币种不同，需在 accountAmount（转账时转入侧为 toAmount）给出按账户币种折算后的金额，否则不会改动该账户余额；无法确定汇率时追问。',
+ '只在金额、转账资金流向、要修改的目标记录等关键事实缺失时追问一个最重要的问题（needsClarification=true，clarification 写问题）。普通支出/收入账户缺失时：本地仅有一个账户则默认关联该账户；若有多个账户且无法借助 habits 可靠判断支付账户，应先追问账户名称，不得猜测扣款账户；若本地没有账户，可以保存未关联流水，但必须明确说明该笔不会改变账户余额。多个操作可部分保存，不能因为其中一项缺信息而丢弃其他有效操作。每个 action 都要给出 confidence(0-1)，不确定就降低它。',
+ '严格输出JSON：{"intent":"record|query|reconcile|manage|conversation|clarify|need_data","answer":"","analysis":"","needsClarification":false,"clarification":"","dataRequest":null,"actions":[{"type":"expense|income|transfer|refund|create_account|budget|balance_snapshot|update_transaction|delete_transaction|rename_account","amount":null,"currency":"CNY","account":"","toAccount":"","merchant":"","category":"","items":[],"occurredAt":"","budgetName":"","budgetLimit":null,"balance":null,"accountType":"credit_card|savings_card|payment|wallet|cash|other","institution":"","last4":"","availableCredit":null,"creditLimit":null,"balanceKind":"","targetId":"","changes":{},"newName":"","neutral":false,"accountAmount":null,"toAmount":null,"confidence":0.0,"note":""}]}。无操作时 actions 必须是空数组。所有金额字段必须数字或 null，不得输出格式化货币文本。',
+ '本地时间：'+new Date().toLocaleString('zh-CN',{hour12:false})+'；时区：'+Intl.DateTimeFormat().resolvedOptions().timeZone+'；用户记账偏好：'+(settings().rules||'无')+'；本地财务上下文：'+JSON.stringify(ctx)
  ].join('\n');
 }
-function parse(t){t=clean(t);let a=t.indexOf('{'),b=t.lastIndexOf('}');if(a<0||b<a)throw Error('AI 返回格式无法识别');return JSON.parse(t.slice(a,b+1));}
-function parseAmount(v){if(v==null||v==='')return null;if(typeof v==='number')return Number.isFinite(v)?v:null;let s=String(v).replace(/[￥¥$,，\s]/g,'');let m=1;if(/万/.test(s)){m=10000;s=s.replace(/万/g,'');}else if(/千/.test(s)){m=1000;s=s.replace(/千/g,'');}const n=Number(s.replace(/[^\d.-]/g,''));return Number.isFinite(n)?n*m:null;}
+function parse(t){t=clean(t);const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a<0||b<a)throw Error('AI 返回格式无法识别');return JSON.parse(t.slice(a,b+1));}
+function parseAmount(v){if(v==null||v==='')return null;if(typeof v==='number')return Number.isFinite(v)?v:null;let s=String(v).replace(/[￥¥$,，\s]/g,'');let m=1;if(/万/.test(s)){m=10000;s=s.replace(/万/g,'');}else if(/千/.test(s)){m=1000;s=s.replace(/千/g,'');}const n=Number(s.replace(/[^\d.-]/g,''));return Number.isFinite(n)&&s.replace(/[^\d]/g,'')!==''?n*m:null;}
+function normChanges(c){if(!c||typeof c!=='object')return{};const o={},am=parseAmount(c.amount);if(am!=null)o.amount=am;['account','toAccount','merchant','category','note'].forEach(k=>{if(clean(c[k]))o[k]=clean(c[k]);});if(clean(c.occurredAt||c.date))o.occurredAt=normalizeDate(c.occurredAt||c.date);const aa=parseAmount(c.accountAmount);if(aa!=null)o.accountAmount=aa;const ta=parseAmount(c.toAmount);if(ta!=null)o.toAmount=ta;return o;}
 function normalize(r){
  const src=Array.isArray(r.actions)?r.actions:(r.type?[r]:[]);
  const meta=r.accountInfo||r.detectedAccount||r.account||{};
@@ -352,83 +383,129 @@ function normalize(r){
   const institution=clean(a.institution||a.bankName||a.bank||meta.institution||meta.bankName||'');
   const last4=clean(a.last4||a.accountLast4||a.cardLast4||meta.last4||'').replace(/\D/g,'').slice(-4);
   const account=clean(a.account||a.accountName||a.bankAccount||a.cardName||meta.name||meta.accountName||'')||(institution&&last4?institution+' ****'+last4:institution);
+  const conf=(a.confidence===''||a.confidence==null||!Number.isFinite(Number(a.confidence)))?.85:Number(a.confidence);
   return {...a,type:clean(a.type),amount:parseAmount(a.amount),balance:parseAmount(a.balance),
    budgetLimit:parseAmount(a.budgetLimit),availableCredit:parseAmount(a.availableCredit),creditLimit:parseAmount(a.creditLimit),
    account,toAccount:clean(a.toAccount||a.toAccountName),merchant:clean(a.merchant||a.shopName),category:clean(a.category),budgetName:clean(a.budgetName),institution,last4,
    accountType:guessAccountType(account,a.accountType||a.cardType||meta.accountType),balanceKind:clean(a.balanceKind),
-   items:Array.isArray(a.items)?a.items:(clean(a.items)?[clean(a.items)]:[]),occurredAt:normalizeDate(a.occurredAt||a.date||r.occurredAt),currency:clean(a.currency||meta.currency)||'CNY'};
+   items:Array.isArray(a.items)?a.items:(clean(a.items)?[clean(a.items)]:[]),occurredAt:normalizeDate(a.occurredAt||a.date||r.occurredAt),currency:(clean(a.currency||meta.currency)||'CNY').toUpperCase(),
+   targetId:clean(a.targetId),changes:normChanges(a.changes),newName:clean(a.newName),neutral:a.neutral===true||a.neutral==='true',accountAmount:parseAmount(a.accountAmount),toAmount:parseAmount(a.toAmount),confidence:conf,note:clean(a.note)};
  });
  if(!actions.length&&meta&&typeof meta==='object'){
   const institution=clean(meta.institution||meta.bankName||meta.bank||''),last4=clean(meta.last4||meta.accountLast4||'').replace(/\D/g,'').slice(-4);
   const name=clean(meta.name||meta.accountName)||(institution&&last4?institution+' ****'+last4:institution);
   const balance=parseAmount(meta.balance),type=guessAccountType(name,meta.accountType||meta.cardType);
-  if(name)actions.push({type:'create_account',account:name,accountType:type,institution,last4,currency:meta.currency||'CNY',balance:null,amount:null,occurredAt:normalizeDate(meta.date||r.occurredAt),items:[],confidence:Number(meta.confidence||.8),note:'从账户信息中识别并创建'});
-  if(name&&Number.isFinite(balance))actions.push({type:'balance_snapshot',account:name,accountType:type,institution,last4,balance,currency:meta.currency||'CNY',occurredAt:normalizeDate(meta.date||r.occurredAt),note:'从上传资料识别的账户余额'});
+  if(name)actions.push({type:'create_account',account:name,accountType:type,institution,last4,currency:meta.currency||'CNY',balance:null,amount:null,occurredAt:normalizeDate(meta.date||r.occurredAt),items:[],changes:{},confidence:Number(meta.confidence||.8),note:'从账户信息中识别并创建'});
+  if(name&&Number.isFinite(balance))actions.push({type:'balance_snapshot',account:name,accountType:type,institution,last4,balance,currency:meta.currency||'CNY',occurredAt:normalizeDate(meta.date||r.occurredAt),items:[],changes:{},confidence:Number(meta.confidence||.8),note:'从上传资料识别的账户余额'});
  }
  actions.forEach(a=>{if(a.type==='create_account'&&actions.some(s=>s.type==='balance_snapshot'&&clean(s.account).toLowerCase()===clean(a.account).toLowerCase()))a.balance=null;});
- return{intent:clean(r.intent)||(actions.length?'record':'conversation'),answer:clean(r.answer),analysis:clean(r.analysis),needsClarification:!!r.needsClarification,clarification:clean(r.clarification),actions};
+ return{intent:clean(r.intent)||(actions.length?'record':'conversation'),answer:clean(r.answer),analysis:clean(r.analysis),needsClarification:!!r.needsClarification,clarification:clean(r.clarification),dataRequest:r.dataRequest&&typeof r.dataRequest==='object'?r.dataRequest:null,actions};
 }
-async function callAI(text,pics){
+
+/* ---------- 调用 AI（含重试、本地查询回合） ---------- */
+async function post(s,body){
+ const go=async()=>{const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),90000);try{const res=await fetch(s.endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.key},body:JSON.stringify(body),signal:ctl.signal});return{res,raw:await res.text()};}catch(e){throw Error(e.name==='AbortError'?'请求超时，请重试':'网络请求失败：'+e.message);}finally{clearTimeout(tm);}};
+ let {res,raw}=await go();
+ if(!res.ok&&res.status===400&&body.response_format&&/response_format|json/i.test(raw)){delete body.response_format;({res,raw}=await go());}
+ if(!res.ok)throw Error('API '+res.status+' · '+raw.slice(0,220));
+ const data=JSON.parse(raw);await recordUsage(data.usage||{});return data;
+}
+async function callAI(text,pics,extra,opt){
  const s=settings();if(!s.endpoint||!s.key)throw Error('请先在设置中配置 API。');
  const ctx=await context(),parts=[{type:'text',text:text||'请自动识别图片内容并判断用户意图。'}];
  pics.forEach(src=>parts.push({type:'image_url',image_url:{url:src,detail:'high'}}));
- const body={model:s.model,messages:[{role:'system',content:prompt(ctx)},{role:'user',content:parts}],temperature:.15,response_format:{type:'json_object'}};
- const res=await fetch(s.endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.key},body:JSON.stringify(body)}),raw=await res.text();
- if(!res.ok)throw Error('API '+res.status+' · '+raw.slice(0,220));
- const data=JSON.parse(raw),content=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;if(!content)throw Error('API 未返回内容');
- await recordUsage(data.usage||{});return normalize(parse(content));
+ const msgs=[{role:'system',content:prompt(ctx)},...((opt&&opt.noHist)?[]:history),{role:'user',content:parts},...(extra||[])];
+ const body=()=>({model:s.model,messages:msgs,temperature:.15,response_format:{type:'json_object'}});
+ const content=d=>d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content;
+ let data=await post(s,body()),c=content(data);if(!c)throw Error('API 未返回内容');
+ let r;try{r=parse(c);}catch(e){msgs.push({role:'assistant',content:c},{role:'user',content:'上次输出不是合法 JSON。请严格只返回符合约定格式的 JSON 对象，不要任何其他文字。'});data=await post(s,body());c=content(data);if(!c)throw Error('API 未返回内容');r=parse(c);}
+ return normalize(r);
+}
+async function converse(text,pics,opt){
+ const extra=[];
+ for(let round=0;round<3;round++){
+  const r=await callAI(text,pics,extra,opt);
+  if(r.intent==='need_data'&&r.dataRequest&&round<2){
+   const res=await runQuery(r.dataRequest);
+   extra.push({role:'assistant',content:JSON.stringify({intent:'need_data',dataRequest:r.dataRequest})},{role:'user',content:'本地查询结果（可信数据，请据此作答，intent 用 query）：'+JSON.stringify(res)});
+   continue;
+  }
+  return r;
+ }
+ throw Error('AI 未能给出结论，请换个说法再试。');
 }
 async function recordUsage(u){await put('tokenUsage',{id:uid(),time:Date.now(),prompt:Number(u.prompt_tokens||0),completion:Number(u.completion_tokens||0),total:Number(u.total_tokens||0)});renderTokens();}
-function issues(a){let p=[];if(['expense','income','transfer'].includes(a.type)&&!(Number.isFinite(a.amount)&&a.amount>0))p.push('金额');if(['expense','income','transfer'].includes(a.type)&&Number.isFinite(a.amount)&&a.amount>1e9)p.push('金额过大，请核实');if(a.type==='transfer'&&(!a.account||!a.toAccount))p.push('转出/转入账户');if(a.type==='transfer'&&a.account&&a.toAccount&&accountKey(a.account)===accountKey(a.toAccount))p.push('转出和转入必须是不同账户');if(a.type==='create_account'&&!a.account)p.push('账户名');if(a.type==='budget'&&!(Number.isFinite(a.budgetLimit??a.amount)&&(a.budgetLimit??a.amount)>0))p.push('预算额度');if(a.type==='balance_snapshot'&&(!a.account||!Number.isFinite(a.balance)))p.push('账户/截图余额');if(!['expense','income','transfer','create_account','budget','balance_snapshot'].includes(a.type))p.push('操作类型');return p;}
-async function actionHtml(a,i){
- const names={expense:'支出',income:'收入',transfer:'转账',create_account:'创建账户',budget:'预算',balance_snapshot:'资金校准'},v=[];
- if(a.type==='balance_snapshot'){const ac=await account(a.account),diff=ac?Number(a.balance||0)-Number(ac.balance||0):null;v.push(['截图余额',a.balance==null?'未识别':money(a.balance)],['账户',a.account],['本地账面余额',ac?money(ac.balance):'首次校准'],['与本地差额',ac?money(diff):'首次校准，无历史基准'],['识别说明',a.note||'']);if(ac&&!ac.verifiedAt)v.push(['说明','尚无历史校准基准，差额仅供参考']);}
- else v.push(['金额',a.amount==null?'待补充':money(a.amount)],['账户',a.account],['转入',a.toAccount],['商户',a.merchant],['分类',a.category],['内容',a.items.join('、')],['时间',a.occurredAt?new Date(a.occurredAt).toLocaleString('zh-CN'):''],['预算',a.budgetName],['额度',a.budgetLimit==null?'':money(a.budgetLimit)]);
- const fields=v.filter(x=>x[1]!==''&&x[1]!=null).map(x=>'<div class="field"><span>'+esc(x[0])+'</span><b>'+esc(x[1])+'</b></div>').join(''),p=issues(a);
- return'<div class="action"><div class="action-title">'+(i+1)+' · '+esc(names[a.type]||a.type)+'</div><div class="fields">'+fields+'</div>'+(p.length?'<div class="note">待补充：'+esc(p.join('、'))+'</div>':'')+'</div>';
+
+/* ---------- 本地查询 ---------- */
+async function runQuery(q){
+ const tx=await all('transactions');
+ const dts=(s,end)=>{s=clean(s);if(!s)return null;const d=new Date(/^\d{4}-\d{2}-\d{2}$/.test(s)?s+(end?'T23:59:59.999':'T00:00:00'):s);const n=d.getTime();return Number.isFinite(n)?n:null;};
+ const f=dts(q.from),e=dts(q.to,true),inc=(h,n)=>!n||String(h||'').toLowerCase().includes(String(n).toLowerCase());
+ const type=clean(q.type)||'all',min=parseAmount(q.minAmount),max=parseAmount(q.maxAmount);
+ const rows=tx.filter(t=>{
+  if(type!=='all'&&t.type!==type)return false;
+  const ts=time(t);if(f!=null&&ts<f)return false;if(e!=null&&ts>e)return false;
+  if(!inc(t.merchant+' '+(t.items||[]).join(' '),q.merchant))return false;
+  if(!inc(t.category,q.category))return false;
+  if(q.account&&!(accountKey(t.account).includes(accountKey(q.account))||accountKey(t.toAccount).includes(accountKey(q.account))))return false;
+  if(q.keyword&&!inc([t.merchant,t.category,t.note,t.account,(t.items||[]).join(' ')].join(' '),q.keyword))return false;
+  if(min!=null&&amt(t)<min)return false;if(max!=null&&amt(t)>max)return false;
+  return true;
+ });
+ const totals={expense:0,income:0,refund:0,transfer:0,neutral:0};rows.forEach(t=>{if(t.neutral)totals.neutral=r2(totals.neutral+amt(t));else totals[t.type]=r2((totals[t.type]||0)+amt(t));});
+ const key=t=>{const g=clean(q.groupBy);if(g==='category')return t.category||'其他';if(g==='merchant')return t.merchant||'未注明';if(g==='account')return t.account||'未关联';if(g==='day')return dayKey(time(t));if(g==='month')return dayKey(time(t)).slice(0,7);return null;};
+ let groups=null;if(key(rows[0]||{})!==null&&clean(q.groupBy)&&clean(q.groupBy)!=='none'){const m={};rows.forEach(t=>{const k=key(t),o=m[k]||(m[k]={key:k,total:0,count:0});o.total=r2(o.total+amt(t));o.count++;});groups=Object.values(m).sort((a,b)=>b.total-a.total).slice(0,40);}
+ rows.sort((a,b)=>clean(q.sort)==='amount_desc'?amt(b)-amt(a):time(b)-time(a));
+ const lim=Math.max(1,Math.min(50,Number(q.limit)||15));
+ return{matched:rows.length,totals,groups,rows:rows.slice(0,lim).map(t=>({id:t.id,date:dayKey(time(t)),type:t.type,amount:t.amount,currency:t.currency||'CNY',merchant:t.merchant||'',category:t.category||'',account:t.account||'',neutral:!!t.neutral}))};
 }
-async function describePending(r){
- const names={expense:'支出',income:'收入',transfer:'转账',create_account:'创建账户',budget:'预算',balance_snapshot:'资金校准'},lines=[];
- for(let i=0;i<(r.actions||[]).length;i++){
-  const a=r.actions[i];let detail=names[a.type]||a.type;
-  if(a.type==='create_account')detail+='：'+(a.account||'新账户')+(a.accountType?'（'+accountTypeName(a.accountType)+'）':'')+(a.institution?' · '+a.institution:'')+(a.last4?' · 尾号 '+a.last4:'')+(a.balance!=null?'，初始余额 '+money(a.balance):'');
-  else if(a.type==='balance_snapshot'){
-   detail+='：'+(a.account||'账户')+'，截图余额 '+(a.balance==null?'未识别':money(a.balance));
-   const existing=await account(a.account);
-   if(existing){
-    detail+='，当前账面 '+money(existing.balance);
-    if(a.balance!=null)detail+='，差额 '+money(Number(a.balance)-Number(existing.balance));
-   }else detail+='，将自动创建账户并建立首次校准基准';
-   if(a.note)detail+='。'+a.note;
-  }else detail+='：'+(a.amount==null?'金额待确认':money(a.amount))+(a.account?'，账户 '+a.account:'')+(a.merchant?'，商户 '+a.merchant:'')+(a.category?'，分类 '+a.category:'')+(a.toAccount?'，转入 '+a.toAccount:'');
-  const miss=issues(a);lines.push((i+1)+'. '+detail+(miss.length?'（待确认：'+miss.join('、')+'）':''));
+
+/* ---------- 校验 ---------- */
+function issues(a){
+ const p=[];
+ if(!TYPES.includes(a.type)){p.push('操作类型');return p;}
+ if(MONEY.includes(a.type)){
+  if(!(Number.isFinite(a.amount)&&a.amount>0))p.push('金额');
+  else if(a.amount>1e9)p.push('金额过大，请核实');
  }
- return lines.join('\n');
+ if(a.type==='transfer'){if(!a.account||!a.toAccount)p.push('转出/转入账户');if(a.account&&a.toAccount&&accountKey(a.account)===accountKey(a.toAccount))p.push('转出和转入必须是不同账户');}
+ if(a.type==='create_account'&&!a.account)p.push('账户名');
+ if(a.type==='budget'&&!(Number.isFinite(a.budgetLimit??a.amount)&&(a.budgetLimit??a.amount)>0))p.push('预算额度');
+ if(a.type==='balance_snapshot'&&(!a.account||!Number.isFinite(a.balance)))p.push('账户/截图余额');
+ if(a.type==='update_transaction'&&(!a.targetId||!Object.keys(a.changes||{}).length))p.push('要修改的记录或内容');
+ if(a.type==='delete_transaction'&&!a.targetId)p.push('要删除的记录');
+ if(a.type==='rename_account'&&(!a.account||!a.newName))p.push('原账户名/新账户名');
+ return p;
 }
-async function showResult(r){
- pending=r.actions.length?r:null;$('preview').classList.remove('show');
- const summary=r.actions.length?((r.answer||r.analysis)?(r.answer||r.analysis)+'\n':'')+await describePending(r):(r.answer||r.analysis||r.clarification||'已理解。');
- $('naturalInput').value=summary;$('naturalInput').readOnly=!!pending;$('analyzeText').textContent=pending?'记录':'分析';
- const missing=(r.actions||[]).flatMap(issues);
- if(r.needsClarification||missing.length)message(r.clarification||(missing.length?'仅需补充：'+missing.join('、'):'有一项信息需要确认。'));
- else message(r.actions.length?'AI 已完成理解，请检查输入框内容后记录。':summary);
-}
-async function prepareImage(f){
- if(!f.type.startsWith('image/'))throw Error('只支持图片文件');
- const src=await new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=()=>no(r.error);r.readAsDataURL(f);});
- const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=src;});
- const scale=Math.min(1,1800/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.84);
-}
-function drawPics(){$('attachments').innerHTML=images.map((x,i)=>'<div class="attachment"><img src="'+x+'"><button data-remove="'+i+'">×</button></div>').join('');}
-async function analyse(){
- const text=clean($('naturalInput').value),pics=images.slice();if(!text&&!pics.length){message('输入内容或上传图片。');return;}
- const b=$('analyzeText');busy(b,true);message('AI 正在理解内容、账户与时间……');
- try{await showResult(await callAI(text,pics));}
- catch(e){message(e.message,'error');}
- finally{busy(b,false);b.textContent=pending?'记录':'分析';}
+
+/* ---------- 执行操作 ---------- */
+async function deleteTxCore(id){const t=(await all('transactions')).find(x=>x.id===id);if(!t)throw Error('找不到要删除的记录');await applyEffect(t,-1);await del('transactions',id);return t;}
+async function updateTx(id,ch){
+ const old=(await all('transactions')).find(x=>x.id===id);if(!old)throw Error('找不到要修改的记录');
+ if(ch.amount!=null&&!(Number.isFinite(ch.amount)&&ch.amount>0&&ch.amount<=1e9))throw Error('修改后的金额无效');
+ await applyEffect(old,-1);
+ const n={...old};
+ try{
+  const keep=ch.amount==null||r2(ch.amount)===amt(old);
+  if(ch.amount!=null)n.amount=r2(ch.amount);
+  ['merchant','category','note'].forEach(k=>{if(ch[k]!==undefined)n[k]=clean(ch[k]);});
+  if(ch.occurredAt&&Math.floor(Date.parse(ch.occurredAt)/60000)!==Math.floor(time(old)/60000))n.occurredAt=ch.occurredAt;
+  let from=(await all('accounts')).find(x=>x.id===old.accountId)||null,to=(await all('accounts')).find(x=>x.id===old.toAccountId)||null;
+  if(ch.account&&ch.account!==old.account){from=await ensureAccount(ch.account);n.account=from.name;n.accountId=from.id;}
+  if(old.type==='transfer'&&ch.toAccount&&ch.toAccount!==old.toAccount){to=await ensureAccount(ch.toAccount);n.toAccount=to.name;n.toAccountId=to.id;}
+  if(n.type==='transfer'&&n.accountId&&n.accountId===n.toAccountId)throw Error('转出和转入账户不能相同');
+  const cur=n.currency||'CNY',sameAcc=n.accountId===old.accountId,sameTo=n.toAccountId===old.toAccountId;
+  n.fromDelta=calcDelta(from,cur,n.amount,ch.accountAmount,sameAcc?old.fromDelta:null,keep&&sameAcc);
+  n.toDelta=n.type==='transfer'?calcDelta(to,cur,n.amount,ch.toAmount,sameTo?old.toDelta:null,keep&&sameTo):null;
+  await put('transactions',n);await applyEffect(n,1);
+ }catch(e){await applyEffect(old,1);throw e;}
+ return n;
 }
 async function applyAction(a){
- if(a.type==='budget'){await put('budgets',{id:uid(),name:a.budgetName||a.category||'未命名预算',limit:Number(a.budgetLimit??a.amount),category:a.category||'',createdAt:Date.now()});return null;}
+ if(a.type==='budget'){
+  const name=a.budgetName||a.category||'未命名预算',limit=Number(a.budgetLimit??a.amount),list=await all('budgets'),ex=list.find(b=>clean(b.name)===name);
+  await put('budgets',ex?{...ex,limit,category:a.category||ex.category||''}:{id:uid(),name,limit,category:a.category||'',createdAt:Date.now()});return null;
+ }
  if(a.type==='create_account'){
   const ac=await ensureAccount(a.account,{accountType:a.accountType,institution:a.institution,last4:a.last4,currency:a.currency,creditLimit:a.creditLimit,availableCredit:a.availableCredit});
   if(a.balance!=null){ac.balance=r2(a.balance);ac.verifiedAt=Date.parse(a.occurredAt)||Date.now();ac.balanceInitialized=true;}
@@ -441,126 +518,231 @@ async function applyAction(a){
   await put('reconciliations',{id:uid(),accountId:ac.id,accountName:ac.name,previousBalance:previous,statementBalance:statement,difference:base?r2(statement-previous):null,analysis:a.note||'',createdAt:Date.now(),occurredAt:a.occurredAt||localISO(),source:'image',accountType:ac.accountType,previousVerifiedAt:ac.verifiedAt||null});
   ac.balance=statement;ac.verifiedAt=snapshotAt;ac.balanceInitialized=true;await put('accounts',ac);return null;
  }
- const amount=r2(a.amount),eventAt=Date.parse(a.occurredAt)||Date.now(),meta={accountType:a.accountType,institution:a.institution,last4:a.last4,currency:a.currency};
+ if(a.type==='rename_account'){
+  const ac=await account(a.account);if(!ac)throw Error('找不到账户「'+a.account+'」');
+  const dup=await account(a.newName);if(dup&&dup.id!==ac.id)throw Error('已存在名为「'+a.newName+'」的账户');
+  ac.name=a.newName;await put('accounts',ac);
+  for(const t of await all('transactions')){let ch=false;if(t.accountId===ac.id&&t.account!==ac.name){t.account=ac.name;ch=true;}if(t.toAccountId===ac.id&&t.toAccount!==ac.name){t.toAccount=ac.name;ch=true;}if(ch)await put('transactions',t);}
+  for(const r of await all('reconciliations')){if(r.accountId===ac.id&&r.accountName!==ac.name){r.accountName=ac.name;await put('reconciliations',r);}}
+  return null;
+ }
+ if(a.type==='delete_transaction'){await deleteTxCore(a.targetId);return null;}
+ if(a.type==='update_transaction'){await updateTx(a.targetId,a.changes);return null;}
+ /* 支出 / 收入 / 转账 / 退款 */
+ const amount=r2(a.amount),eventAt=Date.parse(a.occurredAt)||Date.now(),cur=a.currency||'CNY',meta={accountType:a.accountType,institution:a.institution,last4:a.last4,currency:cur};
+ const existing=await all('transactions');
+ if(a.type==='refund'&&a.targetId){const o=existing.find(t=>t.id===a.targetId);if(o){a.category=a.category||o.category;a.merchant=a.merchant||o.merchant;if(!a.account)a.account=o.account||'';}}
  let from=a.account?await ensureAccount(a.account,meta):null;
  if(!from&&!a.account){const known=await all('accounts');if(known.length===1)from=known[0];}
  if(from)a.account=from.name;
  const to=a.type==='transfer'?await ensureAccount(a.toAccount):null;
  if(to)a.toAccount=to.name;
  if(a.type==='transfer'&&from&&to&&from.id===to.id)throw Error('转出和转入账户指向同一账户，未执行转账。');
- const existing=await all('transactions');
  const duplicate=existing.some(t=>t.type===a.type&&Number(t.amount)===amount&&accountKey(t.account)===accountKey(a.account)&&accountKey(t.toAccount)===accountKey(a.toAccount)&&accountKey(t.merchant)===accountKey(a.merchant)&&accountKey(t.category)===accountKey(a.category)&&Math.abs(time(t)-eventAt)<=90000);
  if(duplicate)return '检测到相同流水在 90 秒内已保存，已跳过重复记录。';
- let notice=null;
- if(a.type==='expense'&&from){if(affectsBalanceAt(from,eventAt))from.balance=r2(Number(from.balance||0)-amount);else notice='该笔发生在账户最近一次校准之前，已保存流水但未改变余额。';}
- if(a.type==='income'&&from){if(affectsBalanceAt(from,eventAt))from.balance=r2(Number(from.balance||0)+amount);else notice='该笔发生在账户最近一次校准之前，已保存流水但未改变余额。';}
- if(a.type==='transfer'){
-  let skipped=false;
-  if(from){if(affectsBalanceAt(from,eventAt))from.balance=r2(Number(from.balance||0)-amount);else skipped=true;}
-  if(to){if(affectsBalanceAt(to,eventAt))to.balance=r2(Number(to.balance||0)+amount);else skipped=true;}
-  if(skipped)notice='转账发生在某账户最近一次校准之前，该账户余额未改变。';
- }
- if(from)await put('accounts',from);if(to)await put('accounts',to);
- await put('transactions',{id:uid(),...a,amount,accountId:from?from.id:'',toAccountId:to?to.id:'',createdAt:Date.now(),source:images.length?'image':'natural-language'});
- if((a.type==='expense'||a.type==='income')&&!from)return '这笔收支没有匹配到具体账户，流水已保存但余额未变。请在描述中补充账户名称。';
- return notice;
+ const fromDelta=calcDelta(from,cur,amount,a.accountAmount),toDelta=a.type==='transfer'?calcDelta(to,cur,amount,a.toAmount):null;
+ const notes=[];
+ if((from&&fromDelta===0)||(to&&toDelta===0))notes.push('币种与账户币种不同且缺少折算金额，已保存流水但未改变对应账户余额。');
+ else if((from&&!affectsBalanceAt(from,eventAt))||(to&&!affectsBalanceAt(to,eventAt)))notes.push('该笔发生在账户最近一次校准之前，已保存流水但未改变对应余额。');
+ const rec={id:uid(),type:a.type,amount,currency:cur,account:a.account||'',toAccount:a.toAccount||'',merchant:a.merchant||'',category:a.category||'',items:a.items||[],note:a.note||'',occurredAt:a.occurredAt,neutral:!!a.neutral,confidence:a.confidence,fromDelta,toDelta,accountId:from?from.id:'',toAccountId:to?to.id:'',createdAt:Date.now(),source:images.length?'image':'natural-language'};
+ await put('transactions',rec);await applyEffect(rec,1);
+ if((a.type==='expense'||a.type==='income'||a.type==='refund')&&!from)notes.push('这笔收支没有匹配到具体账户，流水已保存但余额未变。请在描述中补充账户名称。');
+ return notes.join(' ')||null;
 }
-async function confirmPending(){
- if(!pending)return;
- const good=pending.actions.filter(a=>!issues(a).length),bad=pending.actions.filter(a=>issues(a).length);
- if(!good.length){message('还需补充：'+bad.map(a=>issues(a).join('、')).join('；')+'。可取消后重新描述，不必补齐其他字段。');return;}
+const LABEL={expense:'支出',income:'收入',transfer:'转账',refund:'退款',create_account:'创建账户',budget:'预算',balance_snapshot:'资金校准',update_transaction:'修改记录',delete_transaction:'删除记录',rename_account:'账户改名'};
+function brief(a){return LABEL[a.type]+(a.amount!=null&&MONEY.includes(a.type)?' '+fmt(a.amount,a.currency):'')+(a.merchant?' '+a.merchant:'');}
+async function commit(actions,auto){
+ const good=actions.filter(a=>!issues(a).length),bad=actions.filter(a=>issues(a).length);
+ if(!good.length){toast('还需补充：'+bad.map(a=>issues(a).join('、')).join('；'));return false;}
+ undoSnap=await snapshot();
+ const notes=[];let ok=0;
+ for(const a of good){try{const n=await applyAction(a);ok++;if(n)notes.push(n);}catch(e){notes.push('⚠ '+brief(a)+'：'+e.message);}}
+ if(!ok)undoSnap=null;
+ pushHist('assistant',JSON.stringify({intent:'record',answer:'已保存：'+good.map(brief).join('；')}));
+ await renderAll();
+ if(bad.length){pending={actions:bad};await openConfirm(pending,'还有 '+bad.length+' 项需要补充信息');}
+ else{pending=null;closeSheet();$('naturalInput').value='';$('naturalInput').placeholder=PLACEHOLDER;images=[];drawPics();$('imageInput').value='';syncExamples();message('');}
+ toast((auto?'已自动记录 ':'已记录 ')+ok+' 项'+(notes.length?'。'+notes.join(' '):''),ok>0);
+ return true;
+}
+
+/* ---------- 确认弹层 ---------- */
+function kv(rows){return rows.filter(r=>r[1]!==''&&r[1]!=null).map(r=>'<div class="kv"><span>'+esc(r[0])+'</span><b>'+esc(r[1])+'</b></div>').join('');}
+function cardHtml(a,i,txs,acs){
+ const p=issues(a),inp=(f,l,v,m)=>'<label class="fld"><span>'+l+'</span><input class="f-input" data-i="'+i+'" data-f="'+f+'" '+(m?'inputmode="'+m+'" ':'')+'value="'+esc(v==null?'':v)+'"></label>';
+ const txOf=id=>txs.find(t=>t.id===id),txDesc=t=>t?(LABEL[t.type]||t.type)+' '+fmt(t.amount,t.currency)+' · '+(t.merchant||t.category||'无商户')+' · '+when(t):'（找不到该记录：'+id+'）';
+ let body='',id=a.targetId;
+ if(MONEY.includes(a.type))body='<div class="grid2">'+inp('amount','金额',a.amount==null?'':a.amount,'decimal')+inp('account',a.type==='transfer'?'转出账户':'账户',a.account)+(a.type==='transfer'?inp('toAccount','转入账户',a.toAccount):inp('merchant','商户',a.merchant))+inp('category','分类',a.category)+'</div><div class="meta">'+esc([new Date(a.occurredAt).toLocaleString('zh-CN'),a.currency!=='CNY'?a.currency:'',a.neutral?'不计入收支统计':'',(a.items||[]).join('、'),a.note].filter(Boolean).join(' · '))+'</div>';
+ else if(a.type==='create_account')body=kv([['账户名',a.account],['类型',accountTypeName(a.accountType)],['机构',a.institution],['尾号',a.last4],['币种',a.currency],['初始余额',a.balance==null?'':fmt(a.balance,a.currency)],['信用额度',a.creditLimit==null?'':fmt(a.creditLimit,a.currency)],['可用额度',a.availableCredit==null?'':fmt(a.availableCredit,a.currency)]]);
+ else if(a.type==='budget')body=kv([['名称',a.budgetName||a.category],['分类',a.category],['额度',fmt(a.budgetLimit??a.amount)]]);
+ else if(a.type==='balance_snapshot'){const ex=acs.find(x=>accountKey(x.name)===accountKey(a.account));body=kv([['账户',a.account],['截图余额',a.balance==null?'未识别':fmt(a.balance,a.currency)],['本地账面',ex?fmt(ex.balance,ex.currency):'首次校准，将自动建账户'],['与账面差额',ex&&a.balance!=null?fmt(r2(a.balance-ex.balance),ex.currency):''],['说明',a.note]]);}
+ else if(a.type==='update_transaction'){body=kv([['原记录',txDesc(txOf(id))]])+kv(Object.entries(a.changes||{}).map(([k,v])=>[{amount:'金额',account:'账户',toAccount:'转入账户',merchant:'商户',category:'分类',note:'备注',occurredAt:'时间',accountAmount:'折算金额',toAmount:'转入折算'}[k]||k,k==='amount'?fmt(v):k==='occurredAt'?new Date(v).toLocaleString('zh-CN'):v]));}
+ else if(a.type==='delete_transaction')body=kv([['将删除',txDesc(txOf(id))],['影响','账户余额会相应回滚']]);
+ else if(a.type==='rename_account')body=kv([['原名称',a.account],['新名称',a.newName]]);
+ else body=kv([['类型',a.type]]);
+ const low=a.confidence<.75?'<span class="conf">置信度较低，请核对</span>':'';
+ return'<div class="acard"><div class="acard-head"><span class="tag t-'+esc(a.type)+'">'+esc((i+1)+' · '+(LABEL[a.type]||a.type))+'</span>'+low+'</div>'+body+(p.length?'<div class="warn">待补充：'+esc(p.join('、'))+'</div>':'')+'</div>';
+}
+async function openConfirm(r,sub){
+ pending=r;const [txs,acs]=await Promise.all([all('transactions'),all('accounts')]);
+ const text=(r.answer||r.analysis||'').trim();
+ showSheet({title:'确认记录',sub:sub||'可直接修改后保存',body:(text?'<div class="ai-text">'+esc(text)+'</div>':'')+r.actions.map((a,i)=>cardHtml(a,i,txs,acs)).join(''),foot:'<button class="btn flex" data-act="close">取消</button><button class="btn primary flex" data-act="confirm">记录</button>'});
+}
+function collectEdits(){qa('#sheetBody [data-i]').forEach(inp=>{const a=pending&&pending.actions[inp.dataset.i];if(!a)return;const f=inp.dataset.f,v=clean(inp.value);if(f==='amount')a.amount=parseAmount(v);else a[f]=v;});}
+function showAnswer(r){const text=(r.answer||r.analysis||r.clarification||'已理解。').trim();showSheet({title:'AI 回答',body:'<div class="ai-text">'+esc(text)+'</div>',foot:'<button class="btn primary flex" data-act="close">好的</button>'});}
+
+/* ---------- 主流程 ---------- */
+function syncExamples(){$('examples').style.display=$('naturalInput').value.trim()||images.length?'none':'flex';}
+function drawPics(){$('attachments').innerHTML=images.map((x,i)=>'<div class="attachment"><img src="'+x+'"><button data-remove="'+i+'">×</button></div>').join('');syncExamples();}
+async function prepareImage(f){
+ if(!f.type.startsWith('image/'))throw Error('只支持图片文件');
+ const src=await new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=()=>no(r.error);r.readAsDataURL(f);});
+ const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=src;});
+ const scale=Math.min(1,1800/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.84);
+}
+async function analyse(){
+ if(busyAI)return;
+ const text=clean($('naturalInput').value),pics=images.slice();if(!text&&!pics.length){message('输入内容或上传图片。');return;}
+ const b=$('analyzeText');busyAI=true;busy(b,true);message('AI 正在理解内容、账户与时间……');
  try{
-  const notices=[];
-  for(const a of good){const note=await applyAction(a);if(note)notices.push(note);}
-  let status;
-  if(bad.length){pending={...pending,actions:bad};await showResult(pending);status='已保存 '+good.length+' 项；剩余项目需要补充必要信息。';}
-  else{pending=null;$('naturalInput').value='';$('naturalInput').readOnly=false;images=[];drawPics();$('imageInput').value='';$('analyzeText').textContent='分析';status='已记录 '+good.length+' 项。';}
-  await renderAll();
-  message([status,...notices].filter(Boolean).join(' '));
- }catch(e){message('保存失败：'+e.message,'error');}
+  const r=await converse(text,pics);
+  pushHist('user',(text||'')+(pics.length?'［附 '+pics.length+' 张图片］':''));
+  pushHist('assistant',JSON.stringify({intent:r.intent,answer:r.answer||r.clarification||'',actions:r.actions.map(a=>({type:a.type,amount:a.amount,account:a.account,merchant:a.merchant,category:a.category}))}));
+  await route(r);
+ }catch(e){message(e.message,'error');}
+ finally{busyAI=false;busy(b,false);}
 }
-async function deleteTx(id,kind){
- if(kind==='reconciliation'){
-  const r=(await all('reconciliations')).find(x=>x.id===id);if(!r)return;
-  const ac=(await all('accounts')).find(x=>x.id===r.accountId);
-  if(ac&&Number(ac.balance)===Number(r.statementBalance)){ac.balance=Number(r.previousBalance||0);ac.balanceInitialized=!!r.previousVerifiedAt;ac.verifiedAt=r.previousVerifiedAt||null;await put('accounts',ac);}
-  await del('reconciliations',id);await renderAll();message('已删除校准记录。');return;
+async function route(r){
+ const actions=r.actions,good=actions.filter(a=>!issues(a).length);
+ $('naturalInput').placeholder=PLACEHOLDER;
+ if(!actions.length||(!good.length&&(r.needsClarification||r.intent==='clarify'))){
+  if(r.needsClarification||r.intent==='clarify'){
+   const q=r.clarification||r.answer||'还需要补充一点信息。';
+   $('naturalInput').value='';$('naturalInput').placeholder='请回答：'+q;message(q);syncExamples();$('naturalInput').focus();return;
+  }
+  message('');showAnswer(r);$('naturalInput').value='';syncExamples();return;
  }
- const t=(await all('transactions')).find(x=>x.id===id);if(!t)return;
- const acs=await all('accounts'),from=acs.find(x=>x.id===t.accountId),to=acs.find(x=>x.id===t.toAccountId),v=Number(t.amount||0),eventAt=time(t),after=a=>affectsBalanceAt(a,eventAt);
- if(t.type==='expense'&&from&&after(from))from.balance=r2(Number(from.balance||0)+v);
- if(t.type==='income'&&from&&after(from))from.balance=r2(Number(from.balance||0)-v);
- if(t.type==='transfer'){if(from&&after(from)){from.balance=r2(Number(from.balance||0)+v);await put('accounts',from);}if(to&&after(to)){to.balance=r2(Number(to.balance||0)-v);await put('accounts',to);}}
- if(from&&t.type!=='transfer')await put('accounts',from);
- await del('transactions',id);await renderAll();message('记录已删除。');
+ message('');
+ const missing=actions.flatMap(issues);
+ const auto=settings().auto&&!r.needsClarification&&!missing.length&&actions.every(a=>SAFE.has(a.type)&&a.confidence>=.75);
+ if(auto)await commit(actions,true);
+ else await openConfirm(r,r.needsClarification&&r.clarification?r.clarification:(missing.length?'仅需补充：'+missing.join('、'):'请检查后记录'));
 }
-function txHtml(t,canDelete){
- const label=t.type==='income'?'收入':t.type==='transfer'?'转账':t.type==='balance_adjustment'?'校准':'支出',sign=t.type==='income'?'+':t.type==='expense'?'-':'',title=t.merchant||t.category||(t.items&&t.items[0])||label;
- const color=t.type==='income'?'income-text':t.type==='expense'?'expense-text':'',kind=t.sourceReconciliation?'reconciliation':'transaction';
- return '<div class="swipe-shell" data-row-id="'+esc(t.id)+'"><button class="swipe-delete" data-delete="'+esc(t.id)+'" data-delete-kind="'+kind+'">删除</button><div class="swipe-content"><div class="item"><div class="symbol">'+(t.type==='income'?'＋':t.type==='transfer'?'⇄':t.type==='balance_adjustment'?'≈':'−')+'</div><div class="item-main"><b>'+esc(title)+'</b><small>'+esc([t.account||(t.type==='expense'||t.type==='income'?'未关联账户':''),t.category,when(t)].filter(Boolean).join(' · '))+'</small></div><div class="item-right"><b class="'+color+'">'+sign+money(t.amount)+'</b><small>'+label+'</small></div></div></div></div>';
+
+/* ---------- 删除 / 编辑 ---------- */
+async function deleteTx(id,kind){
+ undoSnap=await snapshot();
+ try{
+  if(kind==='reconciliation'){
+   const r=(await all('reconciliations')).find(x=>x.id===id);if(!r)return;
+   const ac=(await all('accounts')).find(x=>x.id===r.accountId);
+   if(ac&&Number(ac.balance)===Number(r.statementBalance)){ac.balance=Number(r.previousBalance||0);ac.balanceInitialized=!!r.previousVerifiedAt;ac.verifiedAt=r.previousVerifiedAt||null;await put('accounts',ac);}
+   await del('reconciliations',id);
+  }else await deleteTxCore(id);
+  await renderAll();toast('已删除',true);
+ }catch(e){undoSnap=null;toast('删除失败：'+e.message);}
+}
+async function openEdit(id){
+ const t=(await all('transactions')).find(x=>x.id===id);if(!t)return;editId=id;
+ const loc=new Date(time(t)-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
+ const e=(f,l,v,m)=>'<label class="fld"><span>'+l+'</span><input class="f-input" data-edit="'+f+'" value="'+esc(v==null?'':v)+'"'+(m?' inputmode="'+m+'"':'')+'></label>';
+ const body='<div class="grid2">'+e('amount','金额（'+(t.currency||'CNY')+'）',t.amount,'decimal')+(t.type==='transfer'?e('account','转出账户',t.account)+e('toAccount','转入账户',t.toAccount):e('account','账户',t.account)+e('merchant','商户',t.merchant))+e('category','分类',t.category)+e('note','备注',t.note)+'</div><label class="fld" style="margin-top:8px"><span>时间</span><input class="f-input" type="datetime-local" data-edit="time" value="'+loc+'"></label>'+(t.neutral?'<div class="meta">此记录不计入收支统计</div>':'');
+ showSheet({title:'编辑记录',sub:LABEL[t.type]||'',body,foot:'<button class="btn danger" data-act="del-edit">删除</button><button class="btn flex" data-act="close">取消</button><button class="btn primary flex" data-act="save-edit">保存</button>'});
+}
+async function saveEdit(){
+ const ch={};qa('#sheetBody [data-edit]').forEach(i=>{const f=i.dataset.edit,v=clean(i.value);if(f==='amount'){const n=parseAmount(v);if(n!=null)ch.amount=n;}else if(f==='time'){if(v)ch.occurredAt=normalizeDate(v);}else ch[f]=v;});
+ undoSnap=await snapshot();
+ try{await updateTx(editId,ch);closeSheet();await renderAll();toast('已保存修改',true);}catch(e){undoSnap=null;toast('保存失败：'+e.message);}
+}
+
+/* ---------- 渲染 ---------- */
+function txHtml(t){
+ const label=t.type==='income'?'收入':t.type==='transfer'?'转账':t.type==='refund'?'退款':t.type==='balance_adjustment'?'校准':'支出',sign=t.type==='income'||t.type==='refund'?'+':t.type==='expense'?'-':'',title=t.merchant||t.category||(t.items&&t.items[0])||label;
+ const color=t.type==='income'||t.type==='refund'?'income-text':t.type==='expense'?'expense-text':'',kind=t.sourceReconciliation?'reconciliation':'transaction';
+ return '<div class="swipe-shell" data-row-id="'+esc(t.id)+'" data-kind="'+kind+'"><button class="swipe-delete" data-delete="'+esc(t.id)+'" data-delete-kind="'+kind+'">删除</button><div class="swipe-content"><div class="item"><div class="symbol">'+catIcon(t.category||t.merchant,t.type)+'</div><div class="item-main"><b>'+esc(title)+'</b><small>'+esc([t.account||(t.type==='expense'||t.type==='income'?'未关联账户':''),t.category,t.neutral?'不计收支':'',new Date(time(t)).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})].filter(Boolean).join(' · '))+'</small></div><div class="item-right"><b class="'+color+'">'+sign+money(t.amount,t.currency)+'</b><small>'+label+'</small></div></div></div></div>';
 }
 function isDetailRange(t){
- const d=new Date(time(t)),n=new Date();if(detailRange==='day')return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate();
- if(detailRange==='week'){const start=new Date(n.getFullYear(),n.getMonth(),n.getDate()-n.getDay());start.setHours(0,0,0,0);return time(t)>=start.getTime()&&time(t)<=Date.now();}
- const start=new Date(n.getFullYear(),n.getMonth(),1);return time(t)>=start.getTime()&&time(t)<=Date.now();
+ const d=new Date(time(t)),n=new Date(),ts=time(t);
+ if(detailRange==='day')return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate();
+ if(detailRange==='week'){const start=new Date(n.getFullYear(),n.getMonth(),n.getDate()-((n.getDay()+6)%7));return ts>=start.getTime()&&ts<=Date.now();}
+ return ts>=new Date(n.getFullYear(),n.getMonth(),1).getTime()&&ts<=Date.now();
 }
-function inRange(t,period){
- const ts=time(t),now=Date.now(),d=new Date(now);
- let start;
- if(period==='week'){start=new Date(d);start.setHours(0,0,0,0);start.setDate(start.getDate()-6);}
- else if(period==='year')start=new Date(d.getFullYear(),0,1);
- else start=new Date(d.getFullYear(),d.getMonth(),1);
- return ts>=start.getTime()&&ts<=now;
+function bounds(period){
+ const d=new Date(),n=d.getTime();let s,ps,pe,label;
+ if(period==='week'){s=new Date(d.getFullYear(),d.getMonth(),d.getDate()-6).getTime();ps=s-7*864e5;pe=s;label='较前7日';}
+ else if(period==='year'){s=new Date(d.getFullYear(),0,1).getTime();ps=new Date(d.getFullYear()-1,0,1).getTime();pe=new Date(d.getFullYear()-1,d.getMonth(),d.getDate(),d.getHours(),d.getMinutes()).getTime();label='较去年同期';}
+ else{s=new Date(d.getFullYear(),d.getMonth(),1).getTime();ps=new Date(d.getFullYear(),d.getMonth()-1,1).getTime();pe=s;label='较上月';}
+ return{s,e:n,ps,pe,label};
 }
+const between=(t,s,e)=>{const x=time(t);return x>=s&&x<=e;};
+const inRange=(t,period)=>{const b=bounds(period);return between(t,b.s,b.e);};
+function dlt(label,cur,prev){if(!prev)return cur?label+' 新增':'';const p=(cur-prev)/Math.abs(prev)*100;return label+' '+(p>=0?'+':'')+p.toFixed(0)+'%';}
+function balanceSplit(acs){let assets=0,liab=0,net=0;const other={};acs.forEach(a=>{const c=a.currency||'CNY',b=Number(a.balance||0);if(c==='CNY'){net+=b;if(b>=0)assets+=b;else liab+=-b;}else other[c]=(other[c]||0)+b;});return{assets:r2(assets),liab:r2(liab),net:r2(net),other};}
 async function renderHome(){
- const [tx,acs]=await Promise.all([all('transactions'),all('accounts')]),month=tx.filter(t=>inRange(t,'month'));
- const inc=month.filter(t=>t.type==='income').reduce((s,t)=>s+Number(t.amount||0),0),exp=month.filter(t=>t.type==='expense').reduce((s,t)=>s+Number(t.amount||0),0);
- $('heroAssets').textContent=money(acs.reduce((s,a)=>s+Number(a.balance||0),0));$('heroIncome').textContent=money(inc);$('heroExpense').textContent=money(exp);
+ const [tx,acs]=await Promise.all([all('transactions'),all('accounts')]),month=tx.filter(t=>inRange(t,'month')),sp=balanceSplit(acs);
+ $('heroAssets').textContent=money(sp.net);
+ $('heroSub').textContent=hideAmt?'':[acs.length?'资产 '+fmt(sp.assets)+(sp.liab?' · 负债 '+fmt(sp.liab):''):'',...Object.entries(sp.other).map(([c,v])=>c+' '+fmt(v,c))].filter(Boolean).join(' · ');
+ $('heroIncome').textContent=money(incOf(month));$('heroExpense').textContent=money(expOf(month));
+ $('toggleHide').textContent=hideAmt?'🙈':'👁';
  $('overviewDate').textContent=new Date().toLocaleDateString('zh-CN',{month:'long',day:'numeric'});
- $('homeAccounts').innerHTML=acs.length?acs.map(a=>'<button class="account-chip" data-home-account="'+esc(a.id)+'"><b>'+esc(a.name)+'</b><small>'+accountTypeName(a.accountType||guessAccountType(a.name))+' · '+money(a.balance)+'</small></button>').join(''):'<div class="empty">上传账户截图或用文字描述即可自动创建</div>';
+ $('homeAccounts').innerHTML=acs.length?acs.map(a=>'<button class="account-chip" style="--c:'+(TYPE_COLOR[a.accountType]||TYPE_COLOR.other)+'" data-home-account="'+esc(a.id)+'"><b>'+esc(a.name)+'</b><small>'+accountTypeName(a.accountType||guessAccountType(a.name))+' · '+money(a.balance,a.currency)+'</small></button>').join(''):'<div class="empty">上传账户截图或用文字描述即可自动创建</div>';
 }
 async function renderTransactions(){
  const [tx,recs]=await Promise.all([all('transactions'),all('reconciliations')]),q=clean($('transactionSearch').value).toLowerCase();
- const detail=tx.filter(isDetailRange),income=detail.filter(t=>t.type==='income').reduce((s,t)=>s+Number(t.amount||0),0),expense=detail.filter(t=>t.type==='expense').reduce((s,t)=>s+Number(t.amount||0),0);
- $('detailIncome').textContent=money(income);$('detailExpense').textContent=money(expense);$('detailNet').textContent=money(income-expense);
- const snapshots=recs.map(r=>({id:r.id,type:'balance_adjustment',amount:r.difference==null?r.statementBalance:r.difference,account:r.accountName,merchant:'余额校准',occurredAt:r.occurredAt,createdAt:r.createdAt,sourceReconciliation:true}));
- const rows=tx.concat(snapshots).sort((a,b)=>time(b)-time(a)).filter(t=>(filter==='all'||filter===t.type)&&(!q||[t.merchant,t.account,t.category,t.note].join(' ').toLowerCase().includes(q)));
- $('transactionCount').textContent=rows.length+' 条';$('transactionList').innerHTML=rows.length?rows.map(t=>txHtml(t,true)).join(''):'<div class="empty">没有匹配记录</div>';
+ const detail=tx.filter(isDetailRange),income=incOf(detail),expense=expOf(detail);
+ $('detailIncome').textContent=money(income);$('detailExpense').textContent=money(expense);$('detailNet').textContent=money(r2(income-expense));
+ const snaps=recs.map(r=>({id:r.id,type:'balance_adjustment',amount:r.difference==null?r.statementBalance:r.difference,account:r.accountName,merchant:'余额校准',occurredAt:r.occurredAt,createdAt:r.createdAt,sourceReconciliation:true}));
+ const rows=tx.concat(snaps).sort((a,b)=>time(b)-time(a)).filter(t=>(filter==='all'||filter===t.type||(filter==='income'&&t.type==='refund'))&&(!q||[t.merchant,t.account,t.category,t.note].join(' ').toLowerCase().includes(q)));
+ $('transactionCount').textContent=rows.length+' 条';
+ if(!rows.length){$('transactionList').innerHTML='<div class="empty">没有匹配记录</div>';return;}
+ const groups=[];rows.forEach(t=>{const k=dayKey(time(t)),g=groups[groups.length-1];if(g&&g.k===k)g.l.push(t);else groups.push({k,l:[t]});});
+ $('transactionList').innerHTML=groups.map(g=>{const d=new Date(g.k+'T12:00:00'),real=g.l.filter(t=>!t.sourceReconciliation);return'<div class="day-head"><span>'+d.toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'short'})+'</span><span>'+(real.length?'支 '+money(expOf(real))+' · 收 '+money(incOf(real)):'')+'</span></div><div class="list">'+g.l.map(txHtml).join('')+'</div>';}).join('');
 }
+function curvePath(p){let d='M'+p[0][0]+','+p[0][1];for(let i=0;i<p.length-1;i++){const [x0,y0]=p[i],[x1,y1]=p[i+1],cx=(x0+x1)/2;d+='C'+cx+','+y0+' '+cx+','+y1+' '+x1+','+y1;}return d;}
 async function renderAnalytics(){
- const [tx,acs,bud]=await Promise.all([all('transactions'),all('accounts'),all('budgets')]),p=tx.filter(t=>inRange(t,range));
- const exp=p.filter(t=>t.type==='expense').reduce((s,t)=>s+Number(t.amount||0),0),inc=p.filter(t=>t.type==='income').reduce((s,t)=>s+Number(t.amount||0),0),assets=acs.reduce((s,a)=>s+Number(a.balance||0),0);
- $('totalAssets').textContent=money(assets);$('netFlow').textContent=money(inc-exp);$('periodIncome').textContent=money(inc);$('periodExpense').textContent=money(exp);$('analyticsPeriod').textContent=range==='week'?'近7日':range==='year'?'本年':'本月';
- const mons={},now=new Date();for(let i=5;i>=0;i--){let d=new Date(now.getFullYear(),now.getMonth()-i,1),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');mons[k]={in:0,out:0,label:(d.getMonth()+1)+'月'};}
- tx.forEach(t=>{let d=new Date(time(t)),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');if(mons[k]){if(t.type==='income')mons[k].in+=Number(t.amount||0);if(t.type==='expense')mons[k].out+=Number(t.amount||0);}});
- const pts=Object.values(mons),max=Math.max(1,...pts.map(x=>Math.max(x.in,x.out))),xx=i=>35+i*106,yy=v=>157-v/max*130,ip=pts.map((a,i)=>xx(i)+','+yy(a.in)).join(' '),op=pts.map((a,i)=>xx(i)+','+yy(a.out)).join(' ');
- $('trendChart').innerHTML=[0,.5,1].map(v=>'<line x1="20" x2="590" y1="'+(157-v*130)+'" y2="'+(157-v*130)+'" stroke="var(--line)" stroke-dasharray="3 5"/>').join('')+'<polyline points="'+ip+'" fill="none" stroke="var(--income)" stroke-width="3" stroke-linejoin="round"/><polyline points="'+op+'" fill="none" stroke="var(--expense)" stroke-width="3.5" stroke-linejoin="round"/>'+pts.map((a,i)=>'<circle cx="'+xx(i)+'" cy="'+yy(a.in)+'" r="3" fill="var(--income)"/><circle cx="'+xx(i)+'" cy="'+yy(a.out)+'" r="3.5" fill="var(--expense)"/>').join('');
+ const [tx,acs,bud]=await Promise.all([all('transactions'),all('accounts'),all('budgets')]),b=bounds(range),p=tx.filter(t=>between(t,b.s,b.e)),pp=tx.filter(t=>between(t,b.ps,b.pe));
+ const exp=expOf(p),inc=incOf(p),sp=balanceSplit(acs);
+ $('totalAssets').textContent=money(sp.net);$('netFlow').textContent=money(r2(inc-exp));$('periodIncome').textContent=money(inc);$('periodExpense').textContent=money(exp);$('assetsOnly').textContent=money(sp.assets);$('liabOnly').textContent=money(sp.liab);
+ $('incDlt').textContent=hideAmt?'':dlt(b.label,inc,incOf(pp));$('expDlt').textContent=hideAmt?'':dlt(b.label,exp,expOf(pp));
+ $('analyticsPeriod').textContent=range==='week'?'近7日':range==='year'?'本年':'本月';
+ const mons={},now=new Date();for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');mons[k]={in:0,out:0,label:(d.getMonth()+1)+'月'};}
+ tx.forEach(t=>{if(!pl(t))return;const d=new Date(time(t)),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');if(mons[k]){if(t.type==='income')mons[k].in+=amt(t);if(t.type==='expense')mons[k].out+=amt(t);if(t.type==='refund')mons[k].out-=amt(t);}});
+ const pts=Object.values(mons),max=Math.max(1,...pts.map(x=>Math.max(x.in,x.out))),xx=i=>50+i*100,yy=v=>157-Math.max(0,v)/max*130,ip=pts.map((a,i)=>[xx(i),yy(a.in)]),op=pts.map((a,i)=>[xx(i),yy(a.out)]);
+ $('trendChart').innerHTML=[0,.5,1].map(v=>'<line x1="20" x2="590" y1="'+(157-v*130)+'" y2="'+(157-v*130)+'" stroke="var(--line)" stroke-dasharray="3 5"/>').join('')+'<path d="'+curvePath(ip)+'" fill="none" stroke="var(--income)" stroke-width="3" stroke-linecap="round"/><path d="'+curvePath(op)+'" fill="none" stroke="var(--expense)" stroke-width="3.5" stroke-linecap="round"/>'+pts.map((a,i)=>'<circle cx="'+xx(i)+'" cy="'+yy(a.in)+'" r="'+(trendSel===i?6:3.5)+'" fill="var(--income)"/><circle cx="'+xx(i)+'" cy="'+yy(a.out)+'" r="'+(trendSel===i?6:4)+'" fill="var(--expense)"/><rect data-m="'+i+'" x="'+(xx(i)-50)+'" y="0" width="100" height="190" fill="transparent"/>').join('');
  $('trendLabels').innerHTML=pts.map(a=>'<span>'+a.label+'</span>').join('');
- const cats={};p.filter(t=>t.type==='expense').forEach(t=>{let k=t.category||'其他';cats[k]=(cats[k]||0)+Number(t.amount||0);});
- const arr=Object.entries(cats).sort((a,b)=>b[1]-a[1]),cols=['#df4d52','#249b68','#4e5969','#8a929c','#b8bdc5','#d6d9de'];let at=0,st=[];
- arr.forEach((a,i)=>{let end=at+(exp?a[1]/exp*360:0);st.push(cols[i%cols.length]+' '+at+'deg '+end+'deg');at=end;});
- $('donut').style.background=st.length?'conic-gradient('+st.join(',')+')':'var(--soft)';$('donutTotal').textContent=money(exp);
- $('categoryLegend').innerHTML=arr.length?arr.slice(0,7).map((a,i)=>'<div><i style="background:'+cols[i%cols.length]+'"></i><span>'+esc(a[0])+'</span><b class="expense-text">'+money(a[1])+'</b></div>').join(''):'<div class="empty">暂无支出</div>';
- $('accountAnalytics').innerHTML=acs.length?acs.map(a=>'<button class="account account-button" data-account-id="'+esc(a.id)+'"><span><b>'+esc(a.name)+'</b><small>'+accountTypeName(a.accountType||guessAccountType(a.name))+(a.last4?' · ****'+esc(a.last4):'')+(a.verifiedAt?' · 已校准':' · 账面推算')+'</small></span><b>'+money(a.balance)+'</b></button>').join(''):'<div class="empty">暂无账户</div>';
- $('budgetList').innerHTML=bud.length?bud.map(b=>{let used=p.filter(t=>t.type==='expense'&&(!b.category||t.category===b.category)).reduce((s,t)=>s+Number(t.amount||0),0),pct=Math.min(100,b.limit?used/b.limit*100:0);return'<div class="account" style="display:block"><div class="setting-row"><b>'+esc(b.name)+'</b><span>'+money(used)+' / '+money(b.limit)+'</span></div><div style="height:7px;background:var(--soft);border-radius:9px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--accent)"></div></div></div>';}).join(''):'<div class="empty">暂无预算</div>';
+ const si=trendSel==null?pts.length-1:trendSel,sa=pts[si];$('trendInfo').textContent=hideAmt?'':sa.label+'：收入 '+fmt(r2(sa.in))+'，支出 '+fmt(r2(sa.out))+'，结余 '+fmt(r2(sa.in-sa.out));
+ const cats={};p.forEach(t=>{if(!pl(t)||(t.type!=='expense'&&t.type!=='refund'))return;const k=t.category||'其他';cats[k]=(cats[k]||0)+(t.type==='refund'?-amt(t):amt(t));});
+ const arr=Object.entries(cats).filter(a=>a[1]>0).sort((a,b)=>b[1]-a[1]),cols=['#df4d52','#249b68','#4e5969','#e08a1e','#3f7de0','#8a5ae0','#b8bdc5'],pos=arr.reduce((s,a)=>s+a[1],0);let at=0;const st=[];
+ if(selCat&&!cats[selCat])selCat=null;
+ arr.forEach((a,i)=>{const end=at+(pos?a[1]/pos*360:0);st.push((selCat&&a[0]!==selCat?cols[i%cols.length]+'55':cols[i%cols.length])+' '+at+'deg '+end+'deg');at=end;});
+ $('donut').style.background=st.length?'conic-gradient('+st.join(',')+')':'var(--soft)';
+ $('donutLabel').textContent=selCat||'总支出';$('donutTotal').textContent=money(selCat?cats[selCat]:exp);
+ $('categoryLegend').innerHTML=arr.length?arr.slice(0,7).map((a,i)=>'<button data-cat="'+esc(a[0])+'" class="'+(selCat===a[0]?'sel':'')+'"><i style="background:'+cols[i%cols.length]+'"></i><span>'+esc(a[0])+'</span><b class="expense-text">'+money(a[1])+'</b></button>').join(''):'<div class="empty">暂无支出</div>';
+ $('accountAnalytics').innerHTML=acs.length?acs.map(a=>{
+  const lim=Number(a.creditLimit),hasLim=Number.isFinite(lim)&&lim>0&&a.creditLimit!=null;let credit='';
+  if(hasLim){const av=a.availableCredit!=null?Number(a.availableCredit):null,used=av!=null&&Number.isFinite(av)?lim-av:Math.max(0,-Number(a.balance||0)),pct=Math.max(0,Math.min(100,used/lim*100));credit='<div class="bar'+(pct>=80?' hot':'')+'"><i style="width:'+pct+'%"></i></div><div class="bar-note">额度使用 '+pct.toFixed(0)+'%'+(hideAmt?'':' · 已用 '+fmt(used,a.currency)+' / 额度 '+fmt(lim,a.currency))+'</div>';}
+  return'<button class="acct-card" style="--c:'+(TYPE_COLOR[a.accountType]||TYPE_COLOR.other)+'" data-account-id="'+esc(a.id)+'"><div class="acct-top"><span><b>'+esc(a.name)+'</b><small>'+accountTypeName(a.accountType||guessAccountType(a.name))+(a.last4?' · ****'+esc(a.last4):'')+(a.verifiedAt?' · 已校准':' · 账面推算')+'</small></span><b>'+money(a.balance,a.currency)+'</b></div>'+credit+'</button>';
+ }).join(''):'<div class="empty">暂无账户</div>';
+ const mtx=tx.filter(t=>inRange(t,'month'));
+ $('budgetList').innerHTML=bud.length?bud.map(bg=>{const used=expOf(mtx.filter(t=>!bg.category||t.category===bg.category)),pct=bg.limit?Math.min(100,used/bg.limit*100):0,left=r2(bg.limit-used);return'<div class="budget"><div class="budget-row"><b>'+esc(bg.name)+'</b><span>'+money(used)+' / '+money(bg.limit)+'</span></div><div class="bar'+(pct>=90?' hot':'')+'"><i style="width:'+pct+'%"></i></div><div class="bar-note">'+(hideAmt?'':(left>=0?'剩余 '+fmt(left):'已超支 '+fmt(-left)))+'</div></div>';}).join(''):'<div class="empty">暂无预算，可对 AI 说“每月餐饮预算 2000”</div>';
 }
 async function runFinanceAnalysis(){
- const box=$('financeAnalysis'),b=$('runFinanceAnalysis');box.textContent='正在结合本地流水、账户余额和预算进行分析……';busy(b,true);
- try{const r=await callAI('请基于本地财务统计与近期流水，生成中文财务分析。包括整体状况、收入来源、主要支出类别、近期变化或异常、账户余额风险、预算执行情况、3条可执行建议。没有数据的部分请明确说明，不要编造。只返回analysis或answer，不要创建任何交易。',[]);box.textContent=r.analysis||r.answer||'AI 未返回文字分析。';}
- catch(e){box.textContent='分析失败：'+e.message;}finally{busy(b,false);}
+ const box=$('financeAnalysis'),b=$('runFinanceAnalysis');box.textContent='正在结合本地流水、账户余额和预算进行分析……请稍候';box.classList.add('skeleton');busy(b,true);
+ try{const r=await converse('请基于本地财务统计与近期流水，生成中文财务分析。包括整体状况、收入来源、主要支出类别、近期变化或异常、账户余额与信用卡负债风险、预算执行情况、3条可执行建议。没有数据的部分请明确说明，不要编造。只返回 analysis 或 answer，actions 必须为空数组，不要创建任何交易。',[],{noHist:true});box.textContent=r.analysis||r.answer||'AI 未返回文字分析。';}
+ catch(e){box.textContent='分析失败：'+e.message;}finally{box.classList.remove('skeleton');busy(b,false);}
 }
 async function openAccountModal(id){
  const [acs,tx,recs]=await Promise.all([all('accounts'),all('transactions'),all('reconciliations')]),a=acs.find(x=>x.id===id);if(!a)return;
- $('modalAccountName').textContent=a.name;$('modalAccountMeta').textContent=[accountTypeName(a.accountType||guessAccountType(a.name)),a.institution,a.last4?'尾号 '+a.last4:'',a.verifiedAt?'已校准':'账面推算'].filter(Boolean).join(' · ');
- $('modalAccountBalance').textContent=money(a.balance);
- const items=tx.filter(t=>t.accountId===id||t.toAccountId===id||clean(t.account)===clean(a.name)||clean(t.toAccount)===clean(a.name)).map(t=>({date:time(t),label:t.type==='income'?'收入':t.type==='transfer'?'转账':'支出',detail:[t.merchant,t.category,t.note].filter(Boolean).join(' · '),amount:Number(t.amount||0),type:t.type}));
- recs.filter(r=>r.accountId===id).forEach(r=>items.push({date:Number(r.createdAt||time(r)),label:'资金校准',detail:r.analysis||'截图余额 '+money(r.statementBalance)+'，校准前 '+money(r.previousBalance),amount:r.difference,type:'balance_snapshot'}));
+ const items=tx.filter(t=>t.accountId===id||t.toAccountId===id||clean(t.account)===clean(a.name)||clean(t.toAccount)===clean(a.name)).map(t=>({date:time(t),label:LABEL[t.type]||'支出',detail:[t.merchant,t.category,t.note].filter(Boolean).join(' · '),amount:Number(t.amount||0),cur:t.currency,type:t.type}));
+ recs.filter(r=>r.accountId===id).forEach(r=>items.push({date:Number(r.createdAt||time(r)),label:'资金校准',detail:r.analysis||'截图余额 '+fmt(r.statementBalance,a.currency)+'，校准前 '+fmt(r.previousBalance,a.currency),amount:r.difference,cur:a.currency,type:'balance_snapshot'}));
  items.sort((x,y)=>y.date-x.date);
- $('modalAccountTransactions').innerHTML=items.length?items.slice(0,30).map(t=>'<div class="modal-tx"><time>'+new Date(t.date).toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'})+'</time><div><b>'+esc(t.label)+'</b><small>'+esc(t.detail||'未注明详情')+'</small></div><strong class="'+(t.type==='income'?'income-text':t.type==='expense'?'expense-text':'')+'">'+(t.amount==null?'—':money(t.amount))+'</strong></div>').join(''):'<div class="empty">该账户暂无流水</div>';
- $('accountModal').hidden=false;
+ const body='<div class="modal-balance">'+money(a.balance,a.currency)+'</div><div class="meta" style="margin:0 0 6px">近期资金流转</div>'+(items.length?items.slice(0,30).map(t=>'<div class="modal-tx"><time>'+new Date(t.date).toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'})+'</time><div><b>'+esc(t.label)+'</b><small>'+esc(t.detail||'未注明详情')+'</small></div><strong class="'+(t.type==='income'||t.type==='refund'?'income-text':t.type==='expense'?'expense-text':'')+'">'+(t.amount==null?'—':money(t.amount,t.cur))+'</strong></div>').join(''):'<div class="empty">该账户暂无流水</div>');
+ showSheet({title:a.name,sub:[accountTypeName(a.accountType||guessAccountType(a.name)),a.institution,a.last4?'尾号 '+a.last4:'',a.currency&&a.currency!=='CNY'?a.currency:'',a.verifiedAt?'已校准':'账面推算'].filter(Boolean).join(' · '),body,foot:'<button class="btn primary flex" data-act="close">关闭</button>'});
 }
 async function renderTokens(){const a=await all('tokenUsage');$('promptTokens').textContent=a.reduce((s,x)=>s+x.prompt,0).toLocaleString();$('completionTokens').textContent=a.reduce((s,x)=>s+x.completion,0).toLocaleString();$('totalTokens').textContent=a.reduce((s,x)=>s+x.total,0).toLocaleString();$('requestCount').textContent=a.length.toLocaleString();}
 async function renderAll(){await Promise.all([renderHome(),renderTransactions(),renderAnalytics(),renderTokens()]);}
+
+/* ---------- 交互 ---------- */
 function attachSwipe(el){let startX=0,startY=0,active=null,moved=false;el.addEventListener('touchstart',e=>{const shell=e.target.closest('.swipe-shell');if(!shell)return;active=shell;startX=e.touches[0].clientX;startY=e.touches[0].clientY;moved=false;},{passive:true});el.addEventListener('touchmove',e=>{if(!active)return;const dx=e.touches[0].clientX-startX,dy=e.touches[0].clientY-startY;if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>8)moved=true;},{passive:true});el.addEventListener('touchend',e=>{if(!active)return;const dx=e.changedTouches[0].clientX-startX;if(moved&&dx<-55)active.classList.add('open');else if(dx>40)active.classList.remove('open');active=null;},{passive:true});}
 attachSwipe($('transactionList'));
 function goto(p){qa('.page').forEach(x=>x.classList.toggle('active',x.id==='page-'+p));qa('.tab').forEach(x=>x.classList.toggle('active',x.dataset.page===p));if(p==='transactions')renderTransactions();if(p==='analytics')renderAnalytics();}
@@ -571,43 +753,69 @@ async function saveSettings(){
  if(endpoint){let u;try{u=new URL(endpoint);}catch(e){apiMessage('Endpoint 不是有效的网址。','error');return false;}if(!/^https?:$/.test(u.protocol)){apiMessage('Endpoint 必须以 http:// 或 https:// 开头。','error');return false;}}
  localStorage.setItem('ledger.endpoint',endpoint);localStorage.setItem('ledger.key',clean($('apiKey').value));localStorage.setItem('ledger.model',clean($('apiModel').value));apiMessage('设置已保存。');return true;
 }
-async function testAPI(){if(!(await saveSettings()))return;const s=settings();if(!s.endpoint||!s.key){apiMessage('请填写 Endpoint 和 API Key。','error');return;}const b=$('testApi');busy(b,true);apiMessage('正在连接…');try{const r=await fetch(s.endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.key},body:JSON.stringify({model:s.model,messages:[{role:'user',content:'只返回JSON：{"connected":true}'}],temperature:0})}),raw=await r.text();if(!r.ok)throw Error('HTTP '+r.status+' · '+raw.slice(0,160));const data=JSON.parse(raw);if(!data.choices||!data.choices.length)throw Error('接口未返回模型内容');await recordUsage(data.usage||{});apiMessage('连接成功 · '+(data.model||s.model));}catch(e){apiMessage('连接失败 · '+e.message,'error');}finally{busy(b,false);}}
+async function testAPI(){if(!(await saveSettings()))return;const s=settings();if(!s.endpoint||!s.key){apiMessage('请填写 Endpoint 和 API Key。','error');return;}const b=$('testApi');busy(b,true);apiMessage('正在连接…');try{const data=await post(s,{model:s.model,messages:[{role:'user',content:'只返回JSON：{"connected":true}'}],temperature:0});if(!data.choices||!data.choices.length)throw Error('接口未返回模型内容');apiMessage('连接成功 · '+(data.model||s.model));}catch(e){apiMessage('连接失败 · '+e.message,'error');}finally{busy(b,false);}}
 async function uploadFiles(files){if(!files||!files.length)return;if(images.length>=5){message('一批最多上传 5 张。');return;}try{for(const f of Array.from(files).slice(0,5-images.length))images.push(await prepareImage(f));drawPics();}catch(e){message('图片读取失败：'+e.message,'error');}$('imageInput').value='';}
-function exportData(){Promise.all(STORES.map(all)).then(arr=>{let d={version:2,exportedAt:new Date().toISOString()};STORES.forEach((s,i)=>d[s]=arr[i]);let u=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=u;a.download='ai-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),500);});}
+function exportData(){Promise.all(STORES.map(all)).then(arr=>{const d={version:2,exportedAt:new Date().toISOString()};STORES.forEach((s,i)=>d[s]=arr[i]);const u=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=u;a.download='ai-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();localStorage.setItem('ledger.lastBackup',String(Date.now()));setTimeout(()=>URL.revokeObjectURL(u),500);});}
 async function importData(f){
  let d;try{d=JSON.parse(await f.text());}catch(e){throw Error('文件不是有效的 JSON');}
  if(!d||typeof d!=='object'||Array.isArray(d))throw Error('备份文件格式不正确');
  const present=STORES.filter(s=>d[s]!==undefined);
  if(!present.some(s=>Array.isArray(d[s])))throw Error('备份文件中没有可识别的数据');
- /* 先完整校验，通过后才清空并写入，避免坏文件导致数据丢失 */
- for(const s of present){
-  if(!Array.isArray(d[s]))throw Error('「'+s+'」数据格式不正确');
-  if(d[s].some(x=>!x||typeof x!=='object'||x.id==null||x.id===''))throw Error('「'+s+'」中存在缺少 id 的记录');
- }
+ for(const s of present){if(!Array.isArray(d[s]))throw Error('「'+s+'」数据格式不正确');if(d[s].some(x=>!x||typeof x!=='object'||x.id==null||x.id===''))throw Error('「'+s+'」中存在缺少 id 的记录');}
  for(const s of ['accounts','transactions'])if(Array.isArray(d[s])&&d[s].some(x=>s==='accounts'?!Number.isFinite(Number(x.balance??0)):!Number.isFinite(Number(x.amount??0))))throw Error('「'+s+'」中存在无效的金额');
  for(const s of present){await clear(s);for(const x of d[s])await put(s,x);}
  await renderAll();
 }
-async function clearData(){for(const s of ['accounts','transactions','reconciliations','budgets'])await clear(s);pending=null;images=[];drawPics();$('naturalInput').value='';$('naturalInput').readOnly=false;$('analyzeText').textContent='分析';$('resetConfirm').hidden=true;await renderAll();apiMessage('账户与历史记录已重置，API 设置保留。');}
-async function installApp(){if(deferredInstall){deferredInstall.prompt();await deferredInstall.userChoice;deferredInstall=null;}else apiMessage('iPhone：在 Safari 点分享，再选“添加到主屏幕”。Android：在浏览器菜单选择“安装应用”。');}
+async function clearData(){for(const s of ['accounts','transactions','reconciliations','budgets'])await clear(s);pending=null;undoSnap=null;images=[];history=[];try{sessionStorage.removeItem('ledger.hist');}catch(e){}drawPics();$('naturalInput').value='';$('naturalInput').placeholder=PLACEHOLDER;$('resetConfirm').hidden=true;await renderAll();apiMessage('账户与历史记录已重置，API 设置保留。');}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;});
-qa('.tab').forEach(b=>b.onclick=()=>goto(b.dataset.page));qa('[data-goto]').forEach(b=>b.onclick=()=>goto(b.dataset.goto));
+
+qa('.tab').forEach(b=>b.onclick=()=>goto(b.dataset.page));
 $('pickImages').onclick=()=>$('imageInput').click();$('imageInput').onchange=e=>uploadFiles(e.target.files);
-$('attachments').onclick=e=>{let b=e.target.closest('[data-remove]');if(!b)return;images.splice(Number(b.dataset.remove),1);drawPics();};
-$('clearComposer').onclick=()=>{$('naturalInput').value='';$('naturalInput').readOnly=false;images=[];drawPics();pending=null;$('analyzeText').textContent='分析';$('preview').classList.remove('show');message('');};
-$('analyzeText').onclick=()=>pending?confirmPending():analyse();$('confirmPending').onclick=confirmPending;$('discardPending').onclick=()=>{pending=null;$('preview').classList.remove('show');message('');};
-$('transactionList').onclick=e=>{let b=e.target.closest('[data-delete]');if(b)deleteTx(b.dataset.delete,b.dataset.deleteKind);};
+$('attachments').onclick=e=>{const b=e.target.closest('[data-remove]');if(!b)return;images.splice(Number(b.dataset.remove),1);drawPics();};
+$('clearComposer').onclick=()=>{$('naturalInput').value='';$('naturalInput').placeholder=PLACEHOLDER;images=[];drawPics();pending=null;history=[];try{sessionStorage.removeItem('ledger.hist');}catch(e){}message('');};
+$('analyzeText').onclick=analyse;
+$('naturalInput').oninput=syncExamples;
+$('naturalInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();analyse();}});
+$('examples').onclick=e=>{const b=e.target.closest('[data-ex]');if(!b)return;$('naturalInput').value=b.dataset.ex;syncExamples();$('naturalInput').focus();};
+$('toggleHide').onclick=()=>{hideAmt=!hideAmt;localStorage.setItem('ledger.hide',hideAmt?'1':'0');renderAll();};
+$('transactionList').onclick=e=>{
+ const d=e.target.closest('[data-delete]');if(d){deleteTx(d.dataset.delete,d.dataset.deleteKind);return;}
+ const shell=e.target.closest('.swipe-shell');if(!shell)return;
+ if(shell.classList.contains('open')){shell.classList.remove('open');return;}
+ if(shell.dataset.kind==='transaction')openEdit(shell.dataset.rowId);
+};
 $('homeAccounts').onclick=e=>{const b=e.target.closest('[data-home-account]');if(b)openAccountModal(b.dataset.homeAccount);};
 $('transactionSearch').oninput=renderTransactions;
-$('detailPeriodSwitch').onclick=e=>{const b=e.target.closest('[data-detail-range]');if(!b)return;detailRange=b.dataset.detailRange;qa('#detailPeriodSwitch button').forEach(x=>x.classList.toggle('active',x===b));renderTransactions();};$('transactionFilters').onclick=e=>{let b=e.target.closest('[data-filter]');if(!b)return;filter=b.dataset.filter;qa('#transactionFilters button').forEach(x=>x.classList.toggle('active',x===b));renderTransactions();};
-$('periodSwitch').onclick=e=>{let b=e.target.closest('[data-range]');if(!b)return;range=b.dataset.range;qa('#periodSwitch button').forEach(x=>x.classList.toggle('active',x===b));renderAnalytics();};
+$('detailPeriodSwitch').onclick=e=>{const b=e.target.closest('[data-detail-range]');if(!b)return;detailRange=b.dataset.detailRange;qa('#detailPeriodSwitch button').forEach(x=>x.classList.toggle('active',x===b));renderTransactions();};
+$('transactionFilters').onclick=e=>{const b=e.target.closest('[data-filter]');if(!b)return;filter=b.dataset.filter;qa('#transactionFilters button').forEach(x=>x.classList.toggle('active',x===b));renderTransactions();};
+$('periodSwitch').onclick=e=>{const b=e.target.closest('[data-range]');if(!b)return;range=b.dataset.range;qa('#periodSwitch button').forEach(x=>x.classList.toggle('active',x===b));renderAnalytics();};
+$('trendChart').onclick=e=>{const r=e.target.closest('[data-m]');if(!r)return;trendSel=Number(r.dataset.m);renderAnalytics();};
+$('categoryLegend').onclick=e=>{const b=e.target.closest('[data-cat]');if(!b)return;selCat=selCat===b.dataset.cat?null:b.dataset.cat;renderAnalytics();};
 $('saveSettings').onclick=saveSettings;$('testApi').onclick=testAPI;$('runFinanceAnalysis').onclick=runFinanceAnalysis;
+$('saveRules').onclick=()=>{localStorage.setItem('ledger.rules',clean($('rulesInput').value));localStorage.setItem('ledger.autosave',$('autoSave').checked?'1':'0');toast('记账偏好已保存');};
+$('autoSave').onchange=()=>localStorage.setItem('ledger.autosave',$('autoSave').checked?'1':'0');
 $('accountAnalytics').onclick=e=>{const b=e.target.closest('[data-account-id]');if(b)openAccountModal(b.dataset.accountId);};
-$('closeAccountModal').onclick=()=>{$('accountModal').hidden=true;};$('accountModal').onclick=e=>{if(e.target===$('accountModal'))$('accountModal').hidden=true;};
+$('sheet').onclick=async e=>{
+ if(e.target===$('sheet')){closeSheet();return;}
+ const b=e.target.closest('[data-act]');if(!b)return;const act=b.dataset.act;
+ if(act==='close')closeSheet();
+ else if(act==='confirm'){if(!pending)return;collectEdits();b.disabled=true;try{await commit(pending.actions,false);}finally{b.disabled=false;}}
+ else if(act==='save-edit')saveEdit();
+ else if(act==='del-edit'){const id=editId;closeSheet();await deleteTx(id,'transaction');}
+};
+$('toastUndo').onclick=async()=>{if(!undoSnap)return;const s=undoSnap;undoSnap=null;await restore(s);await renderAll();$('toastUndo').hidden=true;toast('已撤销');};
 $('resetRecords').onclick=()=>$('resetConfirm').hidden=false;$('cancelReset').onclick=()=>$('resetConfirm').hidden=true;$('confirmReset').onclick=clearData;
-$('fontScaleSlider').oninput=e=>applyFontScale(e.target.value);$('themeSelect').onclick=e=>{let b=e.target.closest('[data-theme]');if(b)applyTheme(b.dataset.theme);};
-$('exportData').onclick=exportData;$('importData').onchange=e=>{let f=e.target.files&&e.target.files[0];if(f)importData(f).then(()=>apiMessage('导入完成。')).catch(err=>apiMessage('导入失败：'+err.message,'error'));e.target.value='';};
+$('fontScaleSlider').oninput=e=>applyFontScale(e.target.value);$('themeSelect').onclick=e=>{const b=e.target.closest('[data-theme]');if(b)applyTheme(b.dataset.theme);};
+$('exportData').onclick=exportData;$('importData').onchange=e=>{const f=e.target.files&&e.target.files[0];if(f)importData(f).then(()=>apiMessage('导入完成。')).catch(err=>apiMessage('导入失败：'+err.message,'error'));e.target.value='';};
 
-(async()=>{let s=settings();$('apiEndpoint').value=s.endpoint;$('apiKey').value=s.key;$('apiModel').value=s.model;applyTheme(localStorage.getItem('ledger.theme')||'system');applyFontScale(localStorage.getItem('ledger.fontScale')||1);await openDB();await renderAll();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});})().catch(e=>message('初始化失败：'+e.message,'error'));
+(async()=>{
+ const s=settings();$('apiEndpoint').value=s.endpoint;$('apiKey').value=s.key;$('apiModel').value=s.model;$('rulesInput').value=s.rules;$('autoSave').checked=s.auto;
+ applyTheme(localStorage.getItem('ledger.theme')||'system');applyFontScale(localStorage.getItem('ledger.fontScale')||1);
+ await openDB();await renderAll();syncExamples();
+ try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
+ const n=(await all('transactions')).length+(await all('accounts')).length,lb=Number(localStorage.getItem('ledger.lastBackup')||0);
+ if(n&&Date.now()-lb>14*864e5)toast(lb?'已超过 14 天未备份，建议在设置中导出备份。':'还没有备份过数据，建议在设置中导出备份。');
+ if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+})().catch(e=>message('初始化失败：'+e.message,'error'));
 })();
 </script></body></html>
