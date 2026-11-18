@@ -290,7 +290,7 @@ function openDB(){return new Promise((ok,no)=>{
    countReq.onsuccess=()=>{const legacyReq=budgetStore.get('daily-budget-config');legacyReq.onsuccess=()=>{const legacy=legacyReq.result;if(!legacy)return;if(countReq.result===0)legacyDailyBudgetRows(legacy).forEach(row=>dailyStore.put(row));budgetStore.delete('daily-budget-config');};};
   }
  };
- r.onsuccess=()=>{const opened=r.result,missing=STORES.filter(s=>!opened.objectStoreNames.contains(s));if(missing.length){opened.close();no(new Error('本地数据库结构不完整，缺少数据表：'+missing.join('、')+'。请刷新页面重试。'));return;}db=opened;opened.onversionchange=()=>{opened.close();if(db===opened)db=null;};ok();};
+ r.onsuccess=()=>{const opened=r.result,missing=STORES.filter(s=>!opened.objectStoreNames.contains(s));if(missing.length){opened.close();no(new Error('本地数据库结构不完整，缺少数据表：'+missing.join('、')+'。请刷新页面重试。'));return;}db=opened;message('');opened.onversionchange=()=>{opened.close();if(db===opened)db=null;};ok();};
  r.onerror=()=>no(r.error||new Error('本地数据库打开失败。'));
  r.onblocked=()=>message('数据库升级正被其他打开的 AI Ledger 页面占用。请关闭其他标签页后重新加载。','error');
  });}
