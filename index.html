@@ -40,22 +40,150 @@ textarea{display:block;width:100%;min-height:106px;max-height:220px;resize:verti
 .tab{height:50px;border:0;border-radius:16px;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:9px;font-weight:650}.tab svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.tab.active{background:var(--accent);color:var(--on)}
 .spinner{display:inline-block;width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
 @media(min-width:720px){#app{padding-left:22px;padding-right:22px}.home-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:12px}.hero,.capture{margin-bottom:0}.home-secondary{display:grid;grid-template-columns:1fr 1fr;gap:12px}}
+
+:root{--income:#249b68;--expense:#df4d52;--font-scale:1}
+.income-text{color:var(--income)!important}.expense-text{color:var(--expense)!important}
+#app{padding-top:calc(env(safe-area-inset-top,0px) + 10px)}
+.page{padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+#page-home.active{display:flex;flex-direction:column;gap:10px;height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 104px);min-height:520px;overflow:hidden}
+.home-overview{flex:0 0 25%;min-height:155px;max-height:235px;border-radius:24px;padding:13px 15px 11px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden}
+.overview-head{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:11px;font-weight:650}
+.overview-total{font-size:clamp(26px,6vw,36px);font-weight:780;letter-spacing:-1px;margin:4px 0 6px;font-variant-numeric:tabular-nums}
+.overview-flow{display:flex;gap:20px;align-items:center}
+.overview-flow>div{display:flex;flex-direction:column;gap:2px}.overview-flow small{font-size:9px;color:var(--muted)}.overview-flow b{font-size:12px}
+.account-strip{display:flex;gap:7px;overflow-x:auto;padding:8px 0 2px;margin-top:auto;scrollbar-width:none}
+.account-chip{min-width:104px;max-width:150px;padding:7px 9px;background:var(--surface);border:1px solid var(--line);border-radius:12px;text-align:left;flex:none}
+.account-chip b{display:block;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.account-chip small{display:block;color:var(--muted);font-size:9px;margin-top:3px}
+.capture{flex:1;min-height:0;margin:0!important;padding:0!important;display:grid;grid-template-rows:2fr 1fr;overflow:hidden;border-radius:23px}
+.capture-input{min-height:0;padding:14px 15px}
+.capture-input textarea{width:100%;height:100%;min-height:0;max-height:none;resize:none;font-size:calc(16px * var(--font-scale));line-height:1.6;padding:4px;overflow:auto}
+.capture-bottom{min-height:0;border-top:1px solid var(--line);padding:10px 12px 12px;display:flex;flex-direction:column;justify-content:space-between}
+.capture-actions{display:flex;align-items:center;gap:10px}
+.upload-action{height:48px;padding:0 15px;border:1px solid var(--line);border-radius:15px;background:var(--surface);display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;font-weight:650}
+.upload-action svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.capture-actions .send{height:48px;flex:1;justify-content:center;border-radius:15px;font-size:14px}
+.attachments{min-height:0;max-height:75px;overflow:auto}
+#imageInput,#importData{display:none}
+#preview{display:none!important}
+.message{flex:none}
+#page-transactions,#page-analytics,#page-settings{min-height:calc(100dvh - 94px);padding-bottom:calc(86px + var(--safe));}
+.detail-summary{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:11px 13px;margin-bottom:10px;box-shadow:var(--shadow)}
+.detail-summary .ranges{margin-bottom:6px}
+.detail-totals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.detail-totals>div{display:flex;flex-direction:column;gap:4px}
+.detail-totals small{color:var(--muted);font-size:10px}.detail-totals b{font-size:14px;font-variant-numeric:tabular-nums}
+.item-right b.expense-text{color:var(--expense)!important}.item-right b.income-text{color:var(--income)!important}
+.swipe-shell{position:relative;overflow:hidden;border-bottom:1px solid var(--line);border-radius:2px}
+.swipe-shell:last-child{border-bottom:0}
+.swipe-delete{position:absolute;right:0;top:0;bottom:0;width:76px;border:0;background:var(--expense);color:white;font-size:11px;font-weight:700}
+.swipe-content{position:relative;background:var(--card);transition:transform .18s ease;touch-action:pan-y}
+.swipe-shell.open .swipe-content{transform:translateX(-76px)}
+.swipe-content .item{border:0}
+.account-button{width:100%;text-align:left;background:transparent;border:0;cursor:pointer}
+.account-type{font-size:9px;color:var(--muted);margin-top:3px}
+.finance-analysis{font-size:12px;line-height:1.8;white-space:pre-wrap;color:var(--text);min-height:50px}
+.modal-backdrop{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.38);backdrop-filter:blur(7px);display:flex;align-items:flex-end;justify-content:center;padding:12px}
+.modal-backdrop[hidden]{display:none}
+.modal-sheet{width:min(620px,100%);max-height:82dvh;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:25px;padding:12px 17px calc(20px + var(--safe));box-shadow:0 12px 50px rgba(0,0,0,.2)}
+.modal-handle{width:34px;height:4px;background:var(--muted);opacity:.4;border-radius:9px;margin:0 auto 14px}
+.modal-head{display:flex;justify-content:space-between;align-items:center}
+.modal-head b{display:block;font-size:16px}.modal-head small{display:block;color:var(--muted);font-size:10px;margin-top:4px}
+.modal-balance{font-size:27px;font-weight:760;margin:14px 0}
+.modal-section-title{font-size:12px;font-weight:700;padding:10px 0;border-top:1px solid var(--line)}
+.modal-transactions{display:grid;gap:0}
+.modal-tx{display:grid;grid-template-columns:58px minmax(0,1fr) auto;gap:9px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);font-size:11px}
+.modal-tx time{font-size:10px;color:var(--muted)}.modal-tx b{font-size:12px}.modal-tx small{display:block;color:var(--muted);font-size:10px;margin-top:3px}
+.reset-card{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-top:1px solid var(--line)}
+.reset-card b{font-size:12px;display:block}.reset-card small{font-size:10px;color:var(--muted);display:block;margin-top:4px}
+.reset-confirm{padding:12px;border-radius:14px;background:var(--surface);font-size:11px;line-height:1.5}
+.reset-confirm[hidden]{display:none}.reset-confirm>div{display:flex;gap:8px;margin-top:10px}
+.btn.danger{background:var(--expense);color:#fff;border-color:var(--expense)}
+.font-control{margin-top:12px}.font-control input{width:100%;accent-color:var(--accent)}
+#accountAnalytics .account{cursor:pointer}
+@media(max-height:690px){.home-overview{min-height:145px}.overview-total{font-size:26px}.capture-bottom{padding:7px 10px}.upload-action,.capture-actions .send{height:42px}}
+@media(min-width:720px){#page-home.active{max-width:760px;margin:0 auto}.home-overview{padding:14px 18px}.account-chip{min-width:120px}}
+
 </style>
 </head>
 <body><div id="app">
-<header><div class="date" id="todayLabel"></div><button class="icon" id="topSettings" aria-label="设置"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19 13.5a7.4 7.4 0 0 0 0-3l2-1.2-2-3.4-2.3.8a7.6 7.6 0 0 0-2.6-1.5L13.8 3h-3.9l-.4 2.2a7.6 7.6 0 0 0-2.6 1.5l-2.3-.8-2 3.4 2 1.2a7.4 7.4 0 0 0 0 3l-2 1.2 2 3.4 2.3-.8a7.6 7.6 0 0 0 2.6 1.5l.4 2.2h3.9l.4-2.2a7.6 7.6 0 0 0 2.6-1.5l2.3.8 2-3.4z"/></svg></button></header>
+
+</header>
 <main>
 <section class="page active" id="page-home">
- <div class="home-grid"><div class="hero"><small>总资产</small><div class="balance" id="heroAssets">¥0.00</div><div class="hero-foot"><div class="metric"><span>本月收入</span><b id="heroIncome">¥0.00</b></div><div class="metric"><span>本月支出</span><b id="heroExpense">¥0.00</b></div></div></div>
- <div class="capture"><textarea id="naturalInput" placeholder="说说发生了什么……"></textarea><div class="tools"><div class="toolset"><button class="tool" id="pickImages" aria-label="上传图片"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/></svg></button><button class="tool" id="clearComposer" aria-label="清空"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3"/></svg></button></div><button class="send" id="analyzeText">AI 分析 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button></div><input type="file" id="imageInput" accept="image/*" multiple><div class="attachments" id="attachments"></div></div></div>
+ <div class="home-overview">
+  <div class="overview-head"><span>账户总览</span><span id="overviewDate"></span></div>
+  <div class="overview-total" id="heroAssets">¥0.00</div>
+  <div class="overview-flow">
+   <div><small>本月收入</small><b class="income-text" id="heroIncome">¥0.00</b></div>
+   <div><small>本月支出</small><b class="expense-text" id="heroExpense">¥0.00</b></div>
+  </div>
+  <div class="account-strip" id="homeAccounts"><div class="empty">还没有账户</div></div>
+ </div>
+ <div class="capture">
+  <div class="capture-input"><textarea id="naturalInput" placeholder="描述一笔收支，或上传银行卡 / 支付截图……"></textarea></div>
+  <div class="capture-bottom">
+   <div class="attachments" id="attachments"></div>
+   <div class="capture-actions">
+    <button class="upload-action" id="pickImages"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/></svg><span>上传图片</span></button>
+    <button class="send" id="analyzeText">分析</button>
+   </div>
+   <input type="file" id="imageInput" accept="image/*" multiple>
+  </div>
+ </div>
  <div class="message" id="message"></div>
  <div class="preview" id="preview"><div class="preview-head"><b id="previewTitle">AI 理解结果</b><span id="previewCount"></span></div><div class="ai-answer" id="aiAnswer"></div><div id="previewActions"></div><div class="btnrow"><button class="btn flex" id="discardPending">取消</button><button class="btn primary flex" id="confirmPending">确认保存</button></div></div>
- <div class="home-secondary"><div><div class="section-head"><h2>最近记录</h2><button data-goto="transactions">全部</button></div><div class="list" id="recentList"><div class="empty">暂无记录</div></div></div><div><div class="section-head"><h2>账户</h2><button data-goto="analytics">资产分析</button></div><div class="list" id="homeAccounts"><div class="empty">暂无账户</div></div></div></div>
 </section>
-<section class="page" id="page-transactions"><div class="section-head"><h2>明细</h2><span id="transactionCount" style="font-size:11px;color:var(--muted)"></span></div><input id="transactionSearch" class="search" type="search" placeholder="搜索商户、账户或分类"><div class="chips" id="transactionFilters"><button class="active" data-filter="all">全部</button><button data-filter="expense">支出</button><button data-filter="income">收入</button><button data-filter="transfer">转账</button><button data-filter="balance_adjustment">校准</button></div><div class="list" id="transactionList"><div class="empty">暂无记录</div></div></section>
-<section class="page" id="page-analytics"><div class="section-head"><h2>分析</h2><span id="analyticsPeriod" style="font-size:11px;color:var(--muted)"></span></div><div class="ranges" id="periodSwitch"><button data-range="week">7日</button><button class="active" data-range="month">本月</button><button data-range="year">本年</button></div><div class="stats"><div class="stat"><span>总资产</span><b id="totalAssets">¥0.00</b></div><div class="stat"><span>净流入</span><b id="netFlow">¥0.00</b></div><div class="stat"><span>收入</span><b id="periodIncome">¥0.00</b></div><div class="stat"><span>支出</span><b id="periodExpense">¥0.00</b></div></div><div class="chart"><h3>收支趋势</h3><svg id="trendChart" viewBox="0 0 600 190" preserveAspectRatio="none"></svg><div class="labels" id="trendLabels"></div></div><div class="chart"><h3>支出结构</h3><div class="category"><div class="donut" id="donut"><div class="donut-center"><span>总支出</span><b id="donutTotal">¥0</b></div></div><div class="legend" id="categoryLegend"><div class="empty">暂无数据</div></div></div></div><div class="chart"><h3>账户余额</h3><div id="accountAnalytics"><div class="empty">暂无账户</div></div></div><div class="chart"><h3>预算</h3><div id="budgetList"><div class="empty">暂无预算</div></div></div></section>
-<section class="page" id="page-settings"><div class="section-head"><h2>设置</h2></div><div class="setting"><h3>AI 接口</h3><label class="label" for="apiEndpoint">API Endpoint</label><input class="input" id="apiEndpoint" placeholder="https://api.example.com/v1/chat/completions"><label class="label" for="apiKey">API Key</label><input class="input" id="apiKey" type="password" autocomplete="off" placeholder="API Key"><label class="label" for="apiModel">模型</label><input class="input" id="apiModel" placeholder="模型名称"><div class="btnrow"><button class="btn flex" id="saveSettings">保存</button><button class="btn primary flex" id="testApi">测试连接</button></div><div class="message" id="apiTestMessage"></div><div class="note">图片识别需使用支持视觉输入的模型。应用不设 Token 使用上限；上下文和输出限制由模型服务商决定。</div></div><div class="setting"><h3>外观</h3><div class="themes" id="themeSelect"><button data-theme="system" class="active">跟随系统</button><button data-theme="light">浅色</button><button data-theme="dark">深色</button></div></div><div class="setting"><h3>Token 使用</h3><div class="token-grid"><div class="token"><small>输入</small><b id="promptTokens">0</b></div><div class="token"><small>输出</small><b id="completionTokens">0</b></div><div class="token"><small>合计</small><b id="totalTokens">0</b></div><div class="token"><small>请求</small><b id="requestCount">0</b></div></div></div><div class="setting"><h3>数据</h3><div class="setting-row"><span>主屏幕图标</span><button class="btn" id="installApp">添加到主屏幕</button></div><div class="setting-row"><span>导出备份</span><button class="btn" id="exportData">导出</button></div><div class="setting-row"><span>导入备份</span><label class="btn" for="importData">选择文件</label><input id="importData" type="file" accept="application/json"></div><div class="setting-row"><span>清除本地数据</span><button class="btn" id="clearData">清除</button></div><div class="note">描述、图片及必要的账户和交易上下文会发送到你配置的 API 服务商。</div></div></section>
-</main></div>
+<section class="page" id="page-transactions">
+ <div class="section-head"><h2>明细</h2><span id="transactionCount" style="font-size:11px;color:var(--muted)"></span></div>
+ <div class="detail-summary">
+  <div class="ranges" id="detailPeriodSwitch"><button data-detail-range="day" class="active">日</button><button data-detail-range="week">周</button><button data-detail-range="month">月</button></div>
+  <div class="detail-totals">
+   <div><small>收入</small><b class="income-text" id="detailIncome">¥0.00</b></div>
+   <div><small>支出</small><b class="expense-text" id="detailExpense">¥0.00</b></div>
+   <div><small>结余</small><b id="detailNet">¥0.00</b></div>
+  </div>
+ </div>
+ <input id="transactionSearch" class="search" type="search" placeholder="搜索商户、账户或分类">
+ <div class="chips" id="transactionFilters"><button class="active" data-filter="all">全部</button><button data-filter="expense">支出</button><button data-filter="income">收入</button><button data-filter="transfer">转账</button><button data-filter="balance_adjustment">校准</button></div>
+ <div class="list" id="transactionList"><div class="empty">暂无记录</div></div>
+</section>
+<section class="page" id="page-analytics">
+ <div class="section-head"><h2>分析</h2><span id="analyticsPeriod" style="font-size:11px;color:var(--muted)"></span></div>
+ <div class="ranges" id="periodSwitch"><button data-range="week">7日</button><button class="active" data-range="month">本月</button><button data-range="year">本年</button></div>
+ <div class="stats">
+  <div class="stat"><span>净资产</span><b id="totalAssets">¥0.00</b></div><div class="stat"><span>净流入</span><b id="netFlow">¥0.00</b></div>
+  <div class="stat"><span>收入</span><b class="income-text" id="periodIncome">¥0.00</b></div><div class="stat"><span>支出</span><b class="expense-text" id="periodExpense">¥0.00</b></div>
+ </div>
+ <div class="chart"><h3>收支趋势</h3><svg id="trendChart" viewBox="0 0 600 190" preserveAspectRatio="none"></svg><div class="labels" id="trendLabels"></div></div>
+ <div class="chart"><h3>支出结构</h3><div class="category"><div class="donut" id="donut"><div class="donut-center"><span>总支出</span><b id="donutTotal">¥0</b></div></div><div class="legend" id="categoryLegend"><div class="empty">暂无数据</div></div></div></div>
+ <div class="chart"><h3>账户余额</h3><div class="account-list" id="accountAnalytics"><div class="empty">暂无账户</div></div></div>
+ <div class="chart"><div class="section-head"><h3>AI 财务分析</h3><button id="runFinanceAnalysis">生成分析</button></div><div class="finance-analysis" id="financeAnalysis">结合收入、支出、账户流水和预算，生成你的财务分析。</div></div>
+ <div class="chart"><h3>预算</h3><div id="budgetList"><div class="empty">暂无预算</div></div></div>
+</section>
+<section class="page" id="page-settings">
+ <div class="section-head"><h2>设置</h2></div>
+ <div class="setting"><h3>AI 接口</h3>
+  <label class="label" for="apiEndpoint">API Endpoint</label><input class="input" id="apiEndpoint" placeholder="https://api.example.com/v1/chat/completions">
+  <label class="label" for="apiKey">API Key</label><input class="input" id="apiKey" type="password" autocomplete="off" placeholder="API Key">
+  <label class="label" for="apiModel">模型</label><input class="input" id="apiModel" placeholder="模型名称">
+  <div class="btnrow"><button class="btn flex" id="saveSettings">保存</button><button class="btn primary flex" id="testApi">测试连接</button></div>
+  <div class="message" id="apiTestMessage"></div>
+  <div class="note">图片识别需要支持视觉输入的模型。Token 用量受模型服务商限制，应用不额外截断请求。</div>
+ </div>
+ <div class="setting"><h3>外观</h3><div class="themes" id="themeSelect"><button data-theme="system" class="active">跟随系统</button><button data-theme="light">浅色</button><button data-theme="dark">深色</button></div>
+  <div class="font-control"><div class="setting-row"><span>界面字体</span><b id="fontScaleLabel">100%</b></div><input id="fontScaleSlider" type="range" min="0.9" max="1.2" step="0.05" value="1"></div>
+ </div>
+ <div class="setting"><h3>Token 使用</h3><div class="token-grid"><div class="token"><small>输入</small><b id="promptTokens">0</b></div><div class="token"><small>输出</small><b id="completionTokens">0</b></div><div class="token"><small>合计</small><b id="totalTokens">0</b></div><div class="token"><small>请求</small><b id="requestCount">0</b></div></div></div>
+ <div class="setting"><h3>数据管理</h3>
+  <div class="setting-row"><span>导出备份</span><button class="btn" id="exportData">导出</button></div>
+  <div class="setting-row"><span>导入备份</span><label class="btn" for="importData">选择文件</label><input id="importData" type="file" accept="application/json"></div>
+  <div class="reset-card"><div><b>重置账户与历史记录</b><small>清空所有账户、交易、预算与校准历史，保留 API 设置</small></div><button class="btn danger" id="resetRecords">重置</button></div>
+  <div class="reset-confirm" id="resetConfirm" hidden><span>确认清空账户与所有历史记录？此操作无法撤销。</span><div><button class="btn" id="cancelReset">取消</button><button class="btn primary" id="confirmReset">确认重置</button></div></div>
+  <div class="note">记账描述、上传图片和相关账户上下文会发送到你配置的 API 服务商。</div>
+ </div>
+</section>
+</main><div class="modal-backdrop" id="accountModal" hidden><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-head"><div><b id="modalAccountName"></b><small id="modalAccountMeta"></small></div><button class="icon" id="closeAccountModal" aria-label="关闭">×</button></div><div class="modal-balance" id="modalAccountBalance"></div><div class="modal-section-title">近期资金流转</div><div class="modal-transactions" id="modalAccountTransactions"></div></div></div></div>
 <nav class="dock-wrap"><div class="dock" role="tablist">
 <button class="tab active" data-page="home"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>记账</button>
 <button class="tab" data-page="transactions"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>明细</button>
