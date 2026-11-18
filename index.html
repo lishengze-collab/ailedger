@@ -10,21 +10,111 @@
 <link rel="manifest" href="manifest.webmanifest">
 <title>AI Ledger V1.0</title>
 <style>
-:root{--bg:#f4f7fb;--card:#fff;--text:#102033;--muted:#6b7a90;--line:#dce4ee;--blue:#1769e0;--blue2:#0e4fae;--green:#158a5b;--red:#c44343;--amber:#a86a00;--shadow:0 8px 28px rgba(32,53,82,.09);--safe-b:env(safe-area-inset-bottom,0px)}
-@media(prefers-color-scheme:dark){:root{--bg:#0b1220;--card:#121d2e;--text:#edf4ff;--muted:#98a7bd;--line:#25344a;--blue:#65a1ff;--blue2:#93bcff;--green:#43c78e;--red:#ff7979;--amber:#ffc15b;--shadow:none}}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,textarea,select{font:inherit}button{cursor:pointer}.app{max-width:480px;min-height:100dvh;margin:auto;padding:calc(env(safe-area-inset-top,0px) + 14px) 14px calc(82px + var(--safe-b))}.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.brand{font-weight:850;letter-spacing:-.4px}.brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:.6px}.status{font-size:11px;color:var(--green);font-weight:750}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:15px;margin-bottom:12px}.card h2,.card h3{margin:0 0 10px}.card h2{font-size:18px}.card h3{font-size:14px}.hint{color:var(--muted);font-size:12px;line-height:1.5}.input-wrap{position:relative}.composer{width:100%;min-height:138px;resize:vertical;border:1px solid var(--line);border-radius:14px;background:var(--bg);color:var(--text);padding:13px 13px 48px;outline:none}.composer:focus{border-color:var(--blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 16%,transparent)}.send{position:absolute;right:8px;bottom:8px;border:0;border-radius:10px;background:var(--blue);color:white;font-weight:800;padding:9px 14px}.send:disabled{opacity:.42}.chips{display:flex;gap:7px;overflow:auto;padding:4px 0 2px}.chip{flex:0 0 auto;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:999px;padding:7px 10px;font-size:11px}.drop{display:grid;place-items:center;min-height:92px;border:1.5px dashed var(--line);border-radius:14px;background:var(--bg);text-align:center;padding:12px}.drop input{display:none}.drop strong{font-size:13px}.preview-img{max-width:100%;max-height:180px;border-radius:12px;margin-top:10px}.notice{padding:10px 12px;border-radius:12px;font-size:12px;line-height:1.45;background:color-mix(in srgb,var(--blue) 9%,var(--card));border:1px solid color-mix(in srgb,var(--blue) 23%,var(--line))}.notice.error{background:color-mix(in srgb,var(--red) 9%,var(--card));border-color:color-mix(in srgb,var(--red) 25%,var(--line));color:var(--red)}.notice.warn{background:color-mix(in srgb,var(--amber) 9%,var(--card));border-color:color-mix(in srgb,var(--amber) 25%,var(--line))}.parsed{display:none}.parsed.show{display:block}.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.field{border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:9px}.field span{display:block;color:var(--muted);font-size:10px;text-transform:uppercase}.field b{display:block;font-size:13px;margin-top:3px;overflow-wrap:anywhere}.actions{display:flex;gap:8px;margin-top:11px}.btn{border:1px solid var(--line);border-radius:11px;background:var(--card);color:var(--text);padding:10px 12px;font-weight:750}.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.btn.danger{color:var(--red)}.btn:disabled{opacity:.42}.stats{display:grid;grid-template-columns:1fr 1fr;gap:9px}.stat{padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--card)}.stat span{font-size:10px;color:var(--muted)}.stat b{font-size:19px;display:block;margin-top:4px}.range{display:flex;gap:7px;overflow:auto;margin-bottom:11px}.range button{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:9px;padding:7px 11px}.range button.active{background:var(--blue);color:white;border-color:var(--blue)}.bars{display:grid;gap:9px}.bar-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}.track{height:9px;background:var(--bg);border-radius:99px;overflow:hidden}.fill{height:100%;background:linear-gradient(90deg,var(--blue),#6cabff);border-radius:99px}.list{display:grid;gap:8px}.row{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding:9px 0}.row:last-child{border-bottom:0}.row small{color:var(--muted);display:block;margin-top:3px}.money.negative{color:var(--red)}.money.positive{color:var(--green)}label.s{display:block;font-size:11px;color:var(--muted);margin:10px 0 5px}input.s,select.s{width:100%;height:42px;border:1px solid var(--line);border-radius:11px;background:var(--bg);color:var(--text);padding:0 11px;outline:none}.tabs{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(480px,100%);display:grid;grid-template-columns:repeat(3,1fr);background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(18px);border-top:1px solid var(--line);padding:8px 10px calc(8px + var(--safe-b));z-index:10}.tab{border:0;background:transparent;color:var(--muted);padding:8px 4px;border-radius:11px;font-size:11px;font-weight:750}.tab.active{background:color-mix(in srgb,var(--blue) 12%,transparent);color:var(--blue)}.panel{display:none}.panel.active{display:block}.budget{display:grid;gap:9px}.budget-item{border:1px solid var(--line);border-radius:13px;padding:11px}.budget-head{display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px}.token{font-variant-numeric:tabular-nums}.empty{text-align:center;color:var(--muted);font-size:12px;padding:22px 6px}.sr{position:absolute;clip:rect(0,0,0,0);clip-path:inset(50%);width:1px;height:1px;overflow:hidden}.spinner{display:inline-block;width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px}@keyframes spin{to{transform:rotate(360deg)}}
+
+:root{
+ --bg:#f5f5f7;--card:#ffffff;--surface:#f2f2f7;--soft:#ededf0;
+ --text:#1d1d1f;--muted:#86868b;--line:#e5e5ea;
+ --accent:#1d1d1f;--accent-contrast:#ffffff;
+ --positive:#303036;--negative:#66666d;
+ --shadow:0 8px 28px rgba(0,0,0,.045);--safe-b:env(safe-area-inset-bottom,0px)
+}
+@media(prefers-color-scheme:dark){
+ :root{
+  color-scheme:dark;--bg:#000000;--card:#1c1c1e;--surface:#2c2c2e;--soft:#242426;
+  --text:#f5f5f7;--muted:#98989f;--line:#38383a;--accent:#f5f5f7;
+  --accent-contrast:#1c1c1e;--positive:#f5f5f7;--negative:#b7b7bd;--shadow:none
+ }
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+.app{max-width:680px;min-height:100dvh;margin:auto;padding:calc(env(safe-area-inset-top,0px) + 20px) 18px calc(92px + var(--safe-b))}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding:0 2px}
+.brand{font-size:21px;font-weight:750;letter-spacing:-.65px}
+.brand small{display:block;color:var(--muted);font-size:11px;font-weight:500;letter-spacing:.15px;margin-top:3px}
+.status{font-size:10px;color:var(--muted);font-weight:650;letter-spacing:.35px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:18px;margin-bottom:14px}
+.card h2,.card h3{margin:0 0 11px;letter-spacing:-.2px}
+.card h2{font-size:19px;font-weight:700}
+.card h3{font-size:15px;font-weight:680}
+.hint{color:var(--muted);font-size:12px;line-height:1.55}
+.input-wrap{position:relative}
+.composer{display:block;width:100%;min-height:146px;resize:vertical;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--text);padding:14px 14px 52px;outline:none;font-size:15px;line-height:1.55}
+.composer::placeholder{color:var(--muted);opacity:.85}
+.composer:focus{border-color:var(--muted);box-shadow:0 0 0 3px color-mix(in srgb,var(--text) 7%,transparent)}
+.send{position:absolute;right:9px;bottom:9px;border:0;border-radius:999px;background:var(--accent);color:var(--accent-contrast);font-weight:700;padding:9px 17px;font-size:13px}
+.send:disabled{opacity:.42}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:3px 0 10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:999px;padding:7px 11px;font-size:11px;white-space:nowrap}
+.drop{display:grid;place-items:center;min-height:88px;border:1px dashed var(--line);border-radius:15px;background:var(--surface);text-align:center;padding:14px}
+.drop input{display:none}
+.drop strong{font-size:13px;font-weight:650}
+.preview-img{max-width:100%;max-height:180px;border-radius:12px;margin-top:10px}
+.notice{padding:11px 13px;border-radius:13px;font-size:12px;line-height:1.5;background:var(--surface);border:1px solid var(--line);color:var(--text)}
+.notice.error,.notice.warn{background:var(--soft);border-color:var(--line);color:var(--text)}
+.parsed{display:none}
+.parsed.show{display:block}
+.parsed-action{padding:12px 0;border-top:1px solid var(--line)}
+.parsed-action:first-child{border-top:0;padding-top:0}
+.parsed-action-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px;font-size:13px}
+.parsed-action-head strong{font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.field{min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:9px 10px}
+.field span{display:block;color:var(--muted);font-size:10px}
+.field b{display:block;font-size:13px;font-weight:620;margin-top:4px;overflow-wrap:anywhere}
+.actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--text);padding:10px 15px;font-weight:650;font-size:12px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-contrast)}
+.btn.danger{color:var(--text)}
+.btn:disabled{opacity:.42}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.stat{padding:14px;border:1px solid var(--line);border-radius:15px;background:var(--card)}
+.stat span{font-size:11px;color:var(--muted)}
+.stat b{font-size:20px;letter-spacing:-.4px;display:block;margin-top:5px;font-weight:700}
+.range{display:flex;gap:6px;overflow:auto;margin-bottom:13px;padding:2px;scrollbar-width:none}
+.range button{border:1px solid transparent;background:transparent;color:var(--muted);border-radius:999px;padding:8px 13px;font-size:12px;font-weight:650}
+.range button.active{background:var(--accent);color:var(--accent-contrast)}
+.bars{display:grid;gap:12px}
+.bar-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px}
+.track{height:8px;background:var(--soft);border-radius:99px;overflow:hidden}
+.fill{height:100%;background:var(--negative);border-radius:99px}
+.list{display:grid;gap:2px}
+.row{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding:11px 1px}
+.row:last-child{border-bottom:0}
+.row small{color:var(--muted);display:block;margin-top:4px;font-size:11px}
+.money.negative,.money.positive{color:var(--text)}
+label.s{display:block;font-size:11px;color:var(--muted);margin:12px 0 6px}
+input.s,select.s{width:100%;height:44px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--text);padding:0 12px;outline:none;font-size:14px}
+input.s:focus,select.s:focus{border-color:var(--muted)}
+.tabs{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(680px,100%);display:grid;grid-template-columns:repeat(3,1fr);background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-top:1px solid var(--line);padding:8px 12px calc(8px + var(--safe-b));z-index:10}
+.tab{border:0;background:transparent;color:var(--muted);padding:10px 5px;border-radius:999px;font-size:12px;font-weight:650}
+.tab.active{background:var(--surface);color:var(--text)}
+.panel{display:none}
+.panel.active{display:block}
+.budget{display:grid;gap:9px}
+.budget-item{border:1px solid var(--line);border-radius:14px;padding:12px}
+.budget-head{display:flex;justify-content:space-between;gap:8px;font-size:12px;margin-bottom:8px}
+.empty{text-align:center;color:var(--muted);font-size:12px;padding:24px 8px}
+.sr{position:absolute;clip:rect(0,0,0,0);clip-path:inset(50%);width:1px;height:1px;overflow:hidden}
+.spinner{display:inline-block;width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(min-width:700px){.app{padding-left:22px;padding-right:22px}.card{padding:20px}.entry-layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(230px,.8fr);gap:14px;align-items:start}}
+@media(max-width:420px){.app{padding-left:12px;padding-right:12px}.card{padding:15px;border-radius:18px}.grid{gap:7px}.field{padding:8px}.stat b{font-size:18px}}
+
 </style>
 </head>
 <body>
 <div class="app">
-<header class="top"><div class="brand">AI Ledger<small>NATURAL LANGUAGE FINANCE</small></div><div class="status" id="saveStatus">LOCAL READY</div></header>
+<header class="top"><div class="brand">AI Ledger<small>自然语言记账 · 理解你的每一种表达</small></div><div class="status" id="saveStatus">LOCAL READY</div></header>
 <main>
 <section class="panel active" id="panel-entry">
- <div class="card"><h2>自然语言记账</h2><p class="hint">直接描述支出、收入、转账、新账户或预算。系统不会提供传统按钮式记账。</p>
-  <div class="chips"><button class="chip" data-example="招商银行信用卡消费28元，在便利店购买饮料">消费示例</button><button class="chip" data-example="从建设银行转1000元到工商银行">转账示例</button><button class="chip" data-example="每月餐饮预算设为1500元">预算示例</button></div>
-  <div class="input-wrap"><textarea id="naturalInput" class="composer" placeholder="例如：工资到账8000元到建行，然后转3000元到招行，再用招行支付299元买耳机。"></textarea><button id="analyzeText" class="send">分析</button></div>
+ <div class="card"><h2>记一笔，像聊天一样简单</h2><p class="hint">不用按格式，也不用把信息说完整。直接描述发生了什么，AI 会结合账户和记录理解你的意思。</p>
+  <div class="chips"><button class="chip" data-example="早上赶时间，在楼下买了杯美式，32块，还是上次那个账户">随口记消费</button><button class="chip" data-example="工资刚到账一万二，建行的">记录收入</button><button class="chip" data-example="这个月外卖花了多少？">问问支出</button></div>
+  <div class="input-wrap"><textarea id="naturalInput" class="composer" placeholder="例如：早上买咖啡花了32块；刚才建行转了2000到招行，晚上和朋友吃饭花了86。想到什么就说什么……"></textarea><button id="analyzeText" class="send">分析</button></div>
  </div>
- <div class="card"><h3>图片识别</h3><label class="drop" for="imageInput"><div><strong>点击选择银行截图、消费截图或小票</strong><div class="hint">JPEG / PNG / WebP，图片会发送至你配置的 API</div></div><input id="imageInput" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"><img id="imagePreview" class="preview-img" hidden alt="待识别图片"></label><div class="actions"><button id="analyzeImage" class="btn primary" disabled>识别图片</button><button id="clearImage" class="btn" disabled>清除</button></div></div>
+ <div class="card"><h3>图片识别</h3><label class="drop" for="imageInput"><div><strong>点击选择银行截图、消费截图或小票</strong><div class="hint">JPEG / PNG / WebP · 发送至你配置的 AI 接口</div></div><input id="imageInput" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"><img id="imagePreview" class="preview-img" hidden alt="待识别图片"></label><div class="actions"><button id="analyzeImage" class="btn primary" disabled>识别图片</button><button id="clearImage" class="btn" disabled>清除</button></div></div>
  <div id="message" aria-live="polite"></div>
  <div class="card parsed" id="parsedCard"><h3>AI 解析预览</h3><div id="parsedFields" class="grid"></div><div class="actions"><button id="confirmParsed" class="btn primary">确认记录</button><button id="discardParsed" class="btn">忽略</button></div><p class="hint">确认前不会写入账户余额或交易记录。</p></div>
  <div class="card"><h3>最近记录</h3><div id="recentList" class="list"><div class="empty">暂无记录</div></div></div>
@@ -37,7 +127,7 @@
  <div class="card"><h3>账户</h3><div id="accountList" class="list"><div class="empty">暂无账户</div></div></div>
 </section>
 <section class="panel" id="panel-settings">
- <div class="card"><h2>API 设置</h2><div class="notice warn">API Key 由你手动填写，仅保存在当前浏览器的本地存储中，不写入 HTML 文件或 GitHub 仓库。前端直连仍可能暴露密钥，更安全的方式是填写你自己的 Cloudflare Worker Endpoint。</div>
+ <div class="card"><h2>API 设置</h2><div class="notice warn">API Key 仅保存在当前浏览器。记账描述以及用于上下文理解的账户名称、近期记录摘要会发送到你配置的 API；前端直连仍可能暴露密钥，建议使用自己的 Cloudflare Worker Endpoint。</div>
   <label class="s" for="apiEndpoint">API Endpoint</label><input class="s" id="apiEndpoint" placeholder="https://api.deepseek.com/chat/completions">
   <label class="s" for="apiKey">API Key</label><input class="s" id="apiKey" type="password" autocomplete="off" placeholder="sk-...">
   <label class="s" for="apiModel">Model</label><input class="s" id="apiModel" placeholder="deepseek-chat">
@@ -64,22 +154,137 @@ function all(store){return new Promise((res,rej)=>{const r=db.transaction(store)
 function put(store,obj){return new Promise((res,rej)=>{const r=db.transaction(store,'readwrite').objectStore(store).put(obj);r.onsuccess=()=>res(obj);r.onerror=()=>rej(r.error)})}
 function clearStore(store){return new Promise((res,rej)=>{const r=db.transaction(store,'readwrite').objectStore(store).clear();r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}
 function setting(){return {endpoint:localStorage.getItem('ledger.endpoint')||'https://api.deepseek.com/chat/completions',key:localStorage.getItem('ledger.key')||'',model:localStorage.getItem('ledger.model')||'deepseek-chat',rules:localStorage.getItem('ledger.rules')||''}}
-function fieldsHtml(o){const vals=[['类型',o.type],['金额',o.amount==null?'待补充':money(o.amount)],['账户',o.account],['目标账户',o.toAccount],['商户',o.merchant],['分类',o.category],['商品',Array.isArray(o.items)?o.items.join('、'):o.items],['时间',o.occurredAt],['预算',o.budgetName],['置信度',o.confidence==null?'':Math.round(o.confidence*100)+'%']];return vals.filter(x=>clean(x[1])).map(([k,v])=>`<div class="field"><span>${escapeHtml(k)}</span><b>${escapeHtml(v)}</b></div>`).join('')}
+function fieldsHtml(o){
+ const typeNames={expense:'支出',income:'收入',transfer:'转账',create_account:'创建账户',budget:'设置预算',balance_snapshot:'更新余额'};
+ return (o.actions||[]).map((a,index)=>{
+  const amount=a.amount==null?'待补充':money(a.amount);
+  const occurred=a.occurredAt?new Date(a.occurredAt).toLocaleString('zh-CN'):'未指定（自动按当前时间）';
+  const vals=[['金额',amount],['账户',a.account||'未指定'],['转入账户',a.toAccount||''],['商户',a.merchant||''],['分类',a.category||''],['内容',Array.isArray(a.items)?a.items.join('、'):(a.items||'')],['时间',occurred],['预算',a.budgetName||''],['预算额度',a.budgetLimit==null?'':money(a.budgetLimit)],['余额',a.balance==null?'':money(a.balance)]];
+  return '<div class="parsed-action"><div class="parsed-action-head"><strong>第'+(index+1)+'项 · '+escapeHtml(typeNames[a.type]||a.type||'待判断')+'</strong></div><div class="grid">'+vals.filter(x=>x[1]!==''&&x[1]!=null).map(x=>'<div class="field"><span>'+escapeHtml(x[0])+'</span><b>'+escapeHtml(x[1])+'</b></div>').join('')+'</div></div>';
+ }).join('');
+}
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function systemPrompt(){return `你是个人财务数据解析器。只返回严格JSON，不要Markdown。根据用户自然语言或图片提取一项主要操作。支持 expense,income,transfer,create_account,budget,balance_snapshot。结构：{"type":"","amount":number|null,"currency":"CNY","account":"","toAccount":"","merchant":"","category":"","items":[],"occurredAt":"ISO或空","budgetName":"","budgetLimit":number|null,"balance":number|null,"confidence":0到1,"needsClarification":false,"clarification":"","note":""}。不得猜测缺失金额；不确定时设null并needsClarification=true。转账必须包含account和toAccount。当前时间：${new Date().toISOString()}。用户快捷规则：${setting().rules||'无'}`}
-function parseJson(text){let t=clean(text).replace(/^```json\s*/i,'').replace(/```$/,'').trim();const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a>=0&&b>a)t=t.slice(a,b+1);return JSON.parse(t)}
-async function callAI(userContent){const s=setting();if(!s.endpoint||!s.key)throw new Error('请先在“设置”中填写 API Endpoint 和 API Key。');const body={model:s.model,messages:[{role:'system',content:systemPrompt()},{role:'user',content:userContent}],temperature:0.1,response_format:{type:'json_object'}};const r=await fetch(s.endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.key},body:JSON.stringify(body)});const text=await r.text();if(!r.ok)throw new Error(`API ${r.status}: ${text.slice(0,220)}`);const data=JSON.parse(text),content=data.choices?.[0]?.message?.content;if(!content)throw new Error('API 未返回可解析内容。');await recordUsage(data.usage||{});return parseJson(content)}
+function systemPrompt(context){
+ const now=new Date().toLocaleString('zh-CN',{hour12:false});
+ const zone=Intl.DateTimeFormat().resolvedOptions().timeZone||'local';
+ return [
+ '你是一个真正理解自然语言的个人财务助理，不是表单字段抽取器。用户可以用口语、简称、错别字、省略句、混合叙述表达，不需要按任何模板说话。',
+ '你的首要任务是理解用户真正想做什么。根据语境识别记账、账户操作、预算设置或财务查询。不要把所有输入都强行解释成一笔支出。',
+ '允许用户省略商户、账户、分类、商品、日期等非必要信息。能从本次描述、快捷规则、已存在账户和近期记录可靠推断时就推断；不能确定时留空，不要为了填满字段而追问。',
+ '账户匹配优先使用已存在账户的名称和用户快捷规则。只有在现有账户唯一且语境明显时才自动选用；多个账户无法区分时，普通支出或收入仍可先记为未指定账户，不要因此阻止记录。',
+ '分类、商户、商品可以基于常识和上下文推断。例如咖啡店购买美式通常属于咖啡/餐饮；外卖通常属于餐饮。不要把推断出的内容伪装成用户明确说过。',
+ '金额处理：识别阿拉伯数字和中文金额表达。普通支出或收入只有在金额缺失或无法可靠理解时才需要追问金额；绝对不能编造金额。',
+ '转账必须能确定金额、转出账户和转入账户。缺少其中任何一个且上下文无法补足时，只追问最关键的缺失信息。绝不能猜测资金流向。',
+ '时间处理：没有指定时间时默认当前时间；今天、昨天、上周等相对时间按当前本地时间计算。输出 ISO 8601 时间。',
+ '一段话可能包含多笔交易或多个操作。必须按用户叙述顺序提取全部操作，放进 actions 数组，不得只保留第一笔或所谓主要操作。',
+ '识别财务查询时，使用提供的本地账户、近期记录和预算上下文回答；查询不产生 actions。一般聊天或意图不清时，不要创建记录。',
+ '只在真正影响记账正确性的必要信息缺失或意图存在实质歧义时 needsClarification=true。clarification 只问一个最有价值的问题，语气自然。不要要求用户补全全部字段。',
+ '可用操作类型仅限 expense、income、transfer、create_account、budget、balance_snapshot。支出/收入的 account、merchant、category、items 都是可选字段；transfer 的 amount/account/toAccount 必填；create_account 的 account 必填；budget 的 budgetLimit 必填；balance_snapshot 的 account/balance 必填。',
+ '输出严格 JSON，不要 Markdown、代码围栏或额外文字，结构为：{"intent":"record|query|conversation|clarify","answer":"","needsClarification":false,"clarification":"","actions":[{"type":"expense|income|transfer|create_account|budget|balance_snapshot","amount":null,"currency":"CNY","account":"","toAccount":"","merchant":"","category":"","items":[],"occurredAt":"","budgetName":"","budgetLimit":null,"balance":null,"confidence":0.0,"note":""}]}。无记录操作时 actions 必须是空数组。',
+ '金额必须是数字或 null。没有信息的字符串字段设为空字符串，items 可为空数组。confidence 表示你的理解把握程度，不是用户确认状态。',
+ '当前本地时间：'+now+'；时区：'+zone+'。用户快捷规则：'+(setting().rules||'无')+'。本地上下文：'+JSON.stringify(context)
+ ].join('\n');
+}
+async function buildAIContext(){
+ const [accounts,transactions,budgets]=await Promise.all([all('accounts'),all('transactions'),all('budgets')]);
+ return {
+  accounts:accounts.map(a=>({name:a.name})),
+  recentTransactions:transactions.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,10).map(t=>({type:t.type,amount:t.amount,account:t.account||'',merchant:t.merchant||'',category:t.category||'',items:t.items||[],occurredAt:t.occurredAt||''})),
+  budgets:budgets.map(b=>({name:b.name,category:b.category||'',limit:b.limit}))
+ };
+}
+function normalizeAIResult(raw){
+ if(!raw||typeof raw!=='object')throw new Error('AI 返回内容不是有效对象。');
+ const source=Array.isArray(raw.actions)?raw.actions:(raw.type?[raw]:[]);
+ const actions=source.filter(a=>a&&typeof a==='object'&&clean(a.type)).map(a=>({
+  ...a,
+  amount:a.amount==null||a.amount===''?null:Number(a.amount),
+  budgetLimit:a.budgetLimit==null||a.budgetLimit===''?null:Number(a.budgetLimit),
+  balance:a.balance==null||a.balance===''?null:Number(a.balance),
+  account:clean(a.account),toAccount:clean(a.toAccount),merchant:clean(a.merchant),
+  category:clean(a.category),budgetName:clean(a.budgetName),
+  items:Array.isArray(a.items)?a.items:(clean(a.items)?[clean(a.items)]:[]),
+  occurredAt:clean(a.occurredAt)||( ['expense','income','transfer'].includes(a.type)?new Date().toISOString():''),
+  currency:clean(a.currency)||'CNY'
+ }));
+ return {intent:clean(raw.intent)||(actions.length?'record':'conversation'),answer:clean(raw.answer),needsClarification:Boolean(raw.needsClarification),clarification:clean(raw.clarification),actions};
+}
+async function callAI(userContent){
+ const s=setting();if(!s.endpoint||!s.key)throw new Error('请先在“设置”中填写 API Endpoint 和 API Key。');
+ const context=await buildAIContext();
+ const body={model:s.model,messages:[{role:'system',content:systemPrompt(context)},{role:'user',content:userContent}],temperature:0.2,response_format:{type:'json_object'}};
+ const r=await fetch(s.endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.key},body:JSON.stringify(body)});
+ const text=await r.text();if(!r.ok)throw new Error('API '+r.status+': '+text.slice(0,220));
+ const data=JSON.parse(text),content=data.choices?.[0]?.message?.content;
+ if(!content)throw new Error('API 未返回可解析内容。');
+ await recordUsage(data.usage||{});
+ return normalizeAIResult(parseJson(content));
+}
+
 async function recordUsage(u){const obj={id:uid(),time:Date.now(),prompt:Number(u.prompt_tokens||0),completion:Number(u.completion_tokens||0),total:Number(u.total_tokens||0)};await put('tokenUsage',obj);renderTokens()}
-function showPending(o){pending={...o,occurredAt:o.occurredAt||new Date().toISOString()};$('parsedFields').innerHTML=fieldsHtml(pending);$('parsedCard').classList.add('show'); if(pending.needsClarification)msg('需要补充：'+escapeHtml(pending.clarification||'部分信息不完整'),'warn'); else msg('解析完成，请核对后确认。')}
-async function analyze(content,button){button.disabled=true;const old=button.textContent;button.innerHTML='<span class="spinner"></span> 处理中';msg('');try{showPending(await callAI(content))}catch(e){msg(escapeHtml(e.message),'error')}finally{button.disabled=false;button.textContent=old}}
+function showPending(result){
+ if(result.intent==='query'||!result.actions.length){
+  pending=null;$('parsedCard').classList.remove('show');
+  msg(escapeHtml(result.answer||result.clarification||'我理解了，但还需要你再描述一下具体想查询或记录什么。'),result.needsClarification?'warn':'');
+  return;
+ }
+ pending=result;
+ $('parsedFields').innerHTML=fieldsHtml(pending);
+ $('parsedCard').classList.add('show');
+ if(result.needsClarification)msg(escapeHtml(result.clarification||'有一项关键信息需要确认。可以直接补充一句，不用填写表格。'),'warn');
+ else msg('已理解 '+result.actions.length+' 项操作。未提及的非必要信息不会要求你补填，请核对后确认。');
+}
+function analyze(content,button){
+ button.disabled=true;const old=button.textContent;button.innerHTML='<span class="spinner"></span> 正在理解';
+ msg('');
+ callAI(content).then(showPending).catch(e=>msg(escapeHtml(e.message),'error')).finally(()=>{button.disabled=false;button.textContent=old});
+}
+
 async function findAccount(name){if(!clean(name))return null;const accounts=await all('accounts');return accounts.find(a=>a.name===clean(name))||null}
 async function ensureAccount(name,balance=0){if(!clean(name))return null;let a=await findAccount(name);if(!a){a={id:uid(),name:clean(name),balance:Number(balance||0),createdAt:Date.now()};await put('accounts',a)}return a}
-async function confirmPending(){if(!pending)return;const p=pending;if(p.needsClarification&&p.amount==null&&['expense','income','transfer'].includes(p.type)){msg('金额缺失，不能确认这条资金记录。','error');return}
- if(p.type==='budget'){await put('budgets',{id:uid(),name:p.budgetName||p.category||'未命名预算',limit:Number(p.budgetLimit||p.amount||0),category:p.category||'',period:'month',createdAt:Date.now()})}
- else if(p.type==='create_account'){await ensureAccount(p.account,p.balance||0)}
- else if(p.type==='balance_snapshot'){const a=await ensureAccount(p.account,p.balance||0);a.balance=Number(p.balance||0);a.verifiedAt=Date.now();await put('accounts',a)}
- else {const amount=Number(p.amount||0),from=await ensureAccount(p.account,0);let to=null;if(p.type==='expense'&&from){from.balance-=amount;await put('accounts',from)}if(p.type==='income'&&from){from.balance+=amount;await put('accounts',from)}if(p.type==='transfer'){to=await ensureAccount(p.toAccount,0);if(from){from.balance-=amount;await put('accounts',from)}if(to){to.balance+=amount;await put('accounts',to)}}await put('transactions',{id:uid(),...p,amount,accountId:from?.id||'',toAccountId:to?.id||'',createdAt:Date.now(),source:imageData?'image':'natural-language'})}
- pending=null;$('parsedCard').classList.remove('show');$('naturalInput').value='';msg('已确认并保存。');saveStatus('SAVED');await renderAll()}
+function requiredIssues(actions){
+ const issues=[];
+ actions.forEach((a,i)=>{
+  const n='第'+(i+1)+'项';
+  if(['expense','income','transfer'].includes(a.type)&&!(Number.isFinite(a.amount)&&a.amount>0))issues.push(n+'需要金额');
+  if(a.type==='transfer'){if(!a.account)issues.push(n+'需要转出账户');if(!a.toAccount)issues.push(n+'需要转入账户');}
+  if(a.type==='create_account'&&!a.account)issues.push(n+'需要账户名称');
+  if(a.type==='budget'&&!(Number.isFinite(a.budgetLimit??a.amount)&&(a.budgetLimit??a.amount)>0))issues.push(n+'需要预算额度');
+  if(a.type==='balance_snapshot'&&(!a.account||!Number.isFinite(a.balance)))issues.push(n+'需要账户名称和余额');
+  if(!['expense','income','transfer','create_account','budget','balance_snapshot'].includes(a.type))issues.push(n+'的操作类型暂不支持');
+ });
+ return issues;
+}
+async function confirmPending(){
+ if(!pending)return;
+ const issues=requiredIssues(pending.actions);
+ if(issues.length){msg('只需要补充必要信息：'+escapeHtml(issues.join('；'))+'。其他信息不必补填。','warn');return;}
+ if(pending.needsClarification&&pending.clarification){msg(escapeHtml(pending.clarification)+' 可以直接在上方输入框补充。','warn');return;}
+ const actions=pending.actions;
+ for(const p of actions){
+  if(p.type==='budget'){
+   await put('budgets',{id:uid(),name:p.budgetName||p.category||'未命名预算',limit:Number(p.budgetLimit??p.amount),category:p.category||'',period:'month',createdAt:Date.now()});
+  }else if(p.type==='create_account'){
+   await ensureAccount(p.account,p.balance||0);
+  }else if(p.type==='balance_snapshot'){
+   const a=await ensureAccount(p.account,p.balance||0);a.balance=Number(p.balance);a.verifiedAt=Date.now();await put('accounts',a);
+  }else{
+   const amount=Number(p.amount);
+   const from=await ensureAccount(p.account,0);
+   let to=null;
+   if(p.type==='expense'&&from){from.balance-=amount;await put('accounts',from);}
+   if(p.type==='income'&&from){from.balance+=amount;await put('accounts',from);}
+   if(p.type==='transfer'){
+    to=await ensureAccount(p.toAccount,0);
+    if(from){from.balance-=amount;await put('accounts',from);}
+    if(to){to.balance+=amount;await put('accounts',to);}
+   }
+   await put('transactions',{id:uid(),...p,amount,accountId:from?.id||'',toAccountId:to?.id||'',createdAt:Date.now(),source:imageData?'image':'natural-language'});
+  }
+ }
+ pending=null;$('parsedCard').classList.remove('show');$('naturalInput').value='';imageData=null;
+ msg('已确认并保存 '+actions.length+' 项操作。');saveStatus('SAVED');await renderAll();
+}
 function inRange(ts){const d=new Date(ts),now=new Date();if(activeRange==='day')return d.toDateString()===now.toDateString();if(activeRange==='week')return now-d<=7*864e5;if(activeRange==='month')return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();return d.getFullYear()===now.getFullYear()}
 async function renderRecent(){const tx=(await all('transactions')).sort((a,b)=>b.createdAt-a.createdAt).slice(0,8);$('recentList').innerHTML=tx.length?tx.map(t=>`<div class="row"><div><b>${escapeHtml(t.merchant||t.category||t.type)}</b><small>${escapeHtml(t.account||'')} · ${new Date(t.occurredAt||t.createdAt).toLocaleString('zh-CN')}</small></div><b class="money ${t.type==='income'?'positive':'negative'}">${t.type==='income'?'+':t.type==='transfer'?'':'-'}${money(t.amount)}</b></div>`).join(''):'<div class="empty">暂无记录</div>'}
 async function renderInsights(){const [tx,ac,bud]=await Promise.all([all('transactions'),all('accounts'),all('budgets')]);const period=tx.filter(t=>inRange(t.occurredAt||t.createdAt)),expense=period.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0),income=period.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);$('totalAssets').textContent=money(ac.reduce((s,a)=>s+a.balance,0));$('periodExpense').textContent=money(expense);$('periodIncome').textContent=money(income);$('netFlow').textContent=money(income-expense);
