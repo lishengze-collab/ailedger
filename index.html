@@ -193,6 +193,7 @@ async function buildAIContext(){
   budgets:budgets.map(b=>({name:b.name,category:b.category||'',limit:b.limit}))
  };
 }
+function parseJson(text){let t=clean(text).replace(/^```json\s*/i,'').replace(/```$/,'').trim();const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a>=0&&b>a)t=t.slice(a,b+1);return JSON.parse(t);}
 function normalizeAIResult(raw){
  if(!raw||typeof raw!=='object')throw new Error('AI 返回内容不是有效对象。');
  const source=Array.isArray(raw.actions)?raw.actions:(raw.type?[raw]:[]);
