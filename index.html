@@ -123,6 +123,31 @@ textarea{display:block;width:100%;min-height:106px;max-height:220px;resize:verti
 .modal-tx b{font-size:calc(12px * var(--font-scale,1))}
 .finance-analysis{font-size:calc(12px * var(--font-scale,1))}
 .setting-row{font-size:calc(12px * var(--font-scale,1))}
+
+/* ===== UI 优化覆盖 ===== */
+/* 顶部账户总览：高度自适应，不再裁切账户条 */
+#page-home.active{overflow-y:auto;overflow-x:hidden}
+.home-overview{flex:0 0 auto;min-height:0;max-height:none;overflow:visible}
+.account-strip{flex:none;margin-top:10px;padding:2px 0 4px;max-width:100%;-webkit-overflow-scrolling:touch}
+.account-chip{min-width:112px;max-width:170px}
+/* 输入区：下半区高度自适应，提示信息放在输入框与按钮之间 */
+.capture{flex:1 1 auto;min-height:200px;grid-template-rows:minmax(0,1fr) auto}
+.capture-bottom{gap:8px;justify-content:flex-start}
+#page-home .message.show{position:static;left:auto;bottom:auto;transform:none;width:auto;box-shadow:none;margin:0;padding:7px 10px;max-height:66px;overflow:auto;font-size:calc(12px * var(--font-scale,1));line-height:1.5}
+/* 功能按钮放大 */
+.upload-action{font-size:15px;height:50px}
+.upload-action svg{width:21px;height:21px}
+.upload-clear{font-size:14px;height:50px;padding:0 14px}
+.capture-actions .send{font-size:17px;height:50px}
+.btn{font-size:14px;height:44px}
+.chips button,.ranges button{font-size:13px;padding:9px 15px}
+.themes button{font-size:13px;padding:11px 4px}
+.section-head button{font-size:13px}
+.swipe-delete{font-size:13px}
+.dock{grid-template-columns:repeat(4,1fr)}
+.tab{font-size:11px;height:54px}
+.tab svg{width:21px;height:21px}
+@media(max-height:690px){.home-overview{min-height:0}.upload-action,.capture-actions .send,.upload-clear{height:44px}}
 </style>
 </head>
 <body><div id="app">
@@ -143,6 +168,7 @@ textarea{display:block;width:100%;min-height:106px;max-height:220px;resize:verti
   <div class="capture-input"><textarea id="naturalInput" placeholder="描述一笔收支，或上传银行卡 / 支付截图……"></textarea></div>
   <div class="capture-bottom">
    <div class="attachments" id="attachments"></div>
+   <div class="message" id="message"></div>
    <div class="capture-actions">
     <button class="upload-action" id="pickImages"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/></svg><span>上传图片</span></button>
     <button class="upload-clear" id="clearComposer" aria-label="清空输入">清空</button>
@@ -151,7 +177,6 @@ textarea{display:block;width:100%;min-height:106px;max-height:220px;resize:verti
    <input type="file" id="imageInput" accept="image/*" multiple>
   </div>
  </div>
- <div class="message" id="message"></div>
  <div class="preview" id="preview"><div class="preview-head"><b id="previewTitle">AI 理解结果</b><span id="previewCount"></span></div><div class="ai-answer" id="aiAnswer"></div><div id="previewActions"></div><div class="btnrow"><button class="btn flex" id="discardPending">取消</button><button class="btn primary flex" id="confirmPending">确认保存</button></div></div>
 </section>
 <section class="page" id="page-transactions">
@@ -218,6 +243,7 @@ const DB='ai-ledger-v1',VERSION=2,STORES=['accounts','transactions','budgets','t
 let db=null,pending=null,images=[],range='month',detailRange='day',filter='all',deferredInstall=null;
 const uid=()=>crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);
 const clean=v=>String(v==null?'':v).trim(),money=v=>new Intl.NumberFormat('zh-CN',{style:'currency',currency:'CNY',maximumFractionDigits:2}).format(Number(v||0));
+const r2=v=>Math.round((Number(v||0)+Number.EPSILON)*100)/100;
 const time=t=>{const n=Date.parse(t.occurredAt||'');return Number.isFinite(n)?n:Number(t.createdAt||Date.now());};
 function verifiedTime(a){const v=a&&a.verifiedAt;if(v==null||v==='')return 0;const n=Number(v);if(Number.isFinite(n))return n;const d=Date.parse(v);return Number.isFinite(d)?d:0;}
 function affectsBalanceAt(a,eventAt){const v=verifiedTime(a);return !v||eventAt>=v;}
@@ -265,7 +291,9 @@ async function ensureAccount(name,meta){
  if(!a){
   a={id:uid(),name:n,balance:0,accountType:guessAccountType(n,meta.accountType),institution:clean(meta.institution),last4:clean(meta.last4),currency:clean(meta.currency)||'CNY',createdAt:Date.now(),balanceInitialized:false};
  }else{
-  a.accountType=guessAccountType(n,meta.accountType||a.accountType);
+  /* 已有账户：仅当识别出更具体的类型时才更新，避免普通记账把信用卡等降级为"其他账户" */
+  const t=guessAccountType(n,meta.accountType||a.accountType);
+  if(!a.accountType||t!=='other')a.accountType=t;
   if(meta.institution)a.institution=clean(meta.institution);
   if(meta.last4)a.last4=clean(meta.last4);
   if(meta.currency)a.currency=clean(meta.currency);
@@ -351,7 +379,7 @@ async function callAI(text,pics){
  await recordUsage(data.usage||{});return normalize(parse(content));
 }
 async function recordUsage(u){await put('tokenUsage',{id:uid(),time:Date.now(),prompt:Number(u.prompt_tokens||0),completion:Number(u.completion_tokens||0),total:Number(u.total_tokens||0)});renderTokens();}
-function issues(a){let p=[];if(['expense','income','transfer'].includes(a.type)&&!(Number.isFinite(a.amount)&&a.amount>0))p.push('金额');if(a.type==='transfer'&&(!a.account||!a.toAccount))p.push('转出/转入账户');if(a.type==='transfer'&&a.account&&a.toAccount&&accountKey(a.account)===accountKey(a.toAccount))p.push('转出和转入必须是不同账户');if(a.type==='create_account'&&!a.account)p.push('账户名');if(a.type==='budget'&&!(Number.isFinite(a.budgetLimit??a.amount)&&(a.budgetLimit??a.amount)>0))p.push('预算额度');if(a.type==='balance_snapshot'&&(!a.account||!Number.isFinite(a.balance)))p.push('账户/截图余额');if(!['expense','income','transfer','create_account','budget','balance_snapshot'].includes(a.type))p.push('操作类型');return p;}
+function issues(a){let p=[];if(['expense','income','transfer'].includes(a.type)&&!(Number.isFinite(a.amount)&&a.amount>0))p.push('金额');if(['expense','income','transfer'].includes(a.type)&&Number.isFinite(a.amount)&&a.amount>1e9)p.push('金额过大，请核实');if(a.type==='transfer'&&(!a.account||!a.toAccount))p.push('转出/转入账户');if(a.type==='transfer'&&a.account&&a.toAccount&&accountKey(a.account)===accountKey(a.toAccount))p.push('转出和转入必须是不同账户');if(a.type==='create_account'&&!a.account)p.push('账户名');if(a.type==='budget'&&!(Number.isFinite(a.budgetLimit??a.amount)&&(a.budgetLimit??a.amount)>0))p.push('预算额度');if(a.type==='balance_snapshot'&&(!a.account||!Number.isFinite(a.balance)))p.push('账户/截图余额');if(!['expense','income','transfer','create_account','budget','balance_snapshot'].includes(a.type))p.push('操作类型');return p;}
 async function actionHtml(a,i){
  const names={expense:'支出',income:'收入',transfer:'转账',create_account:'创建账户',budget:'预算',balance_snapshot:'资金校准'},v=[];
  if(a.type==='balance_snapshot'){const ac=await account(a.account),diff=ac?Number(a.balance||0)-Number(ac.balance||0):null;v.push(['截图余额',a.balance==null?'未识别':money(a.balance)],['账户',a.account],['本地账面余额',ac?money(ac.balance):'首次校准'],['与本地差额',ac?money(diff):'首次校准，无历史基准'],['识别说明',a.note||'']);if(ac&&!ac.verifiedAt)v.push(['说明','尚无历史校准基准，差额仅供参考']);}
@@ -403,17 +431,17 @@ async function applyAction(a){
  if(a.type==='budget'){await put('budgets',{id:uid(),name:a.budgetName||a.category||'未命名预算',limit:Number(a.budgetLimit??a.amount),category:a.category||'',createdAt:Date.now()});return null;}
  if(a.type==='create_account'){
   const ac=await ensureAccount(a.account,{accountType:a.accountType,institution:a.institution,last4:a.last4,currency:a.currency,creditLimit:a.creditLimit,availableCredit:a.availableCredit});
-  if(a.balance!=null){ac.balance=Number(a.balance);ac.verifiedAt=Date.parse(a.occurredAt)||Date.now();ac.balanceInitialized=true;}
+  if(a.balance!=null){ac.balance=r2(a.balance);ac.verifiedAt=Date.parse(a.occurredAt)||Date.now();ac.balanceInitialized=true;}
   await put('accounts',ac);return null;
  }
  if(a.type==='balance_snapshot'){
   const ac=await ensureAccount(a.account,{accountType:a.accountType,institution:a.institution,last4:a.last4,currency:a.currency,creditLimit:a.creditLimit,availableCredit:a.availableCredit});
-  const previous=Number(ac.balance||0),base=!!ac.balanceInitialized||!!ac.verifiedAt,statement=Number(a.balance),snapshotAt=Date.parse(a.occurredAt)||Date.now();
+  const previous=Number(ac.balance||0),base=!!ac.balanceInitialized||!!ac.verifiedAt,statement=r2(a.balance),snapshotAt=Date.parse(a.occurredAt)||Date.now();
   if(a.availableCredit!=null)ac.availableCredit=Number(a.availableCredit);if(a.creditLimit!=null)ac.creditLimit=Number(a.creditLimit);
-  await put('reconciliations',{id:uid(),accountId:ac.id,accountName:ac.name,previousBalance:previous,statementBalance:statement,difference:base?statement-previous:null,analysis:a.note||'',createdAt:Date.now(),occurredAt:a.occurredAt||localISO(),source:'image',accountType:ac.accountType,previousVerifiedAt:ac.verifiedAt||null});
+  await put('reconciliations',{id:uid(),accountId:ac.id,accountName:ac.name,previousBalance:previous,statementBalance:statement,difference:base?r2(statement-previous):null,analysis:a.note||'',createdAt:Date.now(),occurredAt:a.occurredAt||localISO(),source:'image',accountType:ac.accountType,previousVerifiedAt:ac.verifiedAt||null});
   ac.balance=statement;ac.verifiedAt=snapshotAt;ac.balanceInitialized=true;await put('accounts',ac);return null;
  }
- const amount=Number(a.amount),eventAt=Date.parse(a.occurredAt)||Date.now(),meta={accountType:a.accountType,institution:a.institution,last4:a.last4,currency:a.currency};
+ const amount=r2(a.amount),eventAt=Date.parse(a.occurredAt)||Date.now(),meta={accountType:a.accountType,institution:a.institution,last4:a.last4,currency:a.currency};
  let from=a.account?await ensureAccount(a.account,meta):null;
  if(!from&&!a.account){const known=await all('accounts');if(known.length===1)from=known[0];}
  if(from)a.account=from.name;
@@ -423,16 +451,19 @@ async function applyAction(a){
  const existing=await all('transactions');
  const duplicate=existing.some(t=>t.type===a.type&&Number(t.amount)===amount&&accountKey(t.account)===accountKey(a.account)&&accountKey(t.toAccount)===accountKey(a.toAccount)&&accountKey(t.merchant)===accountKey(a.merchant)&&accountKey(t.category)===accountKey(a.category)&&Math.abs(time(t)-eventAt)<=90000);
  if(duplicate)return '检测到相同流水在 90 秒内已保存，已跳过重复记录。';
- if(a.type==='expense'&&from&&affectsBalanceAt(from,eventAt))from.balance=Number(from.balance||0)-amount;
- if(a.type==='income'&&from&&affectsBalanceAt(from,eventAt))from.balance=Number(from.balance||0)+amount;
+ let notice=null;
+ if(a.type==='expense'&&from){if(affectsBalanceAt(from,eventAt))from.balance=r2(Number(from.balance||0)-amount);else notice='该笔发生在账户最近一次校准之前，已保存流水但未改变余额。';}
+ if(a.type==='income'&&from){if(affectsBalanceAt(from,eventAt))from.balance=r2(Number(from.balance||0)+amount);else notice='该笔发生在账户最近一次校准之前，已保存流水但未改变余额。';}
  if(a.type==='transfer'){
-  if(from&&affectsBalanceAt(from,eventAt))from.balance=Number(from.balance||0)-amount;
-  if(to&&affectsBalanceAt(to,eventAt))to.balance=Number(to.balance||0)+amount;
+  let skipped=false;
+  if(from){if(affectsBalanceAt(from,eventAt))from.balance=r2(Number(from.balance||0)-amount);else skipped=true;}
+  if(to){if(affectsBalanceAt(to,eventAt))to.balance=r2(Number(to.balance||0)+amount);else skipped=true;}
+  if(skipped)notice='转账发生在某账户最近一次校准之前，该账户余额未改变。';
  }
  if(from)await put('accounts',from);if(to)await put('accounts',to);
  await put('transactions',{id:uid(),...a,amount,accountId:from?from.id:'',toAccountId:to?to.id:'',createdAt:Date.now(),source:images.length?'image':'natural-language'});
  if((a.type==='expense'||a.type==='income')&&!from)return '这笔收支没有匹配到具体账户，流水已保存但余额未变。请在描述中补充账户名称。';
- return null;
+ return notice;
 }
 async function confirmPending(){
  if(!pending)return;
@@ -457,9 +488,9 @@ async function deleteTx(id,kind){
  }
  const t=(await all('transactions')).find(x=>x.id===id);if(!t)return;
  const acs=await all('accounts'),from=acs.find(x=>x.id===t.accountId),to=acs.find(x=>x.id===t.toAccountId),v=Number(t.amount||0),eventAt=time(t),after=a=>affectsBalanceAt(a,eventAt);
- if(t.type==='expense'&&from&&after(from))from.balance=Number(from.balance||0)+v;
- if(t.type==='income'&&from&&after(from))from.balance=Number(from.balance||0)-v;
- if(t.type==='transfer'){if(from&&after(from)){from.balance=Number(from.balance||0)+v;await put('accounts',from);}if(to&&after(to)){to.balance=Number(to.balance||0)-v;await put('accounts',to);}}
+ if(t.type==='expense'&&from&&after(from))from.balance=r2(Number(from.balance||0)+v);
+ if(t.type==='income'&&from&&after(from))from.balance=r2(Number(from.balance||0)-v);
+ if(t.type==='transfer'){if(from&&after(from)){from.balance=r2(Number(from.balance||0)+v);await put('accounts',from);}if(to&&after(to)){to.balance=r2(Number(to.balance||0)-v);await put('accounts',to);}}
  if(from&&t.type!=='transfer')await put('accounts',from);
  await del('transactions',id);await renderAll();message('记录已删除。');
 }
@@ -535,11 +566,28 @@ attachSwipe($('transactionList'));
 function goto(p){qa('.page').forEach(x=>x.classList.toggle('active',x.id==='page-'+p));qa('.tab').forEach(x=>x.classList.toggle('active',x.dataset.page===p));if(p==='transactions')renderTransactions();if(p==='analytics')renderAnalytics();}
 function applyTheme(t){if(t==='system')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);localStorage.setItem('ledger.theme',t);qa('#themeSelect button').forEach(b=>b.classList.toggle('active',b.dataset.theme===t));}
 function applyFontScale(v){const n=Math.max(.9,Math.min(1.2,Number(v)||1));document.documentElement.style.setProperty('--font-scale',String(n));localStorage.setItem('ledger.fontScale',String(n));if($('fontScaleLabel'))$('fontScaleLabel').textContent=Math.round(n*100)+'%';if($('fontScaleSlider'))$('fontScaleSlider').value=String(n);}
-async function saveSettings(){localStorage.setItem('ledger.endpoint',clean($('apiEndpoint').value));localStorage.setItem('ledger.key',clean($('apiKey').value));localStorage.setItem('ledger.model',clean($('apiModel').value));apiMessage('设置已保存。');}
-async function testAPI(){await saveSettings();const s=settings();if(!s.endpoint||!s.key){apiMessage('请填写 Endpoint 和 API Key。','error');return;}const b=$('testApi');busy(b,true);apiMessage('正在连接…');try{const r=await fetch(s.endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.key},body:JSON.stringify({model:s.model,messages:[{role:'user',content:'只返回JSON：{"connected":true}'}],temperature:0})}),raw=await r.text();if(!r.ok)throw Error('HTTP '+r.status+' · '+raw.slice(0,160));const data=JSON.parse(raw);if(!data.choices||!data.choices.length)throw Error('接口未返回模型内容');await recordUsage(data.usage||{});apiMessage('连接成功 · '+(data.model||s.model));}catch(e){apiMessage('连接失败 · '+e.message,'error');}finally{busy(b,false);}}
+async function saveSettings(){
+ const endpoint=clean($('apiEndpoint').value);
+ if(endpoint){let u;try{u=new URL(endpoint);}catch(e){apiMessage('Endpoint 不是有效的网址。','error');return false;}if(!/^https?:$/.test(u.protocol)){apiMessage('Endpoint 必须以 http:// 或 https:// 开头。','error');return false;}}
+ localStorage.setItem('ledger.endpoint',endpoint);localStorage.setItem('ledger.key',clean($('apiKey').value));localStorage.setItem('ledger.model',clean($('apiModel').value));apiMessage('设置已保存。');return true;
+}
+async function testAPI(){if(!(await saveSettings()))return;const s=settings();if(!s.endpoint||!s.key){apiMessage('请填写 Endpoint 和 API Key。','error');return;}const b=$('testApi');busy(b,true);apiMessage('正在连接…');try{const r=await fetch(s.endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.key},body:JSON.stringify({model:s.model,messages:[{role:'user',content:'只返回JSON：{"connected":true}'}],temperature:0})}),raw=await r.text();if(!r.ok)throw Error('HTTP '+r.status+' · '+raw.slice(0,160));const data=JSON.parse(raw);if(!data.choices||!data.choices.length)throw Error('接口未返回模型内容');await recordUsage(data.usage||{});apiMessage('连接成功 · '+(data.model||s.model));}catch(e){apiMessage('连接失败 · '+e.message,'error');}finally{busy(b,false);}}
 async function uploadFiles(files){if(!files||!files.length)return;if(images.length>=5){message('一批最多上传 5 张。');return;}try{for(const f of Array.from(files).slice(0,5-images.length))images.push(await prepareImage(f));drawPics();}catch(e){message('图片读取失败：'+e.message,'error');}$('imageInput').value='';}
 function exportData(){Promise.all(STORES.map(all)).then(arr=>{let d={version:2,exportedAt:new Date().toISOString()};STORES.forEach((s,i)=>d[s]=arr[i]);let u=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=u;a.download='ai-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),500);});}
-async function importData(f){const d=JSON.parse(await f.text());for(const s of STORES)if(Array.isArray(d[s])){await clear(s);for(const x of d[s])await put(s,x);}await renderAll();}
+async function importData(f){
+ let d;try{d=JSON.parse(await f.text());}catch(e){throw Error('文件不是有效的 JSON');}
+ if(!d||typeof d!=='object'||Array.isArray(d))throw Error('备份文件格式不正确');
+ const present=STORES.filter(s=>d[s]!==undefined);
+ if(!present.some(s=>Array.isArray(d[s])))throw Error('备份文件中没有可识别的数据');
+ /* 先完整校验，通过后才清空并写入，避免坏文件导致数据丢失 */
+ for(const s of present){
+  if(!Array.isArray(d[s]))throw Error('「'+s+'」数据格式不正确');
+  if(d[s].some(x=>!x||typeof x!=='object'||x.id==null||x.id===''))throw Error('「'+s+'」中存在缺少 id 的记录');
+ }
+ for(const s of ['accounts','transactions'])if(Array.isArray(d[s])&&d[s].some(x=>s==='accounts'?!Number.isFinite(Number(x.balance??0)):!Number.isFinite(Number(x.amount??0))))throw Error('「'+s+'」中存在无效的金额');
+ for(const s of present){await clear(s);for(const x of d[s])await put(s,x);}
+ await renderAll();
+}
 async function clearData(){for(const s of ['accounts','transactions','reconciliations','budgets'])await clear(s);pending=null;images=[];drawPics();$('naturalInput').value='';$('naturalInput').readOnly=false;$('analyzeText').textContent='分析';$('resetConfirm').hidden=true;await renderAll();apiMessage('账户与历史记录已重置，API 设置保留。');}
 async function installApp(){if(deferredInstall){deferredInstall.prompt();await deferredInstall.userChoice;deferredInstall=null;}else apiMessage('iPhone：在 Safari 点分享，再选“添加到主屏幕”。Android：在浏览器菜单选择“安装应用”。');}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;});
