@@ -130,7 +130,7 @@ input.s:focus,select.s:focus{border-color:var(--muted)}
  <div class="card"><h3>账户</h3><div id="accountList" class="list"><div class="empty">暂无账户</div></div></div>
 </section>
 <section class="panel" id="panel-settings">
- <div class="card"><h2>API 设置</h2><div class="notice warn">API Key 仅保存在当前浏览器。记账描述以及用于上下文理解的账户名称、近期记录摘要会发送到你配置的 API；前端直连仍可能暴露密钥，建议使用自己的 Cloudflare Worker Endpoint。</div>
+ <div class="card"><h2>API 设置</h2><div class="notice warn">API Key 仅保存在当前浏览器。记账描述以及用于上下文理解的账户名称、余额、近期记录摘要和收支汇总统计会发送到你配置的 API；前端直连仍可能暴露密钥，建议使用自己的 Cloudflare Worker Endpoint。</div>
   <label class="s" for="apiEndpoint">API Endpoint</label><input class="s" id="apiEndpoint" placeholder="https://api.deepseek.com/chat/completions">
   <label class="s" for="apiKey">API Key</label><input class="s" id="apiKey" type="password" autocomplete="off" placeholder="sk-...">
   <label class="s" for="apiModel">Model</label><input class="s" id="apiModel" placeholder="deepseek-chat">
@@ -185,14 +185,41 @@ function systemPrompt(context){
  '可用操作类型仅限 expense、income、transfer、create_account、budget、balance_snapshot。支出/收入的 account、merchant、category、items 都是可选字段；transfer 的 amount/account/toAccount 必填；create_account 的 account 必填；budget 的 budgetLimit 必填；balance_snapshot 的 account/balance 必填。',
  '输出严格 JSON，不要 Markdown、代码围栏或额外文字，结构为：{"intent":"record|query|conversation|clarify","answer":"","needsClarification":false,"clarification":"","actions":[{"type":"expense|income|transfer|create_account|budget|balance_snapshot","amount":null,"currency":"CNY","account":"","toAccount":"","merchant":"","category":"","items":[],"occurredAt":"","budgetName":"","budgetLimit":null,"balance":null,"confidence":0.0,"note":""}]}。无记录操作时 actions 必须是空数组。',
  '金额必须是数字或 null。没有信息的字符串字段设为空字符串，items 可为空数组。confidence 表示你的理解把握程度，不是用户确认状态。',
- '当前本地时间：'+now+'；时区：'+zone+'。用户快捷规则：'+(setting().rules||'无')+'。本地上下文：'+JSON.stringify(context)
+ '当前本地时间：'+now+'；时区：'+zone+'。用户快捷规则：'+(setting().rules||'无')+'。查询时优先使用本地统计汇总回答，不要只根据最近10笔记录推算月度或年度总额；如果用户询问的时间范围不在汇总中，不要编造精确数字。'+ '本地上下文：'+JSON.stringify(context)
  ].join('\n');
 }
 async function buildAIContext(){
  const [accounts,transactions,budgets]=await Promise.all([all('accounts'),all('transactions'),all('budgets')]);
+ const now=new Date(),monthStart=new Date(now.getFullYear(),now.getMonth(),1).getTime(),yearStart=new Date(now.getFullYear(),0,1).getTime(),historyStart=new Date(now.getFullYear(),now.getMonth()-11,1).getTime();
+ const timeOf=t=>{const parsed=Date.parse(t.occurredAt||'');return Number.isFinite(parsed)?parsed:Number(t.createdAt||0);};
+ const summarize=list=>{
+  let expense=0,income=0;const byCategory={},byMerchant={};
+  list.forEach(t=>{
+   const amount=Number(t.amount||0);
+   if(t.type==='expense'){
+    expense+=amount;const category=t.category||'其他',merchant=t.merchant||'未注明商户';
+    byCategory[category]=(byCategory[category]||0)+amount;
+    byMerchant[merchant]=(byMerchant[merchant]||0)+amount;
+   }else if(t.type==='income')income+=amount;
+  });
+  return {transactionCount:list.length,expenseTotal:expense,incomeTotal:income,netFlow:income-expense,expenseByCategory:byCategory,expenseByMerchant:byMerchant};
+ };
+ const currentMonth=transactions.filter(t=>timeOf(t)>=monthStart&&timeOf(t)<=now.getTime());
+ const currentYear=transactions.filter(t=>timeOf(t)>=yearStart&&timeOf(t)<=now.getTime());
+ const months={};
+ transactions.filter(t=>timeOf(t)>=historyStart).forEach(t=>{
+  const d=new Date(timeOf(t)),key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  (months[key]||(months[key]=[])).push(t);
+ });
+ const monthlySummaries={};
+ Object.keys(months).sort().forEach(key=>monthlySummaries[key]=summarize(months[key]));
  return {
-  accounts:accounts.map(a=>({name:a.name})),
-  recentTransactions:transactions.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,10).map(t=>({type:t.type,amount:t.amount,account:t.account||'',merchant:t.merchant||'',category:t.category||'',items:t.items||[],occurredAt:t.occurredAt||''})),
+  accounts:accounts.map(a=>({name:a.name,balance:a.balance})),
+  totalAssets:accounts.reduce((sum,a)=>sum+Number(a.balance||0),0),
+  currentMonth:summarize(currentMonth),
+  currentYear:summarize(currentYear),
+  last12Months:monthlySummaries,
+  recentTransactions:transactions.sort((a,b)=>timeOf(b)-timeOf(a)).slice(0,10).map(t=>({type:t.type,amount:t.amount,account:t.account||'',merchant:t.merchant||'',category:t.category||'',items:t.items||[],occurredAt:t.occurredAt||''})),
   budgets:budgets.map(b=>({name:b.name,category:b.category||'',limit:b.limit}))
  };
 }
