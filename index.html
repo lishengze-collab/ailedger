@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#0b1220">
+<meta name="theme-color" content="#f5f5f7">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="AI Ledger">
@@ -110,11 +110,13 @@ input.s:focus,select.s:focus{border-color:var(--muted)}
 <header class="top"><div class="brand">AI Ledger<small>自然语言记账 · 理解你的每一种表达</small></div><div class="status" id="saveStatus">LOCAL READY</div></header>
 <main>
 <section class="panel active" id="panel-entry">
+ <div class="entry-layout">
  <div class="card"><h2>记一笔，像聊天一样简单</h2><p class="hint">不用按格式，也不用把信息说完整。直接描述发生了什么，AI 会结合账户和记录理解你的意思。</p>
   <div class="chips"><button class="chip" data-example="早上赶时间，在楼下买了杯美式，32块，还是上次那个账户">随口记消费</button><button class="chip" data-example="工资刚到账一万二，建行的">记录收入</button><button class="chip" data-example="这个月外卖花了多少？">问问支出</button></div>
   <div class="input-wrap"><textarea id="naturalInput" class="composer" placeholder="例如：早上买咖啡花了32块；刚才建行转了2000到招行，晚上和朋友吃饭花了86。想到什么就说什么……"></textarea><button id="analyzeText" class="send">分析</button></div>
  </div>
  <div class="card"><h3>图片识别</h3><label class="drop" for="imageInput"><div><strong>点击选择银行截图、消费截图或小票</strong><div class="hint">JPEG / PNG / WebP · 发送至你配置的 AI 接口</div></div><input id="imageInput" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"><img id="imagePreview" class="preview-img" hidden alt="待识别图片"></label><div class="actions"><button id="analyzeImage" class="btn primary" disabled>识别图片</button><button id="clearImage" class="btn" disabled>清除</button></div></div>
+ </div>
  <div id="message" aria-live="polite"></div>
  <div class="card parsed" id="parsedCard"><h3>AI 解析预览</h3><div id="parsedFields" class="grid"></div><div class="actions"><button id="confirmParsed" class="btn primary">确认记录</button><button id="discardParsed" class="btn">忽略</button></div><p class="hint">确认前不会写入账户余额或交易记录。</p></div>
  <div class="card"><h3>最近记录</h3><div id="recentList" class="list"><div class="empty">暂无记录</div></div></div>
