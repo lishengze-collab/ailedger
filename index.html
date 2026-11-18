@@ -65,6 +65,7 @@ textarea{display:block;width:100%;min-height:106px;max-height:220px;resize:verti
 .capture-actions .send{height:48px;flex:1;justify-content:center;border-radius:15px;font-size:14px}
 .attachments{min-height:0;max-height:75px;overflow:auto}
 #imageInput,#importData{display:none}
+.setting-row label[for="importData"]{display:inline-flex;align-items:center;justify-content:center;line-height:1;white-space:nowrap;cursor:pointer;vertical-align:middle}
 #preview{display:none!important}
 .message{flex:none}
 #page-transactions,#page-analytics,#page-settings{min-height:calc(100dvh - 94px);padding-bottom:calc(86px + var(--safe));}
@@ -218,6 +219,8 @@ let db=null,pending=null,images=[],range='month',detailRange='day',filter='all',
 const uid=()=>crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);
 const clean=v=>String(v==null?'':v).trim(),money=v=>new Intl.NumberFormat('zh-CN',{style:'currency',currency:'CNY',maximumFractionDigits:2}).format(Number(v||0));
 const time=t=>{const n=Date.parse(t.occurredAt||'');return Number.isFinite(n)?n:Number(t.createdAt||Date.now());};
+function verifiedTime(a){const v=a&&a.verifiedAt;if(v==null||v==='')return 0;const n=Number(v);if(Number.isFinite(n))return n;const d=Date.parse(v);return Number.isFinite(d)?d:0;}
+function affectsBalanceAt(a,eventAt){const v=verifiedTime(a);return !v||eventAt>=v;}
 const when=t=>new Date(time(t)).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function openDB(){return new Promise((ok,no)=>{const r=indexedDB.open(DB,VERSION);r.onupgradeneeded=()=>STORES.forEach(s=>{if(!r.result.objectStoreNames.contains(s))r.result.createObjectStore(s,{keyPath:'id'});});r.onsuccess=()=>{db=r.result;ok();};r.onerror=()=>no(r.error);});}
@@ -242,13 +245,22 @@ function guessAccountType(name,explicit){
  if(/现金|钱包/.test(n))return'cash';
  return'other';
 }
-async function account(name){
- const n=clean(name).toLowerCase();if(!n)return null;
- return(await all('accounts')).find(a=>clean(a.name).toLowerCase()===n)||null;
+function accountKey(v){return clean(v).normalize('NFKC').toLowerCase().replace(/[\s*#·•._\-（）()]/g,'');}
+async function account(name,meta){
+ const n=accountKey(name);if(!n)return null;
+ const list=await all('accounts'),exact=list.find(a=>accountKey(a.name)===n);
+ if(exact)return exact;
+ meta=meta||{};
+ const last4=clean(meta.last4).replace(/\D/g,'').slice(-4),institution=accountKey(meta.institution);
+ if(last4){
+  const matches=list.filter(a=>clean(a.last4).replace(/\D/g,'').slice(-4)===last4&&(!institution||accountKey(a.institution)===institution));
+  if(matches.length===1)return matches[0];
+ }
+ return null;
 }
 async function ensureAccount(name,meta){
  const n=clean(name);if(!n)return null;meta=meta||{};
- let a=await account(n);
+ let a=await account(n,meta);
  if(!a){
   a={id:uid(),name:n,balance:0,accountType:guessAccountType(n,meta.accountType),institution:clean(meta.institution),last4:clean(meta.last4),currency:clean(meta.currency)||'CNY',createdAt:Date.now(),balanceInitialized:false};
  }else{
@@ -297,7 +309,7 @@ function prompt(ctx){
  '上传小票/支付截图：识别商户、金额、时间、商品、分类、支付账户；结合文字判断用户是想记录、查询还是仅分析。上传图后自动判断图像类型和用户意图。上传银行流水截图时，只有用户明确要求导入流水，才批量创建交易，避免把余额摘要重复记成交易。',
  '记录时间以用户本地时区为准。将今天、昨天、上周等自动换算为准确日期；没有时间时使用当前本地时间。occurredAt 输出带时区偏移的 ISO 8601 时间。禁止把 UTC 日期当作当地日期。',
  '查询财务问题必须引用本地统计上下文作答。给出清晰结论、支出构成、变化、异常和建议；不得凭空补足没有记录的数字。分析账户时结合该账户近期交易和校准历史。',
- '只在金额或转账资金流向等关键事实缺失时追问一个最重要的问题。普通支出/收入的账户缺失不应阻止保存。多个操作可部分保存，不能因为其中一项缺信息而丢弃其他有效操作。',
+ '只在金额或转账资金流向等关键事实缺失时追问一个最重要的问题。普通支出/收入账户缺失时：本地仅有一个账户则默认关联该账户；若有多个账户且无法可靠判断支付账户，应先追问账户名称，不得猜测扣款账户；若本地没有账户，可以保存未关联流水，但必须明确说明该笔不会改变账户余额。多个操作可部分保存，不能因为其中一项缺信息而丢弃其他有效操作。',
  '严格输出JSON：{"intent":"record|query|reconcile|conversation|clarify","answer":"","analysis":"","needsClarification":false,"clarification":"","actions":[{"type":"expense|income|transfer|create_account|budget|balance_snapshot","amount":null,"currency":"CNY","account":"","toAccount":"","merchant":"","category":"","items":[],"occurredAt":"","budgetName":"","budgetLimit":null,"balance":null,"accountType":"credit_card|savings_card|payment|wallet|cash|other","institution":"","last4":"","availableCredit":null,"creditLimit":null,"balanceKind":"","confidence":0.0,"note":""}]}。无操作时 actions 必须是空数组。所有金额字段必须数字或 null，不得输出格式化货币文本。',
  '本地时间：'+new Date().toLocaleString('zh-CN',{hour12:false})+'；时区：'+Intl.DateTimeFormat().resolvedOptions().timeZone+'；用户规则：'+(settings().rules||'无')+'；本地财务上下文：'+JSON.stringify(ctx)
  ].join('\n');
@@ -387,38 +399,51 @@ async function analyse(){
  finally{busy(b,false);b.textContent=pending?'记录':'分析';}
 }
 async function applyAction(a){
- if(a.type==='budget'){await put('budgets',{id:uid(),name:a.budgetName||a.category||'未命名预算',limit:Number(a.budgetLimit??a.amount),category:a.category||'',createdAt:Date.now()});return;}
+ if(a.type==='budget'){await put('budgets',{id:uid(),name:a.budgetName||a.category||'未命名预算',limit:Number(a.budgetLimit??a.amount),category:a.category||'',createdAt:Date.now()});return null;}
  if(a.type==='create_account'){
   const ac=await ensureAccount(a.account,{accountType:a.accountType,institution:a.institution,last4:a.last4,currency:a.currency,creditLimit:a.creditLimit,availableCredit:a.availableCredit});
-  if(a.balance!=null){ac.balance=Number(a.balance);ac.verifiedAt=Date.now();ac.balanceInitialized=true;}
-  await put('accounts',ac);return;
+  if(a.balance!=null){ac.balance=Number(a.balance);ac.verifiedAt=Date.parse(a.occurredAt)||Date.now();ac.balanceInitialized=true;}
+  await put('accounts',ac);return null;
  }
  if(a.type==='balance_snapshot'){
   const ac=await ensureAccount(a.account,{accountType:a.accountType,institution:a.institution,last4:a.last4,currency:a.currency,creditLimit:a.creditLimit,availableCredit:a.availableCredit});
-  const previous=Number(ac.balance||0),base=!!ac.balanceInitialized||!!ac.verifiedAt,statement=Number(a.balance);
+  const previous=Number(ac.balance||0),base=!!ac.balanceInitialized||!!ac.verifiedAt,statement=Number(a.balance),snapshotAt=Date.parse(a.occurredAt)||Date.now();
   if(a.availableCredit!=null)ac.availableCredit=Number(a.availableCredit);if(a.creditLimit!=null)ac.creditLimit=Number(a.creditLimit);
   await put('reconciliations',{id:uid(),accountId:ac.id,accountName:ac.name,previousBalance:previous,statementBalance:statement,difference:base?statement-previous:null,analysis:a.note||'',createdAt:Date.now(),occurredAt:a.occurredAt||localISO(),source:'image',accountType:ac.accountType,previousVerifiedAt:ac.verifiedAt||null});
-  ac.balance=statement;ac.verifiedAt=Date.now();ac.balanceInitialized=true;await put('accounts',ac);return;
+  ac.balance=statement;ac.verifiedAt=snapshotAt;ac.balanceInitialized=true;await put('accounts',ac);return null;
  }
- const amount=Number(a.amount),existing=await all('transactions'),day=new Date(Date.parse(a.occurredAt)||Date.now()).toDateString();
- const duplicate=existing.some(t=>t.type===a.type&&Number(t.amount)===amount&&clean(t.account)===clean(a.account)&&clean(t.merchant)===clean(a.merchant)&&new Date(time(t)).toDateString()===day);if(duplicate)return;
- const meta={accountType:a.accountType,institution:a.institution,last4:a.last4,currency:a.currency};
- const from=a.account?await ensureAccount(a.account,meta):null;let to=null;
- if(a.type==='expense'&&from)from.balance=Number(from.balance||0)-amount;
- if(a.type==='income'&&from)from.balance=Number(from.balance||0)+amount;
- if(a.type==='transfer'){to=a.toAccount?await ensureAccount(a.toAccount):null;if(from)from.balance=Number(from.balance||0)-amount;if(to)to.balance=Number(to.balance||0)+amount;}
+ const amount=Number(a.amount),eventAt=Date.parse(a.occurredAt)||Date.now(),meta={accountType:a.accountType,institution:a.institution,last4:a.last4,currency:a.currency};
+ let from=a.account?await ensureAccount(a.account,meta):null;
+ if(!from&&!a.account){const known=await all('accounts');if(known.length===1)from=known[0];}
+ if(from)a.account=from.name;
+ const to=a.type==='transfer'?await ensureAccount(a.toAccount):null;
+ if(to)a.toAccount=to.name;
+ const existing=await all('transactions');
+ const duplicate=existing.some(t=>t.type===a.type&&Number(t.amount)===amount&&accountKey(t.account)===accountKey(a.account)&&accountKey(t.toAccount)===accountKey(a.toAccount)&&accountKey(t.merchant)===accountKey(a.merchant)&&accountKey(t.category)===accountKey(a.category)&&Math.abs(time(t)-eventAt)<=90000);
+ if(duplicate)return '检测到相同流水在 90 秒内已保存，已跳过重复记录。';
+ if(a.type==='expense'&&from&&affectsBalanceAt(from,eventAt))from.balance=Number(from.balance||0)-amount;
+ if(a.type==='income'&&from&&affectsBalanceAt(from,eventAt))from.balance=Number(from.balance||0)+amount;
+ if(a.type==='transfer'){
+  if(from&&affectsBalanceAt(from,eventAt))from.balance=Number(from.balance||0)-amount;
+  if(to&&affectsBalanceAt(to,eventAt))to.balance=Number(to.balance||0)+amount;
+ }
  if(from)await put('accounts',from);if(to)await put('accounts',to);
  await put('transactions',{id:uid(),...a,amount,accountId:from?from.id:'',toAccountId:to?to.id:'',createdAt:Date.now(),source:images.length?'image':'natural-language'});
+ if((a.type==='expense'||a.type==='income')&&!from)return '这笔收支没有匹配到具体账户，流水已保存但余额未变。请在描述中补充账户名称。';
+ return null;
 }
 async function confirmPending(){
  if(!pending)return;
  const good=pending.actions.filter(a=>!issues(a).length),bad=pending.actions.filter(a=>issues(a).length);
  if(!good.length){message('还需补充：'+bad.map(a=>issues(a).join('、')).join('；')+'。可取消后重新描述，不必补齐其他字段。');return;}
  try{
-  for(const a of good)await applyAction(a);
-  if(bad.length){pending={...pending,actions:bad};await showResult(pending);message('已保存 '+good.length+' 项；剩余项目需要补充必要信息。');}
-  else{pending=null;$('naturalInput').value='';$('naturalInput').readOnly=false;images=[];drawPics();$('imageInput').value='';$('analyzeText').textContent='分析';message('已记录 '+good.length+' 项。');}
+  const notices=[];
+  for(const a of good){const note=await applyAction(a);if(note)notices.push(note);}
+  let status;
+  if(bad.length){pending={...pending,actions:bad};await showResult(pending);status='已保存 '+good.length+' 项；剩余项目需要补充必要信息。';}
+  else{pending=null;$('naturalInput').value='';$('naturalInput').readOnly=false;images=[];drawPics();$('imageInput').value='';$('analyzeText').textContent='分析';status='已记录 '+good.length+' 项。';}
   await renderAll();
+  message([status,...notices].filter(Boolean).join(' '));
  }catch(e){message('保存失败：'+e.message,'error');}
 }
 async function deleteTx(id,kind){
@@ -429,7 +454,7 @@ async function deleteTx(id,kind){
   await del('reconciliations',id);await renderAll();message('已删除校准记录。');return;
  }
  const t=(await all('transactions')).find(x=>x.id===id);if(!t)return;
- const acs=await all('accounts'),from=acs.find(x=>x.id===t.accountId),to=acs.find(x=>x.id===t.toAccountId),v=Number(t.amount||0),after=a=>!a.verifiedAt||Number(t.createdAt||0)>Number(a.verifiedAt||0);
+ const acs=await all('accounts'),from=acs.find(x=>x.id===t.accountId),to=acs.find(x=>x.id===t.toAccountId),v=Number(t.amount||0),eventAt=time(t),after=a=>affectsBalanceAt(a,eventAt);
  if(t.type==='expense'&&from&&after(from))from.balance=Number(from.balance||0)+v;
  if(t.type==='income'&&from&&after(from))from.balance=Number(from.balance||0)-v;
  if(t.type==='transfer'){if(from&&after(from)){from.balance=Number(from.balance||0)+v;await put('accounts',from);}if(to&&after(to)){to.balance=Number(to.balance||0)-v;await put('accounts',to);}}
@@ -439,12 +464,20 @@ async function deleteTx(id,kind){
 function txHtml(t,canDelete){
  const label=t.type==='income'?'收入':t.type==='transfer'?'转账':t.type==='balance_adjustment'?'校准':'支出',sign=t.type==='income'?'+':t.type==='expense'?'-':'',title=t.merchant||t.category||(t.items&&t.items[0])||label;
  const color=t.type==='income'?'income-text':t.type==='expense'?'expense-text':'',kind=t.sourceReconciliation?'reconciliation':'transaction';
- return '<div class="swipe-shell" data-row-id="'+esc(t.id)+'"><button class="swipe-delete" data-delete="'+esc(t.id)+'" data-delete-kind="'+kind+'">删除</button><div class="swipe-content"><div class="item"><div class="symbol">'+(t.type==='income'?'＋':t.type==='transfer'?'⇄':t.type==='balance_adjustment'?'≈':'−')+'</div><div class="item-main"><b>'+esc(title)+'</b><small>'+esc([t.account,t.category,when(t)].filter(Boolean).join(' · '))+'</small></div><div class="item-right"><b class="'+color+'">'+sign+money(t.amount)+'</b><small>'+label+'</small></div></div></div></div>';
+ return '<div class="swipe-shell" data-row-id="'+esc(t.id)+'"><button class="swipe-delete" data-delete="'+esc(t.id)+'" data-delete-kind="'+kind+'">删除</button><div class="swipe-content"><div class="item"><div class="symbol">'+(t.type==='income'?'＋':t.type==='transfer'?'⇄':t.type==='balance_adjustment'?'≈':'−')+'</div><div class="item-main"><b>'+esc(title)+'</b><small>'+esc([t.account||(t.type==='expense'||t.type==='income'?'未关联账户':''),t.category,when(t)].filter(Boolean).join(' · '))+'</small></div><div class="item-right"><b class="'+color+'">'+sign+money(t.amount)+'</b><small>'+label+'</small></div></div></div></div>';
 }
 function isDetailRange(t){
  const d=new Date(time(t)),n=new Date();if(detailRange==='day')return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate();
  if(detailRange==='week'){const start=new Date(n.getFullYear(),n.getMonth(),n.getDate()-n.getDay());start.setHours(0,0,0,0);return time(t)>=start.getTime()&&time(t)<=Date.now();}
  const start=new Date(n.getFullYear(),n.getMonth(),1);return time(t)>=start.getTime()&&time(t)<=Date.now();
+}
+function inRange(t,period){
+ const ts=time(t),now=Date.now(),d=new Date(now);
+ let start;
+ if(period==='week'){start=new Date(d);start.setHours(0,0,0,0);start.setDate(start.getDate()-6);}
+ else if(period==='year')start=new Date(d.getFullYear(),0,1);
+ else start=new Date(d.getFullYear(),d.getMonth(),1);
+ return ts>=start.getTime()&&ts<=now;
 }
 async function renderHome(){
  const [tx,acs]=await Promise.all([all('transactions'),all('accounts')]),month=tx.filter(t=>inRange(t,'month'));
