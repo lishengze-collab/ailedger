@@ -234,7 +234,7 @@ function accountTypeName(type){
  return names[type]||'其他账户';
 }
 function guessAccountType(name,explicit){
- if(explicit)return explicit;
+ if(explicit){const x=String(explicit).toLowerCase();if(/credit|信用|贷记/.test(x))return'credit_card';if(/saving|debit|储蓄|借记/.test(x))return'savings_card';if(/payment|支付|支付宝|微信/.test(x))return'payment';if(/wallet|钱包/.test(x))return'wallet';if(/cash|现金/.test(x))return'cash';if(['other','其他'].includes(x))return'other';}
  const n=String(name||'').toLowerCase();
  if(/信用卡|贷记卡|visa|mastercard|amex|credit/.test(n))return'credit_card';
  if(/储蓄卡|借记卡|工资卡|银行卡|活期|定期|debit/.test(n))return'savings_card';
@@ -303,6 +303,7 @@ function prompt(ctx){
  ].join('\n');
 }
 function parse(t){t=clean(t);let a=t.indexOf('{'),b=t.lastIndexOf('}');if(a<0||b<a)throw Error('AI 返回格式无法识别');return JSON.parse(t.slice(a,b+1));}
+function parseAmount(v){if(v==null||v==='')return null;if(typeof v==='number')return Number.isFinite(v)?v:null;let s=String(v).replace(/[￥¥$,，\s]/g,'');let m=1;if(/万/.test(s)){m=10000;s=s.replace(/万/g,'');}else if(/千/.test(s)){m=1000;s=s.replace(/千/g,'');}const n=Number(s.replace(/[^\d.-]/g,''));return Number.isFinite(n)?n*m:null;}
 function normalize(r){
  const src=Array.isArray(r.actions)?r.actions:(r.type?[r]:[]);
  const meta=r.accountInfo||r.detectedAccount||r.account||{};
@@ -310,8 +311,8 @@ function normalize(r){
   const institution=clean(a.institution||a.bankName||a.bank||meta.institution||meta.bankName||'');
   const last4=clean(a.last4||a.accountLast4||a.cardLast4||meta.last4||'').replace(/\D/g,'').slice(-4);
   const account=clean(a.account||a.accountName||a.bankAccount||a.cardName||meta.name||meta.accountName||'')||(institution&&last4?institution+' ****'+last4:institution);
-  return {...a,type:clean(a.type),amount:a.amount==null||a.amount===''?null:Number(a.amount),balance:a.balance==null||a.balance===''?null:Number(a.balance),
-   budgetLimit:a.budgetLimit==null||a.budgetLimit===''?null:Number(a.budgetLimit),availableCredit:a.availableCredit==null||a.availableCredit===''?null:Number(a.availableCredit),creditLimit:a.creditLimit==null||a.creditLimit===''?null:Number(a.creditLimit),
+  return {...a,type:clean(a.type),amount:parseAmount(a.amount),balance:parseAmount(a.balance),
+   budgetLimit:parseAmount(a.budgetLimit),availableCredit:parseAmount(a.availableCredit),creditLimit:parseAmount(a.creditLimit),
    account,toAccount:clean(a.toAccount||a.toAccountName),merchant:clean(a.merchant||a.shopName),category:clean(a.category),budgetName:clean(a.budgetName),institution,last4,
    accountType:guessAccountType(account,a.accountType||a.cardType||meta.accountType),balanceKind:clean(a.balanceKind),
    items:Array.isArray(a.items)?a.items:(clean(a.items)?[clean(a.items)]:[]),occurredAt:normalizeDate(a.occurredAt||a.date||r.occurredAt),currency:clean(a.currency||meta.currency)||'CNY'};
@@ -319,7 +320,7 @@ function normalize(r){
  if(!actions.length&&meta&&typeof meta==='object'){
   const institution=clean(meta.institution||meta.bankName||meta.bank||''),last4=clean(meta.last4||meta.accountLast4||'').replace(/\D/g,'').slice(-4);
   const name=clean(meta.name||meta.accountName)||(institution&&last4?institution+' ****'+last4:institution);
-  const balance=meta.balance==null?null:Number(meta.balance),type=guessAccountType(name,meta.accountType||meta.cardType);
+  const balance=parseAmount(meta.balance),type=guessAccountType(name,meta.accountType||meta.cardType);
   if(name)actions.push({type:'create_account',account:name,accountType:type,institution,last4,currency:meta.currency||'CNY',balance:null,amount:null,occurredAt:normalizeDate(meta.date||r.occurredAt),items:[],confidence:Number(meta.confidence||.8),note:'从账户信息中识别并创建'});
   if(name&&Number.isFinite(balance))actions.push({type:'balance_snapshot',account:name,accountType:type,institution,last4,balance,currency:meta.currency||'CNY',occurredAt:normalizeDate(meta.date||r.occurredAt),note:'从上传资料识别的账户余额'});
  }
@@ -345,21 +346,28 @@ async function actionHtml(a,i){
  const fields=v.filter(x=>x[1]!==''&&x[1]!=null).map(x=>'<div class="field"><span>'+esc(x[0])+'</span><b>'+esc(x[1])+'</b></div>').join(''),p=issues(a);
  return'<div class="action"><div class="action-title">'+(i+1)+' · '+esc(names[a.type]||a.type)+'</div><div class="fields">'+fields+'</div>'+(p.length?'<div class="note">待补充：'+esc(p.join('、'))+'</div>':'')+'</div>';
 }
-function describePending(r){
- const names={expense:'支出',income:'收入',transfer:'转账',create_account:'创建账户',budget:'预算',balance_snapshot:'资金校准'};
- return (r.actions||[]).map((a,i)=>{
-  let detail=names[a.type]||a.type;
-  if(a.type==='create_account')detail+='：'+(a.account||'新账户')+(a.accountType?'（'+accountTypeName(a.accountType)+'）':'')+(a.balance!=null?'，余额 '+money(a.balance):'');
-  else if(a.type==='balance_snapshot')detail+='：'+(a.account||'账户')+'，截图余额 '+money(a.balance);
-  else detail+='：'+(a.amount==null?'金额待确认':money(a.amount))+(a.account?'，账户 '+a.account:'')+(a.merchant?'，商户 '+a.merchant:'')+(a.category?'，分类 '+a.category:'')+(a.toAccount?'，转入 '+a.toAccount:'');
-  const miss=issues(a);return(i+1)+'. '+detail+(miss.length?'（待确认：'+miss.join('、')+'）':'');
- }).join('\n');
+async function describePending(r){
+ const names={expense:'支出',income:'收入',transfer:'转账',create_account:'创建账户',budget:'预算',balance_snapshot:'资金校准'},lines=[];
+ for(let i=0;i<(r.actions||[]).length;i++){
+  const a=r.actions[i];let detail=names[a.type]||a.type;
+  if(a.type==='create_account')detail+='：'+(a.account||'新账户')+(a.accountType?'（'+accountTypeName(a.accountType)+'）':'')+(a.institution?' · '+a.institution:'')+(a.last4?' · 尾号 '+a.last4:'')+(a.balance!=null?'，初始余额 '+money(a.balance):'');
+  else if(a.type==='balance_snapshot'){
+   detail+='：'+(a.account||'账户')+'，截图余额 '+(a.balance==null?'未识别':money(a.balance));
+   const existing=await account(a.account);
+   if(existing){
+    detail+='，当前账面 '+money(existing.balance);
+    if(a.balance!=null)detail+='，差额 '+money(Number(a.balance)-Number(existing.balance));
+   }else detail+='，将自动创建账户并建立首次校准基准';
+   if(a.note)detail+='。'+a.note;
+  }else detail+='：'+(a.amount==null?'金额待确认':money(a.amount))+(a.account?'，账户 '+a.account:'')+(a.merchant?'，商户 '+a.merchant:'')+(a.category?'，分类 '+a.category:'')+(a.toAccount?'，转入 '+a.toAccount:'');
+  const miss=issues(a);lines.push((i+1)+'. '+detail+(miss.length?'（待确认：'+miss.join('、')+'）':''));
+ }
+ return lines.join('\n');
 }
 async function showResult(r){
  pending=r.actions.length?r:null;$('preview').classList.remove('show');
- const summary=r.actions.length?((r.answer?r.answer+'\n':'')+describePending(r)):(r.answer||r.analysis||r.clarification||'已理解。');
- $('naturalInput').value=summary;$('naturalInput').readOnly=!!pending;
- $('analyzeText').textContent=pending?'记录':'分析';
+ const summary=r.actions.length?((r.answer||r.analysis)?(r.answer||r.analysis)+'\n':'')+await describePending(r):(r.answer||r.analysis||r.clarification||'已理解。');
+ $('naturalInput').value=summary;$('naturalInput').readOnly=!!pending;$('analyzeText').textContent=pending?'记录':'分析';
  const missing=(r.actions||[]).flatMap(issues);
  if(r.needsClarification||missing.length)message(r.clarification||(missing.length?'仅需补充：'+missing.join('、'):'有一项信息需要确认。'));
  else message(r.actions.length?'AI 已完成理解，请检查输入框内容后记录。':summary);
