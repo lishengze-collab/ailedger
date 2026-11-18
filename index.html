@@ -104,6 +104,9 @@ textarea{display:block;width:100%;min-height:106px;max-height:220px;resize:verti
 @media(max-height:690px){.home-overview{min-height:145px}.overview-total{font-size:26px}.capture-bottom{padding:7px 10px}.upload-action,.capture-actions .send{height:42px}}
 @media(min-width:720px){#page-home.active{max-width:760px;margin:0 auto}.home-overview{padding:14px 18px}.account-chip{min-width:120px}}
 
+
+#page-home .message.show{position:fixed;z-index:45;left:50%;bottom:calc(82px + var(--safe));transform:translateX(-50%);width:min(560px,calc(100% - 30px));box-shadow:0 8px 28px rgba(0,0,0,.12)}
+.capture-input textarea,.overview-head,.overview-flow,.account-chip,.detail-totals,.item-main b,.item-right b,.modal-tx,.finance-analysis,.setting-row{font-size:calc(1em * var(--font-scale,1))}
 </style>
 </head>
 <body><div id="app">
@@ -317,7 +320,7 @@ async function callAI(text,pics){
  await recordUsage(data.usage||{});return normalize(parse(content));
 }
 async function recordUsage(u){await put('tokenUsage',{id:uid(),time:Date.now(),prompt:Number(u.prompt_tokens||0),completion:Number(u.completion_tokens||0),total:Number(u.total_tokens||0)});renderTokens();}
-function issues(a){let p=[];if(['expense','income','transfer'].includes(a.type)&&!(Number.isFinite(a.amount)&&a.amount>0))p.push('金额');if(a.type==='transfer'&&(!a.account||!a.toAccount))p.push('转出/转入账户');if(a.type==='create_account'&&!a.account)p.push('账户名');if(a.type==='budget'&&!(Number.isFinite(a.budgetLimit??a.amount)&&(a.budgetLimit??a.amount)>0))p.push('预算额度');if(a.type==='balance_snapshot'&&(!a.account||!(Number.isFinite(a.balance)&&a.balance>=0)))p.push('账户/截图余额');if(!['expense','income','transfer','create_account','budget','balance_snapshot'].includes(a.type))p.push('操作类型');return p;}
+function issues(a){let p=[];if(['expense','income','transfer'].includes(a.type)&&!(Number.isFinite(a.amount)&&a.amount>0))p.push('金额');if(a.type==='transfer'&&(!a.account||!a.toAccount))p.push('转出/转入账户');if(a.type==='create_account'&&!a.account)p.push('账户名');if(a.type==='budget'&&!(Number.isFinite(a.budgetLimit??a.amount)&&(a.budgetLimit??a.amount)>0))p.push('预算额度');if(a.type==='balance_snapshot'&&(!a.account||!Number.isFinite(a.balance)))p.push('账户/截图余额');if(!['expense','income','transfer','create_account','budget','balance_snapshot'].includes(a.type))p.push('操作类型');return p;}
 async function actionHtml(a,i){
  const names={expense:'支出',income:'收入',transfer:'转账',create_account:'创建账户',budget:'预算',balance_snapshot:'资金校准'},v=[];
  if(a.type==='balance_snapshot'){const ac=await account(a.account),diff=ac?Number(a.balance||0)-Number(ac.balance||0):null;v.push(['截图余额',a.balance==null?'未识别':money(a.balance)],['账户',a.account],['本地账面余额',ac?money(ac.balance):'首次校准'],['与本地差额',ac?money(diff):'首次校准，无历史基准'],['识别说明',a.note||'']);if(ac&&!ac.verifiedAt)v.push(['说明','尚无历史校准基准，差额仅供参考']);}
@@ -353,8 +356,10 @@ async function prepareImage(f){
 function drawPics(){$('attachments').innerHTML=images.map((x,i)=>'<div class="attachment"><img src="'+x+'"><button data-remove="'+i+'">×</button></div>').join('');}
 async function analyse(){
  const text=clean($('naturalInput').value),pics=images.slice();if(!text&&!pics.length){message('输入内容或上传图片。');return;}
- const b=$('analyzeText');busy(b,true);message('AI 正在分析内容与上下文……');
- try{await showResult(await callAI(text,pics));}catch(e){message(e.message,'error');}finally{busy(b,false);}
+ const b=$('analyzeText');busy(b,true);message('AI 正在理解内容、账户与时间……');
+ try{await showResult(await callAI(text,pics));}
+ catch(e){message(e.message,'error');}
+ finally{busy(b,false);b.textContent=pending?'记录':'分析';}
 }
 async function applyAction(a){
  if(a.type==='budget'){await put('budgets',{id:uid(),name:a.budgetName||a.category||'未命名预算',limit:Number(a.budgetLimit??a.amount),category:a.category||'',createdAt:Date.now()});return;}
@@ -481,7 +486,7 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredIns
 qa('.tab').forEach(b=>b.onclick=()=>goto(b.dataset.page));qa('[data-goto]').forEach(b=>b.onclick=()=>goto(b.dataset.goto));
 $('pickImages').onclick=()=>$('imageInput').click();$('imageInput').onchange=e=>uploadFiles(e.target.files);
 $('attachments').onclick=e=>{let b=e.target.closest('[data-remove]');if(!b)return;images.splice(Number(b.dataset.remove),1);drawPics();};
-$('clearComposer').onclick=()=>{$('naturalInput').value='';images=[];drawPics();pending=null;$('preview').classList.remove('show');message('');};
+$('clearComposer').onclick=()=>{$('naturalInput').value='';$('naturalInput').readOnly=false;images=[];drawPics();pending=null;$('analyzeText').textContent='分析';$('preview').classList.remove('show');message('');};
 $('analyzeText').onclick=()=>pending?confirmPending():analyse();$('confirmPending').onclick=confirmPending;$('discardPending').onclick=()=>{pending=null;$('preview').classList.remove('show');message('');};
 $('transactionList').onclick=e=>{let b=e.target.closest('[data-delete]');if(b)deleteTx(b.dataset.delete,b.dataset.deleteKind);};
 $('homeAccounts').onclick=e=>{const b=e.target.closest('[data-home-account]');if(b)openAccountModal(b.dataset.homeAccount);};
