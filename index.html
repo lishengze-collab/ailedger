@@ -241,7 +241,7 @@ textarea.input{height:96px;padding:10px 11px;line-height:1.5;resize:vertical}
 (function(){
 'use strict';
 const $=id=>document.getElementById(id),qa=s=>Array.from(document.querySelectorAll(s));
-const DB='ai-ledger-v1',VERSION=3,STORES=['accounts','transactions','budgets','tokenUsage','settings','reconciliations','dailyBudgets'],SNAP=['accounts','transactions','budgets','reconciliations','dailyBudgets'];
+const DB='ai-ledger-v1',VERSION=4,STORES=['accounts','transactions','budgets','tokenUsage','settings','reconciliations','dailyBudgets'],SNAP=['accounts','transactions','budgets','reconciliations','dailyBudgets'];
 const PLACEHOLDER='描述一笔收支，或上传银行卡 / 支付截图……';
 const MONEY=['expense','income','transfer','refund'];
 const TYPES=[...MONEY,'create_account','budget','daily_budget','balance_snapshot','update_transaction','delete_transaction','rename_account'];
@@ -250,8 +250,8 @@ const TYPE_COLOR={credit_card:'#e0733f',savings_card:'#3f7de0',debit_card:'#3f7d
 let db=null,pending=null,images=[],range='month',detailRange='day',filter='all',deferredInstall=null,undoSnap=null,selCat=null,trendSel=null,trendMode='month',toastTimer=null,editId=null,busyAI=false;
 const EYE_ON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
 const EYE_OFF='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/></svg>';
-let hideAmt=localStorage.getItem('ledger.hide')==='1';
-let history=[];try{history=JSON.parse(localStorage.getItem('ledger.hist')||sessionStorage.getItem('ledger.hist')||'[]');}catch(e){}
+let hideAmt=false;try{hideAmt=localStorage.getItem('ledger.hide')==='1';}catch(e){}
+let history=[];try{const savedHistory=JSON.parse(localStorage.getItem('ledger.hist')||sessionStorage.getItem('ledger.hist')||'[]');if(Array.isArray(savedHistory))history=savedHistory;}catch(e){}
 function histAllowed(){return localStorage.getItem('ledger.histAllowed')!=='0';}
 function setHistCount(){const e=$('histCount');if(e)e.textContent=history.length+' 条';}
 const uid=()=>crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);
@@ -272,7 +272,28 @@ const dayKey=ms=>{const d=new Date(ms);return d.getFullYear()+'-'+String(d.getMo
 function catIcon(c,type){const s=clean(c);if(type==='transfer')return'⇄';if(type==='balance_adjustment')return'≈';if(type==='refund')return'↩';const m=[[/餐|饭|吃|咖啡|奶茶|外卖|零食|饮|早|午|晚/,'🍜'],[/交通|打车|地铁|公交|出行|油|停车|高铁|机票/,'🚇'],[/购物|服饰|衣|数码|网购|日用/,'🛍'],[/住|房|租|水电|物业|燃气|话费|网费/,'🏠'],[/娱乐|游戏|电影|会员|旅/,'🎮'],[/医|药|健康|健身/,'💊'],[/教育|学|书|培训/,'📚'],[/工资|薪|奖金|理财|利息/,'💰'],[/红包|礼|人情/,'🧧'],[/借|还|垫/,'🤝']];for(const[r,i]of m)if(r.test(s))return i;return type==='income'?'＋':'🧾';}
 
 /* ---------- 数据库 ---------- */
-function openDB(){return new Promise((ok,no)=>{const r=indexedDB.open(DB,VERSION);r.onupgradeneeded=()=>STORES.forEach(s=>{if(!r.result.objectStoreNames.contains(s))r.result.createObjectStore(s,{keyPath:'id'});});r.onsuccess=()=>{db=r.result;ok();};r.onerror=()=>no(r.error);});}
+function validBudgetDate(value){const s=clean(value).slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return'';const d=new Date(s+'T00:00:00');return Number.isFinite(d.getTime())&&dayKey(d.getTime())===s?s:'';}
+function legacyDailyBudgetRows(legacy){
+ const rows=Array.isArray(legacy&&legacy.history)?legacy.history.slice():[];
+ if(!rows.length&&Number(legacy&&legacy.dailyAmount)>0)rows.push({effectiveFrom:legacy.effectiveFrom||dayKey(legacy.updatedAt||legacy.createdAt||Date.now()),amount:legacy.dailyAmount,createdAt:legacy.updatedAt||legacy.createdAt||Date.now()});
+ const byDate=new Map();rows.forEach(x=>{const date=validBudgetDate(x&&x.effectiveFrom),amount=Number(x&&x.amount);if(date&&Number.isFinite(amount)&&amount>0&&amount<=1e7)byDate.set(date,{id:'migrated-daily-'+date,amount:r2(amount),effectiveFrom:date,createdAt:Number(x.createdAt)||Date.now(),note:clean(x.note)});});return Array.from(byDate.values());
+}
+function openDB(){return new Promise((ok,no)=>{
+ if(typeof indexedDB==='undefined'){no(new Error('当前浏览器不支持本地数据库 IndexedDB，无法加载账户数据。'));return;}
+ let r;try{r=indexedDB.open(DB,VERSION);}catch(e){no(e);return;}
+ r.onupgradeneeded=e=>{
+  const database=r.result,tx=r.transaction;
+  STORES.forEach(s=>{if(!database.objectStoreNames.contains(s))database.createObjectStore(s,{keyPath:'id'});});
+  // v3 曾把每日预算历史放在 budgets 的保留记录中；v4 迁移到独立 dailyBudgets 表。
+  if(e.oldVersion<4&&database.objectStoreNames.contains('budgets')&&database.objectStoreNames.contains('dailyBudgets')){
+   const budgetStore=tx.objectStore('budgets'),dailyStore=tx.objectStore('dailyBudgets'),countReq=dailyStore.count();
+   countReq.onsuccess=()=>{const legacyReq=budgetStore.get('daily-budget-config');legacyReq.onsuccess=()=>{const legacy=legacyReq.result;if(!legacy)return;if(countReq.result===0)legacyDailyBudgetRows(legacy).forEach(row=>dailyStore.put(row));budgetStore.delete('daily-budget-config');};};
+  }
+ };
+ r.onsuccess=()=>{const opened=r.result,missing=STORES.filter(s=>!opened.objectStoreNames.contains(s));if(missing.length){opened.close();no(new Error('本地数据库结构不完整，缺少数据表：'+missing.join('、')+'。请刷新页面重试。'));return;}db=opened;opened.onversionchange=()=>{opened.close();if(db===opened)db=null;};ok();};
+ r.onerror=()=>no(r.error||new Error('本地数据库打开失败。'));
+ r.onblocked=()=>message('数据库升级正被其他打开的 AI Ledger 页面占用。请关闭其他标签页后重新加载。','error');
+ });}
 function all(s){return new Promise((ok,no)=>{const r=db.transaction(s).objectStore(s).getAll();r.onsuccess=()=>ok(r.result||[]);r.onerror=()=>no(r.error);});}
 function put(s,x){return new Promise((ok,no)=>{const r=db.transaction(s,'readwrite').objectStore(s).put(x);r.onsuccess=()=>ok(x);r.onerror=()=>no(r.error);});}
 function del(s,id){return new Promise((ok,no)=>{const r=db.transaction(s,'readwrite').objectStore(s).delete(id);r.onsuccess=()=>ok();r.onerror=()=>no(r.error);});}
@@ -286,7 +307,7 @@ function weekStartMs(now){const d=new Date(now.getFullYear(),now.getMonth(),now.
 async function getDailyBudgets(){return (await all('dailyBudgets')).sort((a,b)=>String(a.effectiveFrom).localeCompare(String(b.effectiveFrom)));}
 function dailyForDate(list,dateStr){let cur=null;for(const e of list){if(String(e.effectiveFrom)<=dateStr)cur=Number(e.amount);}return cur;}
 function sumDaily(list,fromMs,toMs){let s=0;const d=new Date(fromMs);d.setHours(0,0,0,0);const end=new Date(toMs);end.setHours(0,0,0,0);while(d<=end){const v=dailyForDate(list,dayKey(d.getTime()));if(v!=null)s=r2(s+v);d.setDate(d.getDate()+1);}return s;}
-async function setDailyBudget(amount,effectiveFrom){amount=r2(amount);if(!(amount>0&&amount<=1e7))throw Error('每日预算金额无效');effectiveFrom=effectiveFrom||dayKey(Date.now());const list=await getDailyBudgets(),ex=list.find(e=>e.effectiveFrom===effectiveFrom);if(ex){ex.amount=amount;await put('dailyBudgets',ex);}else await put('dailyBudgets',{id:uid(),amount,effectiveFrom,createdAt:Date.now()});}
+async function setDailyBudget(amount,effectiveFrom){amount=r2(amount);if(!(amount>0&&amount<=1e7))throw Error('每日预算金额无效');effectiveFrom=clean(effectiveFrom)||dayKey(Date.now());if(!validBudgetDate(effectiveFrom))throw Error('每日预算生效日期无效，请选择有效日期');const list=await getDailyBudgets(),ex=list.find(e=>e.effectiveFrom===effectiveFrom);if(ex){ex.amount=amount;await put('dailyBudgets',ex);}else await put('dailyBudgets',{id:uid(),amount,effectiveFrom,createdAt:Date.now()});}
 function shareOf(a,acs){const sp=balanceSplit(acs),b=Number(a.balance||0);if(b>=0&&sp.assets>0)return{pct:b/sp.assets*100,label:'占总资产'};if(b<0&&sp.liab>0)return{pct:-b/sp.liab*100,label:'占总负债'};return{pct:0,label:''};}
 
 /* ---------- 提示 ---------- */
@@ -534,7 +555,18 @@ async function updateTx(id,ch){
   if(ch.occurredAt&&Math.floor(Date.parse(ch.occurredAt)/60000)!==Math.floor(time(old)/60000))n.occurredAt=ch.occurredAt;
   let from=(await all('accounts')).find(x=>x.id===old.accountId)||null,to=(await all('accounts')).find(x=>x.id===old.toAccountId)||null;
   if(ch.account&&ch.account!==old.account){from=await ensureAccount(ch.account);n.account=from.name;n.accountId=from.id;}
-  if(old.type==='transfer'){const kind=ch.transferKind||old.transferKind||'internal';n.transferKind=kind;if(kind==='external'){n.toPerson=clean(ch.toPerson||ch.toAccount||old.toPerson||old.toAccount);n.toAccount=n.toPerson;n.toAccountId='';to=null;}else if(ch.toAccount&&ch.toAccount!==old.toAccount){to=await ensureAccount(ch.toAccount);n.toAccount=to.name;n.toAccountId=to.id;n.toPerson='';}}
+  if(old.type==='transfer'){
+   const kind=ch.transferKind||old.transferKind||'internal';n.transferKind=kind;
+   if(kind==='external'){
+    n.toPerson=clean(ch.toPerson||(old.transferKind==='external'?(old.toPerson||old.toAccount):''));
+    if(!n.toPerson)throw Error('转给他人时请填写收款人');n.toAccount=n.toPerson;n.toAccountId='';to=null;
+   }else{
+    const targetName=clean(ch.toAccount||(old.transferKind!=='external'?old.toAccount:''));
+    if(!targetName)throw Error('内部转账必须指定转入账户');
+    if(ch.toAccount||!old.toAccountId||!to){to=await ensureAccount(targetName);}
+    if(!to)throw Error('找不到转入账户');n.toAccount=to.name;n.toAccountId=to.id;n.toPerson='';
+   }
+  }
   if(n.type==='transfer'&&n.accountId&&n.accountId===n.toAccountId)throw Error('转出和转入账户不能相同');
   const cur=n.currency||'CNY',sameAcc=n.accountId===old.accountId,sameTo=n.toAccountId===old.toAccountId;
   n.fromDelta=calcDelta(from,cur,n.amount,ch.accountAmount,sameAcc?old.fromDelta:null,keep&&sameAcc);
@@ -580,7 +612,8 @@ async function applyAction(a){
  const kind=a.type==='transfer'?(a.transferKind||(a.toPerson?'external':'internal')):'internal';const to=a.type==='transfer'&&kind!=='external'?await ensureAccount(a.toAccount):null;
  if(to)a.toAccount=to.name;
  if(a.type==='transfer'&&from&&to&&from.id===to.id)throw Error('转出和转入账户指向同一账户，未执行转账。');
- const duplicate=existing.some(t=>t.type===a.type&&Number(t.amount)===amount&&accountKey(t.account)===accountKey(a.account)&&accountKey(t.toAccount)===accountKey(a.toAccount)&&accountKey(t.merchant)===accountKey(a.merchant)&&accountKey(t.category)===accountKey(a.category)&&Math.abs(time(t)-eventAt)<=90000);
+ const duplicateTarget=kind==='external'?(a.toPerson||a.toAccount):a.toAccount;
+ const duplicate=existing.some(t=>t.type===a.type&&Number(t.amount)===amount&&accountKey(t.account)===accountKey(a.account)&&accountKey(t.toAccount)===accountKey(duplicateTarget)&&accountKey(t.merchant)===accountKey(a.merchant)&&accountKey(t.category)===accountKey(a.category)&&Math.abs(time(t)-eventAt)<=90000);
  if(duplicate)return '检测到相同流水在 90 秒内已保存，已跳过重复记录。';
  const fromDelta=calcDelta(from,cur,amount,a.accountAmount),toDelta=a.type==='transfer'?calcDelta(to,cur,amount,a.toAmount):null;
  const notes=[];
@@ -688,11 +721,14 @@ async function openEdit(id){
  const t=(await all('transactions')).find(x=>x.id===id);if(!t)return;editId=id;
  const loc=new Date(time(t)-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
  const e=(f,l,v,m)=>'<label class="fld"><span>'+l+'</span><input class="f-input" data-edit="'+f+'" value="'+esc(v==null?'':v)+'"'+(m?' inputmode="'+m+'"':'')+'></label>';
- const body='<div class="grid2">'+e('amount','金额（'+(t.currency||'CNY')+'）',t.amount,'decimal')+(t.type==='transfer'?e('account','转出账户',t.account)+(t.transferKind==='external'?e('toPerson','转给（他人）',t.toPerson||t.toAccount):e('toAccount','转入账户',t.toAccount)):e('account','账户',t.account)+e('merchant','商户',t.merchant))+e('category','分类',t.category)+e('note','备注',t.note)+'</div>'+(t.type==='transfer'?'<label class="fld" style="margin-top:8px"><span>转账类型</span><select class="f-input" data-edit="transferKind"><option value="internal"'+(t.transferKind!=='external'?' selected':'')+'>内部账户间互转（不计收支）</option><option value="external"'+(t.transferKind==='external'?' selected':'')+'>转出给他人（计入支出）</option></select></label>':'')+'<label class="fld" style="margin-top:8px"><span>时间</span><input class="f-input" type="datetime-local" data-edit="time" value="'+loc+'"></label>'+(t.neutral?'<div class="meta">此记录不计入收支统计</div>':'');
+ const targets=t.type==='transfer'?'<div data-transfer-target="internal"'+(t.transferKind==='external'?' hidden':'')+'>'+e('toAccount','转入账户',t.transferKind==='external'?'':t.toAccount)+'</div><div data-transfer-target="external"'+(t.transferKind==='external'?'':' hidden')+'>'+e('toPerson','转给（他人）',t.transferKind==='external'?(t.toPerson||t.toAccount):'')+'</div>':'';
+ const body='<div class="grid2">'+e('amount','金额（'+(t.currency||'CNY')+'）',t.amount,'decimal')+e('account',t.type==='transfer'?'转出账户':'账户',t.account)+(t.type==='transfer'?targets:e('merchant','商户',t.merchant))+e('category','分类',t.category)+e('note','备注',t.note)+'</div>'+(t.type==='transfer'?'<label class="fld" style="margin-top:8px"><span>转账类型</span><select class="f-input" data-edit="transferKind"><option value="internal"'+(t.transferKind!=='external'?' selected':'')+'>内部账户间互转（不计收支）</option><option value="external"'+(t.transferKind==='external'?' selected':'')+'>转出给他人（计入支出）</option></select></label>':'')+'<label class="fld" style="margin-top:8px"><span>时间</span><input class="f-input" type="datetime-local" data-edit="time" value="'+loc+'"></label>'+(t.neutral?'<div class="meta">此记录不计入收支统计</div>':'');
  showSheet({title:'编辑记录',sub:LABEL[t.type]||'',body,foot:'<button class="btn danger" data-act="del-edit">删除</button><button class="btn flex" data-act="close">取消</button><button class="btn primary flex" data-act="save-edit">保存</button>'});
+ if(t.type==='transfer'){const selector=$('sheetBody').querySelector('[data-edit="transferKind"]');if(selector)selector.addEventListener('change',()=>qa('#sheetBody [data-transfer-target]').forEach(el=>{el.hidden=el.dataset.transferTarget!==selector.value;}));}
 }
 async function saveEdit(){
- const ch={};qa('#sheetBody [data-edit]').forEach(i=>{const f=i.dataset.edit,v=clean(i.value);if(f==='amount'){const n=parseAmount(v);if(n!=null)ch.amount=n;}else if(f==='time'){if(v)ch.occurredAt=normalizeDate(v);}else ch[f]=v;});
+ const ch={};let invalidAmount=false;qa('#sheetBody [data-edit]').forEach(i=>{const f=i.dataset.edit,v=clean(i.value);if(f==='amount'){const n=parseAmount(v);if(n==null||n<=0||n>1e9)invalidAmount=true;else ch.amount=n;}else if(f==='time'){if(v)ch.occurredAt=normalizeDate(v);}else ch[f]=v;});
+ if(invalidAmount){toast('金额必须是大于 0 且不超过 10 亿的有效数字。');return;}
  undoSnap=await snapshot();
  try{await updateTx(editId,ch);closeSheet();await renderAll();toast('已保存修改',true);}catch(e){undoSnap=null;toast('保存失败：'+e.message);}
 }
@@ -700,7 +736,7 @@ async function saveEdit(){
 /* ---------- 渲染 ---------- */
 function txHtml(t){
  const label=t.type==='income'?'收入':t.type==='transfer'?(t.transferKind==='external'?'转给他人':'内部转账'):t.type==='refund'?'退款':t.type==='balance_adjustment'?'校准':'支出',sign=t.type==='income'||t.type==='refund'?'+':(t.type==='expense'||(t.type==='transfer'&&t.transferKind==='external'))?'-':'',title=t.merchant||t.category||(t.items&&t.items[0])||label;
- const color=t.type==='income'||t.type==='refund'?'income-text':t.type==='expense'?'expense-text':'',kind=t.sourceReconciliation?'reconciliation':'transaction';
+ const color=t.type==='income'||t.type==='refund'?'income-text':(t.type==='expense'||(t.type==='transfer'&&t.transferKind==='external'))?'expense-text':'',kind=t.sourceReconciliation?'reconciliation':'transaction';
  return '<div class="swipe-shell" data-row-id="'+esc(t.id)+'" data-kind="'+kind+'"><button class="swipe-delete" data-delete="'+esc(t.id)+'" data-delete-kind="'+kind+'">删除</button><div class="swipe-content"><div class="item"><div class="symbol">'+catIcon(t.category||t.merchant,t.type)+'</div><div class="item-main"><b>'+esc(title)+'</b><small>'+esc([t.account||(t.type==='expense'||t.type==='income'?'未关联账户':''),t.type==='transfer'?('→ '+(t.toPerson||t.toAccount||'')):t.category,t.neutral?'不计收支':'',new Date(time(t)).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})].filter(Boolean).join(' · '))+'</small></div><div class="item-right"><b class="'+color+'">'+sign+money(t.amount,t.currency)+'</b><small>'+label+'</small></div></div></div></div>';
 }
 function isDetailRange(t){
@@ -797,14 +833,17 @@ async function saveSettings(){
 }
 async function testAPI(){if(!(await saveSettings()))return;const s=settings();if(!s.endpoint||!s.key){apiMessage('请填写 Endpoint 和 API Key。','error');return;}const b=$('testApi');busy(b,true);apiMessage('正在连接…');try{const data=await post(s,{model:s.model,messages:[{role:'user',content:'只返回JSON：{"connected":true}'}],temperature:0});if(!data.choices||!data.choices.length)throw Error('接口未返回模型内容');apiMessage('连接成功 · '+(data.model||s.model));}catch(e){apiMessage('连接失败 · '+e.message,'error');}finally{busy(b,false);}}
 async function uploadFiles(files){if(!files||!files.length)return;if(images.length>=5){message('一批最多上传 5 张。');return;}try{for(const f of Array.from(files).slice(0,5-images.length))images.push(await prepareImage(f));drawPics();}catch(e){message('图片读取失败：'+e.message,'error');}$('imageInput').value='';}
-function exportData(){Promise.all(STORES.map(all)).then(arr=>{const d={version:3,exportedAt:new Date().toISOString(),conversationHistory:history};STORES.forEach((s,i)=>d[s]=arr[i]);const u=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=u;a.download='ai-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();localStorage.setItem('ledger.lastBackup',String(Date.now()));setTimeout(()=>URL.revokeObjectURL(u),500);});}
+function exportData(){Promise.all(STORES.map(all)).then(arr=>{const d={version:4,exportedAt:new Date().toISOString(),conversationHistory:history};STORES.forEach((s,i)=>d[s]=arr[i]);const u=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=u;a.download='ai-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();localStorage.setItem('ledger.lastBackup',String(Date.now()));setTimeout(()=>URL.revokeObjectURL(u),500);});}
 async function importData(f){
  let d;try{d=JSON.parse(await f.text());}catch(e){throw Error('文件不是有效的 JSON');}
  if(!d||typeof d!=='object'||Array.isArray(d))throw Error('备份文件格式不正确');
+ // 兼容旧版备份：把 budgets 中的每日预算保留记录还原到 dailyBudgets。
+ if(Array.isArray(d.budgets)){const legacy=d.budgets.find(x=>x&&x.id==='daily-budget-config');if(legacy){if(!Array.isArray(d.dailyBudgets)||!d.dailyBudgets.length)d.dailyBudgets=legacyDailyBudgetRows(legacy);d.budgets=d.budgets.filter(x=>!x||x.id!=='daily-budget-config');}}
  const present=STORES.filter(s=>d[s]!==undefined);
  if(!present.some(s=>Array.isArray(d[s])))throw Error('备份文件中没有可识别的数据');
  for(const s of present){if(!Array.isArray(d[s]))throw Error('「'+s+'」数据格式不正确');if(d[s].some(x=>!x||typeof x!=='object'||x.id==null||x.id===''))throw Error('「'+s+'」中存在缺少 id 的记录');}
  for(const s of ['accounts','transactions'])if(Array.isArray(d[s])&&d[s].some(x=>s==='accounts'?!Number.isFinite(Number(x.balance??0)):!Number.isFinite(Number(x.amount??0))))throw Error('「'+s+'」中存在无效的金额');
+ if(Array.isArray(d.dailyBudgets)){for(const x of d.dailyBudgets){const date=validBudgetDate(x.effectiveFrom),amount=Number(x.amount);if(!date||!Number.isFinite(amount)||amount<=0||amount>1e7)throw Error('每日预算中存在无效的生效日期或金额');x.effectiveFrom=date;}}
  for(const s of present){await clear(s);for(const x of d[s])await put(s,x);} if(Array.isArray(d.conversationHistory)){history=d.conversationHistory.slice(-40);try{localStorage.setItem('ledger.hist',JSON.stringify(history));}catch(e){}setHistCount();}
  await renderAll();
 }
