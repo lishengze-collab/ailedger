@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#f5f5f7">
+<meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="AI Ledger">
@@ -262,7 +263,7 @@ function requiredIssues(actions){
 async function confirmPending(){
  if(!pending)return;
  const issues=requiredIssues(pending.actions);
- if(issues.length){msg('只需要补充必要信息：'+escapeHtml(issues.join('；'))+'。其他信息不必补填。','warn');return;}
+ if(issues.length){msg('只需要补充必要信息：'+escapeHtml(issues.join('；'))+'。直接在原描述后补充即可，其他信息不必补填。','warn');return;}
  if(pending.needsClarification&&pending.clarification){msg(escapeHtml(pending.clarification)+' 可以直接在上方输入框补充。','warn');return;}
  const actions=pending.actions;
  for(const p of actions){
