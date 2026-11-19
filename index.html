@@ -739,13 +739,29 @@ async function callAI(text,pics,extra,opt){
   const result=await request(ocrText);message('');return result;
  }
 }
-async function converse(text,pics,opt){
+function historyRequestGate(dataRequest,userText){
+ const request={...(dataRequest||{})},cutoff=Date.now()-3*864e5;
+ const parseDate=(value,end)=>{const v=clean(value);if(!v)return null;const d=new Date(/^\\d{4}-\\d{2}-\\d{2}$/.test(v)?v+(end?'T23:59:59.999':'T00:00:00'):v);return Number.isFinite(d.getTime())?d.getTime():null;};
+ const recentIntent=/(最近3天|最近三天|近3天|近三天|过去72小时|近72小时|近24小时|今天|昨天|前天)/i.test(String(userText||''));
+ let from=parseDate(request.from,false),to=parseDate(request.to,true);
+ if(from==null&&to==null&&recentIntent){request.from=dayKey(cutoff);request.to=dayKey(Date.now());from=cutoff;to=Date.now();}
+ const needsApproval=from!=null?from<cutoff:(to!=null?to<cutoff||!recentIntent:true);
+ const range=needsApproval?(request.from||request.to?(request.from||'未限定起始日期')+' 至 '+(request.to||'至今'):'未限定时间范围（可能涉及全部历史流水）'):'最近3天';
+ return{request,needsApproval,range};
+}
+async function converse(text,pics,opt,approvedRequest){
  const extra=[];
+ if(approvedRequest){
+  const res=await runQuery(approvedRequest);
+  extra.push({role:'assistant',content:JSON.stringify({intent:'need_data',dataRequest:approvedRequest})},{role:'user',content:'用户已明确授权读取3天前的历史记录。本地查询结果（可信数据，请据此作答，intent 用 query）：'+JSON.stringify(res)});
+ }
  for(let round=0;round<3;round++){
   const r=await callAI(text,pics,extra,opt);
   if(r.intent==='need_data'&&r.dataRequest&&round<2){
-   const res=await runQuery(r.dataRequest);
-   extra.push({role:'assistant',content:JSON.stringify({intent:'need_data',dataRequest:r.dataRequest})},{role:'user',content:'本地查询结果（可信数据，请据此作答，intent 用 query）：'+JSON.stringify(res)});
+   const gate=historyRequestGate(r.dataRequest,text);
+   if(gate.needsApproval)return{...r,requiresHistoryApproval:true,historyRequest:gate.request,historyRange:gate.range,originalQuery:text};
+   const res=await runQuery(gate.request);
+   extra.push({role:'assistant',content:JSON.stringify({intent:'need_data',dataRequest:gate.request})},{role:'user',content:'本地近3天查询结果（可信数据，请据此作答，intent 用 query）：'+JSON.stringify(res)});
    continue;
   }
   return r;
@@ -943,22 +959,47 @@ async function prepareImage(f){
  }finally{URL.revokeObjectURL(src);}
 }
 async function analyse(){
- if(busyAI)return;const text=clean($('naturalInput').value),pics=images.slice();if(!text&&!pics.length){message('直接输入自然语言指令即可；图片仅为可选辅助。');return;}
- if(pending&&pending.awaitingConfirmation){
-  if(/^(确认|是|好|好的|执行|可以|对|没问题|同意|保存|记录)(吧|即可)?[。！! ]*$/i.test(text)){pushHist('user',text);const actions=pending.actions||[];pending=null;syncRecordButton();await commit(actions,false);return;}
-  if(/^(取消|否|不|不要|不执行|算了|撤销|放弃)[。！! ]*$/i.test(text)){pushHist('user',text);pending=null;syncRecordButton();pushHist('assistant','已取消待执行操作，没有更改数据。');$('naturalInput').value='';message('已取消。');return;}
+ if(busyAI)return;
+ const text=clean($('naturalInput').value),pics=images.slice(),yes=/^(确认|是|好|好的|执行|可以|对|没问题|同意|授权|继续|允许|读取)(吧|即可|读取|历史记录)?[。！! ]*$/i.test(text),no=/^(取消|否|不|不要|不执行|算了|放弃)[。！! ]*$/i.test(text);
+ if(pendingHistoryRequest){
+  if(yes||(!text&&!pics.length)){
+   const approved=pendingHistoryRequest;pendingHistoryRequest=null;pushHist('user',text||'确认读取历史记录');
+   const b=$('analyzeText');busyAI=true;busy(b,true);message('已授权，正在查询较早的历史流水…');
+   try{const r=await converse(approved.query,approved.pics||[],{},approved.dataRequest);await route(r);}
+   catch(e){pushHist('assistant','历史查询失败：'+e.message);message(e.message,'error');}
+   finally{busyAI=false;busy(b,false);syncRecordButton();}
+   return;
+  }
+  if(no){pushHist('user',text);pendingHistoryRequest=null;$('naturalInput').value='';syncRecordButton();pushHist('assistant','已取消读取3天以前的历史记录，本次不会查询更早流水。');message('');return;}
+  pushHist('user',text);$('naturalInput').value='';pushHist('assistant','请先回复“确认”授权读取3天以前的历史记录，或回复“取消”。');syncRecordButton();return;
  }
+ if(/^撤销[。！! ]*$/i.test(text)&&undoSnap){
+  pushHist('user',text);const snap=undoSnap;undoSnap=null;
+  try{await restore(snap);await renderAll();pushHist('assistant','已撤销上一次操作，数据已恢复。');}
+  catch(e){pushHist('assistant','撤销失败：'+e.message);}
+  $('naturalInput').value='';syncRecordButton();return;
+ }
+ if(pending&&pending.awaitingConfirmation){
+  if(yes||(!text&&!pics.length)){pushHist('user',text||'确认');const actions=pending.actions||[];pending=null;syncRecordButton();await commit(actions,false);return;}
+  if(no){pushHist('user',text);pending=null;syncRecordButton();pushHist('assistant','已取消待执行操作，没有更改数据。');$('naturalInput').value='';message('');return;}
+ }
+ if(!text&&!pics.length){message('直接输入自然语言指令即可；图片仅为可选辅助。');return;}
  let inputText=text;
  if(pending){inputText='继续处理上一项操作。之前待处理动作：'+JSON.stringify(pending.actions||[])+'。用户现在补充或修改为：'+text;pending=null;syncRecordButton();}
- const b=$('analyzeText');busyAI=true;busy(b,true);message('AI 正在结合完整对话历史、账户、历史流水和偏好分析……');
+ const b=$('analyzeText');busyAI=true;busy(b,true);message(pics.length?'AI 正在快速识别压缩图片…':'AI 正在处理消息…');
  try{const r=await converse(inputText,pics);pushHist('user',text+(pics.length?'［附 '+pics.length+' 张图片］':''));await route(r);}
- catch(e){pushHist('user',text);pushHist('assistant','处理失败：'+e.message);message(e.message,'error');}
- finally{busyAI=false;busy(b,false);}
+ catch(e){pushHist('user',text+(pics.length?'［附 '+pics.length+' 张图片］':''));pushHist('assistant','处理失败：'+e.message);message(e.message,'error');}
+ finally{busyAI=false;busy(b,false);syncRecordButton();}
 }
 async function route(r){
+ if(r.requiresHistoryApproval){
+  pendingHistoryRequest={query:r.originalQuery||'',dataRequest:r.historyRequest||r.dataRequest||{},pics:images.slice(),range:r.historyRange||''};
+  pushHist('assistant','这次查询需要读取3天以前的历史流水（'+pendingHistoryRequest.range+'）。最近3天的数据已优先处理；是否授权本次读取更早记录？请回复“确认”继续，或回复“取消”放弃。');
+  $('naturalInput').value='';syncExamples();syncRecordButton();message('等待你确认是否读取更早的历史记录。');return;
+ }
  const actions=r.actions||[],bad=actions.filter(a=>issues(a).length),auto=settings().auto&&!r.needsClarification&&!r.requiresConfirmation&&!bad.length&&actions.length&&actions.every(a=>SAFE.has(a.type)&&a.confidence>=.75);
  $('naturalInput').placeholder=PLACEHOLDER;
- if(!actions.length){showAnswer(r);$('naturalInput').value='';syncExamples();return;}
+ if(!actions.length){showAnswer(r);$('naturalInput').value='';syncExamples();syncRecordButton();return;}
  if(bad.length||r.needsClarification||r.intent==='clarify'){pending={actions,awaitingConfirmation:false};syncRecordButton();const q=r.clarification||bad.map(a=>issues(a).join('、')).join('；')||r.answer||r.reply||'请补充缺少的信息。';pushHist('assistant','还需要补充：'+q+'。直接在输入框回答即可，不需要图片。');return;}
  if(auto){await commit(actions,true);return;}
  await openConfirm(r,'请回复“确认”执行，或“取消”放弃。');
