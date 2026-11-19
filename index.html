@@ -382,6 +382,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 #toast{display:none!important;}
 @media(max-width:380px){.fab-toggle{width:50px;height:50px}.fab-nav{right:12px}}
 @media(min-width:720px){.fab-nav{right:max(22px,calc((100vw - 760px)/2 + 20px));}}
+
+/* Keep the orb above the entry controls while leaving the home page full height */
+#app:has(#page-home.active) .fab-nav{bottom:calc(104px + var(--safe));}
 </style>
 </head>
 <body><div id="app">
@@ -638,12 +641,11 @@ async function applyEffect(t,sign){
 }
 
 /* ---------- AI 上下文与提示词 ---------- */
-async function context(){
+async function context(compact=false){
  const [accounts,tx,budgets,recs]=await Promise.all([all('accounts'),all('transactions'),all('budgets'),all('reconciliations')]);
  const now=new Date(),nowMs=Date.now(),recentCutoff=nowMs-3*864e5,recentTx=tx.filter(t=>time(t)>=recentCutoff),start=new Date(now.getFullYear(),now.getMonth(),1).getTime(),year=new Date(now.getFullYear(),0,1).getTime(),from=new Date(now.getFullYear(),now.getMonth()-11,1).getTime();
  const sum=list=>{const o={income:incOf(list),expense:expOf(list),categories:{},merchants:{}};list.forEach(t=>{if(!pl(t))return;if(t.type==='expense'||t.type==='refund'||(t.type==='transfer'&&t.transferKind==='external')){const sg=t.type==='refund'?-1:1,c=t.category||(t.type==='transfer'?'转给他人':'其他'),m=t.merchant||t.toPerson||'未注明';o.categories[c]=r2((o.categories[c]||0)+sg*amt(t));o.merchants[m]=r2((o.merchants[m]||0)+sg*amt(t));}});o.merchants=Object.fromEntries(Object.entries(o.merchants).sort((a,b)=>b[1]-a[1]).slice(0,15));o.net=r2(o.income-o.expense);o.count=list.length;return o;};
- const months={};tx.filter(t=>time(t)>=from).forEach(t=>{const d=new Date(time(t)),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');(months[k]||(months[k]=[])).push(t);});
- Object.keys(months).forEach(k=>months[k]=sum(months[k]));
+ const months={};if(!compact){tx.filter(t=>time(t)>=from).forEach(t=>{const d=new Date(time(t)),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');(months[k]||(months[k]=[])).push(t);});Object.keys(months).forEach(k=>months[k]=sum(months[k]));}
  const hm={},cc={};
  recentTx.forEach(t=>{if(t.type!=='expense'&&t.type!=='income')return;if(t.category)cc[t.category]=(cc[t.category]||0)+1;const m=clean(t.merchant);if(!m)return;const h=hm[m]||(hm[m]={n:0,c:{},a:{}});h.n++;h.c[t.category||'']=(h.c[t.category||'']||0)+1;h.a[t.account||'']=(h.a[t.account||'']||0)+1;});
  const top=o=>(Object.entries(o).sort((a,b)=>b[1]-a[1])[0]||[''])[0];
@@ -652,13 +654,13 @@ async function context(){
  const monthTx=tx.filter(t=>time(t)>=start);
  return{
   accounts:accounts.map(a=>({name:a.name,balance:a.balance,currency:a.currency||'CNY',accountType:a.accountType||guessAccountType(a.name),institution:a.institution||'',last4:a.last4||'',verifiedAt:a.verifiedAt||null,creditLimit:a.creditLimit??null,availableCredit:a.availableCredit??null})),
-  recent:recentTx.slice().sort((a,b)=>time(b)-time(a)).slice(0,30).map(t=>({id:t.id,type:t.type,amount:t.amount,currency:t.currency||'CNY',account:t.account||'',toAccount:t.toAccount||'',merchant:t.merchant||'',category:t.category||'',occurredAt:t.occurredAt||'',note:t.note||'',neutral:!!t.neutral})),
+  recent:recentTx.slice().sort((a,b)=>time(b)-time(a)).slice(0,compact?12:30).map(t=>({id:t.id,type:t.type,amount:t.amount,currency:t.currency||'CNY',account:t.account||'',toAccount:t.toAccount||'',merchant:t.merchant||'',category:t.category||'',occurredAt:t.occurredAt||'',note:t.note||'',neutral:!!t.neutral})),
   recentWindowHours:72,
-  thisMonth:sum(monthTx),thisYear:sum(tx.filter(t=>time(t)>=year)),months,categories,habits,
-  calibrations:recs.slice().sort((a,b)=>b.createdAt-a.createdAt).slice(0,8).map(r=>({account:r.accountName,previous:r.previousBalance,statement:r.statementBalance,difference:r.difference,date:r.occurredAt,analysis:r.analysis||''})),
-  budgets:budgets.map(b=>{const dim=daysInMonth(now.getFullYear(),now.getMonth()),daily=b.dailyLimit!=null?Number(b.dailyLimit):(b.limit?r2(Number(b.limit)/dim):null);return{name:b.name,category:b.category||'',limit:b.limit,dailyLimit:daily,weeklyLimit:daily!=null?r2(daily*7):null,monthlyLimit:daily!=null?r2(daily*dim):null,usedThisMonth:expOf(monthTx.filter(t=>!b.category||t.category===b.category))};}),
-dailyBudget:await (async()=>{const list=await getDailyBudgets(),today=dayKey(now.getTime()),ws=weekStartMs(now),we=ws+6*864e5,ms=start,me=new Date(now.getFullYear(),now.getMonth()+1,0).getTime();return{amount:dailyForDate(list,today),weekly:sumDaily(list,ws,we),monthly:sumDaily(list,ms,me),history:list.slice(-10).map(e=>({amount:e.amount,effectiveFrom:e.effectiveFrom}))};})(),
-trends:{last7Days:sum(tx.filter(t=>time(t)>=now.getTime()-6*864e5)),last4Weeks:sum(tx.filter(t=>time(t)>=now.getTime()-27*864e5)),last12Months:sum(tx.filter(t=>time(t)>=from))},
+  thisMonth:sum(monthTx),thisYear:compact?undefined:sum(tx.filter(t=>time(t)>=year)),months:compact?undefined:months,categories,habits,
+  calibrations:recs.slice().sort((a,b)=>b.createdAt-a.createdAt).slice(0,compact?3:8).map(r=>({account:r.accountName,previous:r.previousBalance,statement:r.statementBalance,difference:r.difference,date:r.occurredAt,analysis:r.analysis||''})),
+  budgets:(compact?budgets.slice(0,6):budgets).map(b=>{const dim=daysInMonth(now.getFullYear(),now.getMonth()),daily=b.dailyLimit!=null?Number(b.dailyLimit):(b.limit?r2(Number(b.limit)/dim):null);return{name:b.name,category:b.category||'',limit:b.limit,dailyLimit:daily,weeklyLimit:daily!=null?r2(daily*7):null,monthlyLimit:daily!=null?r2(daily*dim):null,usedThisMonth:expOf(monthTx.filter(t=>!b.category||t.category===b.category))};}),
+dailyBudget:await (async()=>{const list=await getDailyBudgets(),today=dayKey(now.getTime()),ws=weekStartMs(now),we=ws+6*864e5,ms=start,me=new Date(now.getFullYear(),now.getMonth()+1,0).getTime();return{amount:dailyForDate(list,today),weekly:sumDaily(list,ws,we),monthly:sumDaily(list,ms,me),history:list.slice(compact?-3:-10).map(e=>({amount:e.amount,effectiveFrom:e.effectiveFrom}))};})(),
+trends:compact?{last3Days:sum(recentTx)}:{last7Days:sum(tx.filter(t=>time(t)>=now.getTime()-6*864e5)),last4Weeks:sum(tx.filter(t=>time(t)>=now.getTime()-27*864e5)),last12Months:sum(tx.filter(t=>time(t)>=from))},
 externalTransfersThisMonth:r2(monthTx.filter(t=>t.type==='transfer'&&t.transferKind==='external').reduce((s2,t)=>s2+amt(t),0))
 };
 }
@@ -735,7 +737,7 @@ function buildVisionContent(userText,base64List,ocrText,imageDetail){
 async function callAI(text,pics,extra,opt){
  const s=settings();if(!s.endpoint||!s.key)throw Error('请先在设置中配置 API。');
  const imageItems=(pics||[]).map(p=>typeof p==='string'?{file:null,dataUrl:p,previewUrl:p}:p).filter(p=>p&&(p.dataUrl||p.previewUrl));
- const ctx=await context();
+ const ctx=await context(imageItems.length>0);
  const base64List=imageItems.map(p=>p.previewUrl||p.dataUrl).filter(Boolean);
  const endpointHost=(()=>{try{return new URL(s.endpoint).hostname.toLowerCase();}catch(e){return'';}})(),isDeepSeek=endpointHost==='deepseek.com'||endpointHost.endsWith('.deepseek.com');
  const imageDetail=imageItems.length&&isDeepSeek?'low':null;
