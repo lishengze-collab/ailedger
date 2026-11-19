@@ -356,7 +356,37 @@ function canonicalBank(v){const k=accountKey(v);for(const [name,aliases] of Obje
 function accountTypeOf(a){return a.accountType||guessAccountType(a.name);}
 async function accountMatches(name,meta){meta=meta||{};const list=await all('accounts'),nk=accountKey(name),rawType=clean(meta.accountType),want=guessAccountType(name,rawType),explicit=!!(rawType&&rawType!=='other')||/信用卡|贷记卡|储蓄卡|借记卡/.test(String(name)),last4=clean(meta.last4||(clean(name).match(/(?:\\*{2,}\\s*|尾号\\s*|末四位\\s*|卡号\\s*)(\\d{4})\\s*$/)||[])[1]).replace(/\\D/g,'').slice(-4),bank=canonicalBank(meta.institution||name);let candidates=list.filter(a=>accountKey(a.name)===nk);if(!candidates.length)candidates=list.filter(a=>canonicalBank(a.institution||a.name)===bank);if(last4)candidates=candidates.filter(a=>clean(a.last4).replace(/\\D/g,'').slice(-4)===last4);if(explicit)candidates=candidates.filter(a=>accountTypeOf(a)===want);return candidates;}
 async function account(name,meta){if(!accountKey(name))return null;const c=await accountMatches(name,meta);return c.length===1?c[0]:null;}
-async function ensureAccount(name,meta){const n=clean(name);if(!n)return null;meta=meta||{};const c=await accountMatches(n,meta);let a=null;if(c.length===1)a=c[0];else if(c.length>1)throw Error('账户「'+n+'」对应多个账户，请注明信用卡/储蓄卡或用 @ 选择。');if(!a){const type=guessAccountType(n,meta.accountType),bank=canonicalBank(meta.institution||n),same=(await all('accounts')).filter(x=>canonicalBank(x.institution||x.name)===bank&&accountTypeOf(x)===type&&type!=='other');if(same.length===1)a=same[0];else if(same.length>1)throw Error('该银行存在多个同类型账户，无法安全合并。');}if(!a)a={id:uid(),name:n,balance:0,accountType:guessAccountType(n,meta.accountType),institution:clean(meta.institution)||canonicalBank(n),last4:clean(meta.last4),currency:clean(meta.currency)||'CNY',createdAt:Date.now(),balanceInitialized:false};else{if(meta.institution)a.institution=clean(meta.institution);if(meta.last4)a.last4=clean(meta.last4);if(meta.currency&&!a.balanceInitialized&&!a.verifiedAt)a.currency=clean(meta.currency);}if(meta.creditLimit!=null)a.creditLimit=Number(meta.creditLimit);if(meta.availableCredit!=null)a.availableCredit=Number(meta.availableCredit);await put('accounts',a);return a;}
+async function mergeAccountSet(rows){
+ if(!rows.length)return null;if(rows.length===1)return rows[0];
+ const typed=new Set(rows.map(accountTypeOf)),tails=new Set(rows.map(a=>clean(a.last4).replace(/\\D/g,'').slice(-4)).filter(Boolean));
+ if(typed.size>1||tails.size>1)throw Error('检测到同一机构下有不同账户类型或不同尾号，不能自动合并。请先选择正确账户。');
+ rows.sort((a,b)=>Number(b.verifiedAt||0)-Number(a.verifiedAt||0)||Number(a.createdAt||0)-Number(b.createdAt||0));
+ const master=rows[0],duplicates=rows.slice(1);
+ for(const duplicate of duplicates){
+  for(const t of await all('transactions')){
+   let dirty=false;
+   if(t.accountId===duplicate.id||(!t.accountId&&accountKey(t.account)===accountKey(duplicate.name))){t.accountId=master.id;t.account=master.name;dirty=true;}
+   if(t.toAccountId===duplicate.id||(!t.toAccountId&&accountKey(t.toAccount)===accountKey(duplicate.name))){t.toAccountId=master.id;t.toAccount=master.name;dirty=true;}
+   if(dirty)await put('transactions',t);
+  }
+  for(const r of await all('reconciliations'))if(r.accountId===duplicate.id||accountKey(r.accountName)===accountKey(duplicate.name)){r.accountId=master.id;r.accountName=master.name;await put('reconciliations',r);}
+  await del('accounts',duplicate.id);
+ }
+ return master;
+}
+async function mergeStoredDuplicates(){
+ const acs=await all('accounts'),groups=new Map();
+ for(const a of acs){const bank=canonicalBank(a.institution||a.name),type=accountTypeOf(a);if(type==='other'||!Object.prototype.hasOwnProperty.call(BANK_ALIASES,bank))continue;const key=bank+'|'+type+'|'+clean(a.last4).replace(/\\D/g,'').slice(-4);const list=groups.get(key)||[];list.push(a);groups.set(key,list);}
+ for(const list of groups.values())if(list.length>1)await mergeAccountSet(list);
+}
+async function ensureAccount(name,meta){
+ const n=clean(name);if(!n)return null;meta=meta||{};let candidates=await accountMatches(n,meta),a=null;
+ if(candidates.length===1)a=candidates[0];else if(candidates.length>1)a=await mergeAccountSet(candidates);
+ if(!a){const type=guessAccountType(n,meta.accountType),bank=canonicalBank(meta.institution||n),same=(await all('accounts')).filter(x=>canonicalBank(x.institution||x.name)===bank&&accountTypeOf(x)===type&&type!=='other');if(same.length===1)a=same[0];else if(same.length>1)a=await mergeAccountSet(same);}
+ if(!a)a={id:uid(),name:n,balance:0,accountType:guessAccountType(n,meta.accountType),institution:clean(meta.institution)||canonicalBank(n),last4:clean(meta.last4),currency:clean(meta.currency)||'CNY',createdAt:Date.now(),balanceInitialized:false};
+ else{if(meta.institution)a.institution=clean(meta.institution);if(meta.last4&&!a.last4)a.last4=clean(meta.last4);if(meta.currency&&!a.balanceInitialized&&!a.verifiedAt)a.currency=clean(meta.currency);}
+ if(meta.creditLimit!=null)a.creditLimit=Number(meta.creditLimit);if(meta.availableCredit!=null)a.availableCredit=Number(meta.availableCredit);await put('accounts',a);return a;
+}
 function localISO(){const d=new Date(),offset=-d.getTimezoneOffset(),sign=offset>=0?'+':'-',hh=String(Math.floor(Math.abs(offset)/60)).padStart(2,'0'),mm=String(Math.abs(offset)%60).padStart(2,'0');return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,19)+sign+hh+':'+mm;}
 function normalizeDate(v){
  const s=clean(v);if(!s)return localISO();
@@ -511,7 +541,7 @@ async function updateTx(id,ch){
   ['merchant','category','note'].forEach(k=>{if(ch[k]!==undefined)n[k]=clean(ch[k]);});
   if(ch.occurredAt&&Math.floor(Date.parse(ch.occurredAt)/60000)!==Math.floor(time(old)/60000))n.occurredAt=ch.occurredAt;
   let from=(await all('accounts')).find(x=>x.id===old.accountId)||null,to=(await all('accounts')).find(x=>x.id===old.toAccountId)||null;
-  if(ch.account&&ch.account!==old.account){from=await ensureAccount(ch.account);n.account=from.name;n.accountId=from.id;}
+  if(ch.account&&ch.account!==old.account){from=await account(ch.account);if(!from){const c=await accountMatches(ch.account,{});throw Error(c.length?'修改后的账户名称匹配多个账户，请注明卡类型。':'修改时无法找到已有账户「'+ch.account+'」。');}n.account=from.name;n.accountId=from.id;}
   if(old.type==='transfer'){
    const kind=ch.transferKind||old.transferKind||'internal';n.transferKind=kind;
    if(kind==='external'){
@@ -520,7 +550,7 @@ async function updateTx(id,ch){
    }else{
     const targetName=clean(ch.toAccount||(old.transferKind!=='external'?old.toAccount:''));
     if(!targetName)throw Error('内部转账必须指定转入账户');
-    if(ch.toAccount||!old.toAccountId||!to){to=await ensureAccount(targetName);}
+    if(ch.toAccount||!old.toAccountId||!to){to=await account(targetName);if(!to){const c=await accountMatches(targetName,{});throw Error(c.length?'修改后的转入账户匹配多个账户，请注明卡类型。':'修改时找不到转入账户「'+targetName+'」。');}}
     if(!to)throw Error('找不到转入账户');n.toAccount=to.name;n.toAccountId=to.id;n.toPerson='';
    }
   }
@@ -811,7 +841,7 @@ async function importData(f){
  for(const s of present){if(!Array.isArray(d[s]))throw Error('「'+s+'」数据格式不正确');if(d[s].some(x=>!x||typeof x!=='object'||x.id==null||x.id===''))throw Error('「'+s+'」中存在缺少 id 的记录');}
  for(const s of ['accounts','transactions'])if(Array.isArray(d[s])&&d[s].some(x=>s==='accounts'?!Number.isFinite(Number(x.balance??0)):!Number.isFinite(Number(x.amount??0))))throw Error('「'+s+'」中存在无效的金额');
  if(Array.isArray(d.dailyBudgets)){for(const x of d.dailyBudgets){const date=validBudgetDate(x.effectiveFrom),amount=Number(x.amount);if(!date||!Number.isFinite(amount)||amount<=0||amount>1e7)throw Error('每日预算中存在无效的生效日期或金额');x.effectiveFrom=date;}}
- for(const s of present){await clear(s);for(const x of d[s])await put(s,x);} if(Array.isArray(d.conversationHistory)){history=[];await clear('conversationHistory');for(const h of d.conversationHistory){const row={id:uid(),role:h.role||'assistant',content:String(h.content||''),createdAt:Number(h.createdAt)||Date.now()};history.push(row);await put('conversationHistory',row);}setHistCount();renderConversation();}
+ for(const s of present){await clear(s);for(const x of d[s])await put(s,x);} if(Array.isArray(d.conversationHistory)){history=[];await clear('conversationHistory');for(const h of d.conversationHistory){const row={id:uid(),role:h.role||'assistant',content:String(h.content||''),createdAt:Number(h.createdAt)||Date.now()};history.push(row);await put('conversationHistory',row);}setHistCount();renderConversation();await mergeStoredDuplicates();}
  await renderAll();
 }
 async function clearData(){for(const s of ['accounts','transactions','reconciliations','budgets','dailyBudgets','conversationHistory'])await clear(s);pending=null;undoSnap=null;images=[];history=[];try{sessionStorage.removeItem('ledger.hist');localStorage.removeItem('ledger.hist');}catch(e){}setHistCount();drawPics();$('naturalInput').value='';$('naturalInput').placeholder=PLACEHOLDER;$('resetConfirm').hidden=true;await renderAll();apiMessage('账户与历史记录已重置，API 设置保留。');}
@@ -860,7 +890,7 @@ $('exportData').onclick=exportData;$('importData').onchange=e=>{const f=e.target
 (async()=>{
  const s=settings();$('apiEndpoint').value=s.endpoint;$('apiKey').value=s.key;$('apiModel').value=s.model;$('rulesInput').value=s.rules;$('autoSave').checked=s.auto;setHistCount();
  applyTheme('light');applyFontScale(localStorage.getItem('ledger.fontScale')||1);
- await openDB();await loadHistory();await renderAll();syncExamples();
+ await openDB();await loadHistory();await mergeStoredDuplicates();await renderAll();syncExamples();
  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
  const n=(await all('transactions')).length+(await all('accounts')).length,lb=Number(localStorage.getItem('ledger.lastBackup')||0),lp=Number(localStorage.getItem('ledger.lastBackupPrompt')||0);
  if(n&&Date.now()-Math.max(lb,lp)>7*864e5){toast(lb?'已超过 7 天未备份，建议导出 Excel 备份。':'建议每 7 天导出一次 Excel 备份。');localStorage.setItem('ledger.lastBackupPrompt',String(Date.now()));}
