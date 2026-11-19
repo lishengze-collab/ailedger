@@ -214,12 +214,12 @@ textarea.input{height:96px;padding:10px 11px;line-height:1.5;resize:vertical}
 <section class="page" id="page-settings">
  <div class="section-head"><h2>设置</h2></div>
  <div class="setting"><h3>AI 接口</h3>
-  <label class="label" for="apiEndpoint">API Endpoint</label><input class="input" id="apiEndpoint" placeholder="https://api.example.com/v1/chat/completions">
+  <label class="label" for="apiEndpoint">API Endpoint</label><input class="input" id="apiEndpoint" placeholder="https://api.deepseek.com/chat/completions">
   <label class="label" for="apiKey">API Key</label><input class="input" id="apiKey" type="password" autocomplete="off" placeholder="API Key">
-  <label class="label" for="apiModel">模型</label><input class="input" id="apiModel" placeholder="模型名称">
+  <label class="label" for="apiModel">模型</label><input class="input" id="apiModel" placeholder="deepseek-flash">
   <div class="btnrow"><button class="btn flex" id="saveSettings">保存</button><button class="btn primary flex" id="testApi">测试连接</button></div>
   <div class="message" id="apiTestMessage" style="margin-top:10px"></div>
-  <div class="note">图片识别需要支持视觉输入的模型。Token 用量受模型服务商限制，应用不额外截断请求。</div>
+  <div class="note">图片识别会在 DeepSeek 接口下自动使用 deepseek-flash；其他服务商请填写支持视觉输入的模型。API Key 仅保存在当前浏览器本地，请勿在公共电脑上保存。Token 用量由模型服务商计费。</div>
  </div>
  <div class="setting"><h3>记账偏好</h3>
   <label class="label" for="rulesInput">告诉 AI 你的习惯（会随每次请求发送）</label>
@@ -319,7 +319,7 @@ function del(s,id){return new Promise((ok,no)=>{const r=db.transaction(s,'readwr
 function clear(s){return new Promise((ok,no)=>{const r=db.transaction(s,'readwrite').objectStore(s).clear();r.onsuccess=()=>ok();r.onerror=()=>no(r.error);});}
 async function snapshot(){const o={};for(const s of SNAP)o[s]=await all(s);return o;}
 async function restore(o){for(const s of SNAP){await clear(s);for(const x of(o[s]||[]))await put(s,x);}}
-function settings(){return{endpoint:localStorage.getItem('ledger.endpoint')||'https://api.deepseek.com/chat/completions',key:localStorage.getItem('ledger.key')||'',model:localStorage.getItem('ledger.model')||'deepseek-chat',rules:localStorage.getItem('ledger.rules')||'',auto:localStorage.getItem('ledger.autosave')!=='0'};}
+function settings(){const endpoint=localStorage.getItem('ledger.endpoint')||'https://api.deepseek.com/chat/completions';let model=localStorage.getItem('ledger.model')||'deepseek-flash';if(/^https?:\/\/api\.deepseek\.com(?:\/|$)/i.test(endpoint)&&model==='deepseek-chat')model='deepseek-flash';return{endpoint,key:localStorage.getItem('ledger.key')||'',model,rules:localStorage.getItem('ledger.rules')||'',auto:localStorage.getItem('ledger.autosave')!=='0'};}
 /* ---------- 每日预算（源头）:周/月由每日逐日加总，中途调整只影响生效日及之后 ---------- */
 function daysInMonth(y,m){return new Date(y,m+1,0).getDate();}
 function weekStartMs(now){const d=new Date(now.getFullYear(),now.getMonth(),now.getDate());d.setDate(d.getDate()-((d.getDay()+6)%7));return d.getTime();}
@@ -430,6 +430,11 @@ trends:{last7Days:sum(tx.filter(t=>time(t)>=now.getTime()-6*864e5)),last4Weeks:s
 externalTransfersThisMonth:r2(monthTx.filter(t=>t.type==='transfer'&&t.transferKind==='external').reduce((s2,t)=>s2+amt(t),0))
 };
 }
+function historyForAI(){
+ const maxMessages=36,maxChars=24000,maxPerMessage=2800,src=history.slice(-maxMessages),out=[];let used=0;
+ for(let i=src.length-1;i>=0;i--){const h=src[i];let content=String(h.content||'');if(content.length>maxPerMessage)content=content.slice(-maxPerMessage)+'…（较早内容已截断）';if(used+content.length>maxChars){if(!out.length&&maxChars-used>200)content=content.slice(-(maxChars-used));else break;}out.unshift({role:h.role==='user'?'user':'assistant',content});used+=content.length;if(used>=maxChars)break;}
+ return out;
+}
 function prompt(ctx){
  return[
  '你是 AI Ledger 的个人财务执行助手。你的工作是理解自然语言并对本地账户、流水、预算、余额校准进行实际操作，而不是仅给出建议。必须结合提供的完整历史对话、账户列表、历史流水、校准记录和记账偏好判断上下文；不要要求用户重复已经给过的信息。',
@@ -466,11 +471,14 @@ async function callAI(text,pics,extra,opt){
  const s=settings();if(!s.endpoint||!s.key)throw Error('请先在设置中配置 API。');
  const ctx=await context(),parts=[{type:'text',text:text||'请自动识别图片内容并判断用户意图。'}];
  pics.forEach(src=>parts.push({type:'image_url',image_url:{url:src,detail:'high'}}));
- const msgs=[{role:'system',content:prompt(ctx)},...history.map(h=>({role:h.role,content:h.content})),{role:'user',content:parts},...(extra||[])];
- const body=()=>({model:s.model,messages:msgs,temperature:.15,response_format:{type:'json_object'}});
+ const msgs=[{role:'system',content:prompt(ctx)},...historyForAI(),{role:'user',content:parts},...(extra||[])];
+ let model=s.model||'deepseek-flash';
+ try{const host=new URL(s.endpoint).hostname.toLowerCase();if(host==='api.deepseek.com'&&(model==='deepseek-chat'||pics.length>0&&model!=='deepseek-flash'))model='deepseek-flash';}catch(e){}
+ const body=()=>({model,messages:msgs,temperature:.15,max_tokens:8192,response_format:{type:'json_object'}});
  const content=d=>d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content;
- let data=await post(s,body()),c=content(data);if(!c)throw Error('API 未返回内容');
- let r;try{r=parse(c);}catch(e){msgs.push({role:'assistant',content:c},{role:'user',content:'上次输出不是合法 JSON。请严格只返回符合约定格式的 JSON 对象，不要任何其他文字。'});data=await post(s,body());c=content(data);if(!c)throw Error('API 未返回内容');r=parse(c);}
+ const readContent=d=>{const ch=d&&d.choices&&d.choices[0],value=content(d);if(ch&&ch.finish_reason==='length')throw Error('AI 输出达到长度上限，无法得到完整结果。请缩短本次描述或清理较早的对话历史后重试。');if(!clean(value))throw Error('AI 返回了空内容。请检查模型设置、JSON 输出状态或重试。');return value;};
+ let data=await post(s,body()),c=readContent(data),r;
+ try{r=parse(c);}catch(e){msgs.push({role:'assistant',content:c},{role:'user',content:'上次输出不是合法 JSON。请严格只返回符合约定格式的 JSON 对象，不要任何其他文字。'});data=await post(s,body());c=readContent(data);try{r=parse(c);}catch(e2){throw Error('AI 连续两次未返回可解析的 JSON。请缩短描述或检查模型是否支持 JSON Output。');}}
  return normalize(r,ctx);
 }
 async function converse(text,pics,opt){
@@ -796,7 +804,8 @@ async function openAccountModal(id){
  const recent=tx.filter(t=>t.accountId===id||t.toAccountId===id).sort((x,y)=>time(y)-time(x)).slice(0,10).map(t=>(LABEL[t.type]||t.type)+' '+fmt(t.amount,t.currency)+' '+(t.merchant||t.category||'')+' '+when(t));
  pushHist('assistant',a.name+'（'+accountTypeName(accountTypeOf(a))+'）当前余额 '+fmt(a.balance,a.currency)+(a.last4?'，尾号 '+a.last4:'')+'。近期流水：'+(recent.join('；')||'暂无')+'。可直接输入“把'+a.name+'改名为…”、“删除'+a.name+'账户”或“把'+a.name+'校准为金额”。');
 }
-function applyAnalyticsControls(){}\nasync function renderTokens(){const a=await all('tokenUsage');$('promptTokens').textContent=a.reduce((s,x)=>s+x.prompt,0).toLocaleString();$('completionTokens').textContent=a.reduce((s,x)=>s+x.completion,0).toLocaleString();$('totalTokens').textContent=a.reduce((s,x)=>s+x.total,0).toLocaleString();$('requestCount').textContent=a.length.toLocaleString();}
+function applyAnalyticsControls(){}
+async function renderTokens(){const a=await all('tokenUsage');$('promptTokens').textContent=a.reduce((s,x)=>s+x.prompt,0).toLocaleString();$('completionTokens').textContent=a.reduce((s,x)=>s+x.completion,0).toLocaleString();$('totalTokens').textContent=a.reduce((s,x)=>s+x.total,0).toLocaleString();$('requestCount').textContent=a.length.toLocaleString();}
 async function renderAll(){await Promise.all([renderHome(),renderTransactions(),renderAnalytics(),renderAccounts(),renderTokens()]);}
 
 /* ---------- 交互 ---------- */
@@ -894,7 +903,7 @@ $('exportData').onclick=exportData;$('importData').onchange=e=>{const f=e.target
  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
  const n=(await all('transactions')).length+(await all('accounts')).length,lb=Number(localStorage.getItem('ledger.lastBackup')||0),lp=Number(localStorage.getItem('ledger.lastBackupPrompt')||0);
  if(n&&Date.now()-Math.max(lb,lp)>7*864e5){toast(lb?'已超过 7 天未备份，建议导出 Excel 备份。':'建议每 7 天导出一次 Excel 备份。');localStorage.setItem('ledger.lastBackupPrompt',String(Date.now()));}
- if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=6').catch(()=>{});
+ if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=7').catch(()=>{});
 })().catch(e=>message('初始化失败：'+e.message,'error'));
 })();
 </script></body></html>
