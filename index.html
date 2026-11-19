@@ -354,6 +354,34 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 .backup-actions .btn{height:42px!important;width:100%;min-width:0;padding:0 5px!important;font-size:12px!important;white-space:nowrap;}
 .merchant-row b{font-size:11px;white-space:nowrap;}
 @media(max-width:380px){.backup-actions{gap:5px}.backup-actions .btn{font-size:11px!important;padding:0 3px!important}}
+
+/* Floating navigation orb replaces the bottom taskbar */
+.dock-wrap{display:none!important;}
+.fab-nav{position:fixed;z-index:55;right:max(16px,calc((100vw - 760px)/2 + 18px));bottom:calc(20px + var(--safe));display:flex;flex-direction:column;align-items:flex-end;gap:12px;pointer-events:none;}
+.fab-toggle{pointer-events:auto;width:54px;height:54px;border:1px solid rgba(255,255,255,.75);border-radius:50%;background:rgba(255,255,255,.86);color:#202832;box-shadow:0 10px 28px rgba(25,35,50,.2),inset 0 1px 1px rgba(255,255,255,.95);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);display:grid;place-items:center;font-size:18px;font-weight:800;position:relative;}
+.fab-toggle i{position:absolute;width:7px;height:7px;border-radius:50%;right:8px;top:8px;background:#48a879;box-shadow:0 0 0 3px rgba(72,168,121,.13);}
+.fab-menu{pointer-events:auto;display:grid;gap:7px;min-width:142px;padding:9px;border-radius:20px;background:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.75);box-shadow:0 12px 35px rgba(25,35,50,.18);backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);}
+.fab-menu[hidden]{display:none!important;}
+.fab-item{height:42px;border:0;border-radius:13px;background:transparent;color:#59616c;display:flex;align-items:center;gap:11px;padding:0 12px;text-align:left;font-size:14px;font-weight:650;}
+.fab-item svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.fab-item.active{background:#e9eef5;color:#202832;}
+/* Remove the former bottom bar reservation; the entry workspace fills it */
+#app{padding-bottom:calc(10px + var(--safe))!important;}
+#page-home.active{height:calc(100dvh - env(safe-area-inset-top,0px) - var(--safe) - 20px)!important;min-height:0!important;overflow:hidden!important;padding-bottom:0!important;}
+#page-home .capture{flex:1 1 0!important;height:auto!important;min-height:0!important;overflow:hidden!important;}
+#page-home .capture-input{flex:1 1 0!important;min-height:0!important;}
+#page-home .conversation-log{flex:1 1 0;min-height:0;max-height:none!important;overflow-y:auto!important;}
+#page-home .capture-bottom{position:static!important;bottom:auto!important;flex:0 0 auto!important;}
+#page-home .capture-actions .confirm-record,#confirmRecord{display:none!important;}
+#page-home .chat-bubble.user{background:#dcecff!important;color:#153d67!important;border:1px solid #c6ddf8!important;align-self:flex-end;border-bottom-right-radius:5px;}
+#page-home .chat-bubble.assistant{background:#f0f2f5!important;color:#252b33!important;border:1px solid #e0e4e9!important;align-self:flex-start;border-bottom-left-radius:5px;}
+#page-home .chat-bubble{max-width:94%;font-size:16px!important;line-height:1.62!important;padding:10px 13px;}
+#page-transactions.active{height:calc(100dvh - env(safe-area-inset-top,0px) - var(--safe) - 20px)!important;min-height:0!important;}
+#page-transactions .detail-scroll{padding-bottom:84px;}
+.page:not(#page-home){padding-bottom:92px;}
+#toast{display:none!important;}
+@media(max-width:380px){.fab-toggle{width:50px;height:50px}.fab-nav{right:12px}}
+@media(min-width:720px){.fab-nav{right:max(22px,calc((100vw - 760px)/2 + 20px));}}
 </style>
 </head>
 <body><div id="app">
@@ -371,7 +399,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
    <div class="capture-actions">
     <button class="upload-action" id="pickImages"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/></svg><span>上传图片</span></button>
     <button class="upload-clear" id="clearComposer" aria-label="清空输入">清空</button>
-    <button class="send" id="analyzeText">发送</button><button class="btn primary confirm-record" id="confirmRecord" type="button" hidden>确认记录</button>
+    <button class="send" id="analyzeText">发送</button>
    </div>
    <input type="file" id="imageInput" accept="image/*" multiple>
   </div>
@@ -446,14 +474,16 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 </section>
 </main>
 <div class="modal-backdrop" id="sheet" hidden><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-head"><div><b id="sheetTitle"></b><small id="sheetSub"></small></div><button class="icon" data-act="close" aria-label="关闭">×</button></div><div class="sheet-body" id="sheetBody"></div><div class="sheet-foot" id="sheetFoot"></div></div></div>
-<div class="toast" id="toast" hidden><span id="toastText"></span><button id="toastUndo" hidden>撤销</button></div>
-<nav class="dock-wrap"><div class="dock" role="tablist">
-<button class="tab active" data-page="home"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>记账</button>
-<button class="tab" data-page="transactions"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>明细</button>
-<button class="tab" data-page="analytics"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h17M8 15l4-5 3 2 5-7"/></svg>分析</button>
-<button class="tab" data-page="accounts"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg>账户</button>
-<button class="tab" data-page="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 13.5a7.4 7.4 0 0 0 0-3l2-1.2-2-3.4-2.3.8a7.6 7.6 0 0 0-2.6-1.5L13.8 3h-3.9l-.4 2.2a7.6 7.6 0 0 0-2.6 1.5l-2.3-.8-2 3.4 2 1.2a7.4 7.4 0 0 0 0 3l-2 1.2 2 3.4 2.3-.8a7.6 7.6 0 0 0 2.6 1.5l.4 2.2h3.9l.4-2.2a7.6 7.6 0 0 0 2.6-1.5l2.3.8 2-3.4z"/></svg>设置</button>
-</div></nav>
+<div class="fab-nav" id="fabNav">
+ <div class="fab-menu" id="fabMenu" role="menu" hidden>
+  <button class="fab-item active" data-page="home" data-short="记"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg><span>记账</span></button>
+  <button class="fab-item" data-page="transactions" data-short="明"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>明细</span></button>
+  <button class="fab-item" data-page="analytics" data-short="析"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h17M8 15l4-5 3 2 5-7"/></svg><span>分析</span></button>
+  <button class="fab-item" data-page="accounts" data-short="户"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg><span>账户</span></button>
+  <button class="fab-item" data-page="settings" data-short="设"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 13.5a7.4 7.4 0 0 0 0-3l2-1.2-2-3.4-2.3.8a7.6 7.6 0 0 0-2.6-1.5L13.8 3h-3.9l-.4 2.2a7.6 7.6 0 0 0-2.6 1.5l-2.3-.8-2 3.4 2 1.2a7.4 7.4 0 0 0 0 3l-2 1.2 2 3.4 2.3-.8a7.6 7.6 0 0 0 2.6 1.5l.4 2.2h3.9l.4-2.2a7.6 7.6 0 0 0 2.6-1.5l2.3.8 2-3.4z"/></svg><span>设置</span></button>
+ </div>
+ <button class="fab-toggle" id="fabToggle" type="button" aria-label="打开导航" aria-controls="fabMenu" aria-expanded="false"><span id="fabCurrent">记</span><i></i></button>
+</div>
 </div>
 <script>
 (function(){
@@ -1191,7 +1221,14 @@ function attachSwipe(el){
  el.addEventListener('lostpointercapture',end,{passive:true});
 }
 attachSwipe($('transactionList'));
-function goto(p){qa('.page').forEach(x=>x.classList.toggle('active',x.id==='page-'+p));qa('.tab').forEach(x=>x.classList.toggle('active',x.dataset.page===p));if(p==='transactions')renderTransactions();if(p==='analytics')renderAnalytics();if(p==='accounts')renderAccounts();}
+function syncFab(p){
+ qa('.fab-item').forEach(x=>x.classList.toggle('active',x.dataset.page===p));
+ const active=qa('.fab-item').find(x=>x.dataset.page===p);
+ if($('fabCurrent'))$('fabCurrent').textContent=active?active.dataset.short:'';
+ if($('fabMenu'))$('fabMenu').hidden=true;
+ if($('fabToggle'))$('fabToggle').setAttribute('aria-expanded','false');
+}
+function goto(p){qa('.page').forEach(x=>x.classList.toggle('active',x.id==='page-'+p));syncFab(p);if(p==='transactions')renderTransactions();if(p==='analytics')renderAnalytics();if(p==='accounts')renderAccounts();}
 function applyTheme(t){document.documentElement.setAttribute('data-theme','light');localStorage.setItem('ledger.theme','light');}
 function applyFontScale(v){const n=Math.max(.9,Math.min(1.2,Number(v)||1));document.documentElement.style.setProperty('--font-scale',String(n));localStorage.setItem('ledger.fontScale',String(n));if($('fontScaleLabel'))$('fontScaleLabel').textContent=Math.round(n*100)+'%';if($('fontScaleSlider'))$('fontScaleSlider').value=String(n);}
 async function saveSettings(){
@@ -1243,10 +1280,12 @@ async function importData(f){
  for(const s of present){await clear(s);for(const x of d[s])await put(s,x);} if(Array.isArray(d.conversationHistory)){history=[];await clear('conversationHistory');for(const h of d.conversationHistory){const row={id:uid(),role:h.role||'assistant',content:String(h.content||''),createdAt:Number(h.createdAt)||Date.now()};history.push(row);await put('conversationHistory',row);}setHistCount();renderConversation();await mergeStoredDuplicates();}
  await renderAll();
 }
-async function clearData(){for(const s of ['accounts','transactions','reconciliations','budgets','dailyBudgets','conversationHistory'])await clear(s);pending=null;syncRecordButton();undoSnap=null;images=[];history=[];try{sessionStorage.removeItem('ledger.hist');localStorage.removeItem('ledger.hist');}catch(e){}setHistCount();drawPics();$('naturalInput').value='';$('naturalInput').placeholder=PLACEHOLDER;$('resetConfirm').hidden=true;await renderAll();apiMessage('账户与历史记录已重置，API 设置保留。');}
+async function clearData(){for(const s of ['accounts','transactions','reconciliations','budgets','dailyBudgets','conversationHistory'])await clear(s);pending=null;pendingHistoryRequest=null;syncRecordButton();undoSnap=null;images=[];history=[];try{sessionStorage.removeItem('ledger.hist');localStorage.removeItem('ledger.hist');}catch(e){}setHistCount();drawPics();$('naturalInput').value='';$('naturalInput').placeholder=PLACEHOLDER;$('resetConfirm').hidden=true;await renderAll();apiMessage('账户与历史记录已重置，API 设置保留。');}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;});
 
-qa('.tab').forEach(b=>b.onclick=()=>goto(b.dataset.page));
+$('fabToggle').onclick=()=>{const menu=$('fabMenu'),open=menu.hidden;menu.hidden=!open;$('fabToggle').setAttribute('aria-expanded',String(open));};
+$('fabMenu').onclick=e=>{const b=e.target.closest('[data-page]');if(b)goto(b.dataset.page);};
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('#fabNav')){$('fabMenu').hidden=true;$('fabToggle').setAttribute('aria-expanded','false');}});
 $('pickImages').onclick=()=>$('imageInput').click();$('imageInput').onchange=e=>uploadFiles(e.target.files);
 $('attachments').onclick=e=>{const b=e.target.closest('[data-remove]');if(!b)return;images.splice(Number(b.dataset.remove),1);drawPics();};
 $('clearComposer').onclick=()=>{$('naturalInput').value='';$('naturalInput').placeholder=PLACEHOLDER;images=[];drawPics();pending=null;pendingHistoryRequest=null;syncRecordButton();message('');};
