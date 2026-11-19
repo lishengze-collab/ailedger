@@ -320,6 +320,22 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
     #page-home .capture-actions .upload-action svg{width:16px;height:16px;flex-basis:16px;}
     #page-home .capture-actions .upload-clear{padding:0 7px!important;font-size:13px!important;}
   }
+
+/* 2026-11 mobile workspace refinement */
+#page-home.active{height:calc(100dvh - env(safe-area-inset-top,0px) - var(--safe) - 82px)!important;}
+#page-home .capture{height:100%;min-height:0;}
+#page-home .capture-input{padding-bottom:8px;}
+#page-home .conversation-log{font-size:15px;}
+#page-home .chat-bubble{font-size:14px!important;line-height:1.58!important;}
+#page-home .capture-input textarea{height:64px!important;min-height:64px!important;max-height:112px!important;font-size:17px!important;line-height:1.5!important;}
+#page-home .capture-bottom{padding-bottom:7px!important;}
+#page-home .account-suggestions{display:flex;flex-direction:column;align-items:stretch;gap:5px;max-height:150px;overflow-y:auto;overflow-x:hidden;padding:4px 1px!important;}
+#page-home .account-suggestions[hidden]{display:none!important;}
+#page-home .account-suggestions button{width:100%;flex:none;text-align:left;border-radius:11px!important;padding:9px 11px!important;font-size:13px!important;}
+.toast{top:calc(env(safe-area-inset-top,0px) + 12px)!important;bottom:auto!important;width:min(560px,calc(100% - 24px));z-index:90;}
+.backup-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;}
+.backup-actions .btn{height:40px;padding:0 13px;font-size:13px;}
+@media(max-height:700px){#page-home .capture-input textarea{height:58px!important;min-height:58px!important}.toast{top:calc(env(safe-area-inset-top,0px) + 8px)!important}}
 </style>
 </head>
 <body><div id="app">
@@ -327,7 +343,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 <section class="page active" id="page-home">
  <div class="home-overview"><div class="budget-ring-grid" id="homeBudgetRings"><div class="empty">正在计算预算…</div></div><div class="home-spend-summary" id="homeSpendSummary"></div></div>
  <div class="capture">
-  <div class="capture-input"><div id="conversationLog" class="conversation-log" aria-live="polite"></div><div id="accountSuggestions" class="account-suggestions" hidden></div><textarea id="naturalInput" placeholder="输入消息，或用 @ 选择账户…"></textarea><div id="todayBudgetHint" class="today-budget-hint"></div></div>
+  <div class="capture-input"><div id="conversationLog" class="conversation-log" aria-live="polite"></div><div id="accountSuggestions" class="account-suggestions" hidden></div><textarea id="naturalInput" placeholder="输入消息，输入账户简称或用 @ 选择账户…"></textarea><div id="todayBudgetHint" class="today-budget-hint"></div></div>
   <div class="capture-bottom">
    <div class="examples" id="examples">
     <button data-ex="午饭 28 微信">午饭 28 微信</button><button data-ex="昨天打车 35">昨天打车 35</button><button data-ex="工资到账 12000 招行">工资到账 12000</button><button data-ex="本月餐饮花了多少">本月餐饮花了多少</button><button data-ex="把上一笔改成微信支付">改上一笔</button><button data-ex="每天预算 100">每天预算 100</button><button data-ex="转给妈妈 500 微信">转给妈妈 500</button>
@@ -404,7 +420,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
  <div class="setting"><h3>外观</h3><div class="setting-row"><span>浅色界面</span><b>已固定</b></div><div class="font-control"><div class="setting-row"><span>界面字体</span><b id="fontScaleLabel">100%</b></div><input id="fontScaleSlider" type="range" min="0.9" max="1.2" step="0.05" value="1"></div></div>
  <div class="setting"><h3>Token 使用</h3><div class="token-grid"><div class="token"><small>输入</small><b id="promptTokens">0</b></div><div class="token"><small>输出</small><b id="completionTokens">0</b></div><div class="token"><small>合计</small><b id="totalTokens">0</b></div><div class="token"><small>请求</small><b id="requestCount">0</b></div></div></div>
  <div class="setting"><h3>数据管理</h3>
-  <div class="setting-row"><span>导出备份</span><button class="btn" id="exportData">导出</button></div>
+  <div class="setting-row"><span>导出备份</span><div class="backup-actions"><button class="btn" id="exportJson">导出 JSON</button><button class="btn" id="exportData">导出 Excel</button></div></div>
   <div class="setting-row"><span>导入备份</span><label class="btn" for="importData">选择文件</label><input id="importData" type="file" accept="application/json"></div>
   <div class="reset-card"><div><b>重置账户与历史记录</b><small>清空所有账户、交易、预算与校准历史，保留 API 设置</small></div><button class="btn danger" id="resetRecords">重置</button></div>
   <div class="reset-confirm" id="resetConfirm" hidden><span>确认清空账户与所有历史记录？此操作无法撤销。</span><div><button class="btn" id="cancelReset">取消</button><button class="btn primary" id="confirmReset">确认重置</button></div></div>
@@ -427,7 +443,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 'use strict';
 const $=id=>document.getElementById(id),qa=s=>Array.from(document.querySelectorAll(s));
 const DB='ai-ledger-v1',VERSION=5,STORES=['accounts','transactions','budgets','tokenUsage','settings','reconciliations','dailyBudgets','conversationHistory'],SNAP=['accounts','transactions','budgets','reconciliations','dailyBudgets'];
-const PLACEHOLDER='输入消息，或用 @ 选择账户…';
+const PLACEHOLDER='输入消息，输入账户简称或用 @ 选择账户…';
 const MONEY=['expense','income','transfer','refund'];
 const TYPES=[...MONEY,'create_account','budget','daily_budget','balance_snapshot','update_transaction','delete_transaction','rename_account','delete_account','preference'];
 const SAFE=new Set(['expense','income','transfer','refund','create_account','budget','daily_budget','preference']);
@@ -672,40 +688,40 @@ function buildVisionContent(userText,base64List,ocrText){
 }
 async function callAI(text,pics,extra,opt){
  const s=settings();if(!s.endpoint||!s.key)throw Error('请先在设置中配置 API。');
- const imageItems=(pics||[]).map(p=>typeof p==='string'?{file:null,dataUrl:p,previewUrl:p}:p).filter(p=>p&&((p.dataUrl)||(p.previewUrl)));
- let ocrText='';
- if(imageItems.length){
-  const files=imageItems.map(p=>p.file).filter(Boolean);
-  if(files.length){
-   message('正在逐张调用 DeepSeek OCR 提取截图文字…');
-   const results=await deepseekOCRMany(files);
-   const ok=results.filter(r=>r.ok&&r.text),failed=results.filter(r=>!r.ok);
-   ocrText=ok.map(r=>r.text).join('\n\n--- 图片分隔 ---\n\n');
-   if(failed.length)message(failed.length+' 张图片 OCR 失败，正在让视觉模型直接识别原图兜底…','error');
-   else if(ocrText)message('OCR 已提取 '+ocrText.length+' 个字符，正在结合原图进行语义识别…');
-   if(results.some(r=>r.incomplete))ocrText+='\n\n【提示：部分 OCR 页面达到输出长度上限，文字可能不完整，请以原图为准。】';
-  }
- }
+ const imageItems=(pics||[]).map(p=>typeof p==='string'?{file:null,dataUrl:p,previewUrl:p}:p).filter(p=>p&&(p.dataUrl||p.previewUrl));
  const ctx=await context();
  const imageBytes=imageItems.reduce((n,p)=>n+Number(p.file&&p.file.size||0),0);
  const supportedOriginal=imageItems.every(p=>!p.file||/^image\/(jpeg|png|gif|webp)$/i.test(p.file.type||''));
  const canSendOriginal=imageBytes<=30*1024*1024&&supportedOriginal;
  const base64List=imageItems.map(p=>canSendOriginal?p.dataUrl:(p.previewUrl||p.dataUrl)).filter(Boolean);
- const userContent=imageItems.length?buildVisionContent(text,base64List,ocrText):(text||'请根据上下文理解用户的财务指令。');
- const msgs=[{role:'system',content:prompt(ctx)},...historyForAI(),{role:'user',content:userContent},...(extra||[])];
  const model=imageItems.length?FLASH_MODEL:(s.model||FLASH_MODEL);
- const body=()=>({model,messages:msgs,temperature:.15,max_tokens:8192,response_format:{type:'json_object'}});
  const content=d=>d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content;
  const readContent=d=>{const ch=d&&d.choices&&d.choices[0],value=content(d);if(ch&&ch.finish_reason==='length')throw Error('AI 输出达到长度上限，无法得到完整结果。请缩短本次描述或清理较早的对话历史后重试。');if(!clean(value))throw Error('AI 返回了空内容。请检查模型设置、JSON 输出状态或重试。');return value;};
- let data=await post(s,body()),c='',r;
- try{c=readContent(data);r=parse(c);}catch(e){
-  if(/达到长度上限/.test(e.message))throw e;
-  msgs.push({role:'assistant',content:content(data)||''},{role:'user',content:'上次回复为空或不是合法 JSON。请重新分析，并且只输出一个完整、非空、可解析的 JSON 对象；不要输出 Markdown 或解释文字。'});
-  data=await post(s,body());
-  try{c=readContent(data);r=parse(c);}catch(e2){if(/达到长度上限/.test(e2.message))throw e2;throw Error('AI 连续两次未返回可解析的 JSON。请缩短描述、检查模型设置或稍后重试。');}
+ const request=async ocrText=>{
+  const userContent=imageItems.length?buildVisionContent(text,base64List,ocrText):(text||'请根据上下文理解用户的财务指令。');
+  const msgs=[{role:'system',content:prompt(ctx)},...historyForAI(),{role:'user',content:userContent},...(extra||[])];
+  const body=()=>({model,messages:msgs,temperature:.15,max_tokens:8192,response_format:{type:'json_object'}});
+  let data=await post(s,body()),c='',r;
+  try{c=readContent(data);r=parse(c);}catch(e){
+   if(/达到长度上限/.test(e.message))throw e;
+   msgs.push({role:'assistant',content:content(data)||''},{role:'user',content:'上次回复为空或不是合法 JSON。请重新分析，并且只输出一个完整、非空、可解析的 JSON 对象；不要输出 Markdown 或解释文字。'});
+   data=await post(s,body());c=readContent(data);r=parse(c);
+  }
+  return normalize(r,ctx);
+ };
+ if(!imageItems.length){const result=await request('');message('');return result;}
+ message('正在由 deepseek-flash 直接识别原图…');
+ try{const result=await request('');message('');return result;}
+ catch(primaryError){
+  const files=imageItems.map(p=>p.file).filter(Boolean);
+  if(!files.length)throw primaryError;
+  message('FLASH 识别未完成，正在使用 OCR 补充后重试…');
+  const results=await deepseekOCRMany(files),ok=results.filter(r=>r.ok&&r.text);
+  let ocrText=ok.map(r=>r.text).join('\n\n--- 图片分隔 ---\n\n');
+  if(results.some(r=>r.incomplete))ocrText+='\n\n【提示：部分 OCR 页面达到输出长度上限，请以原图为准。】';
+  if(!ocrText)throw primaryError;
+  const result=await request(ocrText);message('');return result;
  }
- message('');
- return normalize(r,ctx);
 }
 async function converse(text,pics,opt){
  const extra=[];
@@ -885,14 +901,15 @@ function renderConversation(){const el=$('conversationLog');if(!el)return;el.inn
 async function renderAccountSuggestions(){
  const el=$('accountSuggestions'),input=$('naturalInput');if(!el||!input)return;
  const caret=input.selectionStart==null?input.value.length:input.selectionStart;
- const before=input.value.slice(0,caret),match=before.match(/@([^@\s]*)$/);
- if(!match){el.hidden=true;el.innerHTML='';delete el.dataset.mentionStart;delete el.dataset.mentionEnd;return;}
- const requestToken=before+'|'+caret;el.dataset.requestToken=requestToken;
+ const before=input.value.slice(0,caret),mention=before.match(/@([^@\s]*)$/),plain=before.match(/([\u4e00-\u9fffA-Za-z0-9]{2,})$/);
+ const match=mention||plain;
+ if(!match){el.hidden=true;el.innerHTML='';delete el.dataset.mentionStart;delete el.dataset.mentionEnd;delete el.dataset.mentionMode;return;}
  const query=accountKey(match[1]),acs=await all('accounts');
- if(el.dataset.requestToken!==requestToken)return;
- const hits=acs.filter(a=>!query||accountKey(a.name).includes(query)||accountKey(a.institution).includes(query)||canonicalBank(a.name).includes(query)).slice(0,10);
- el.dataset.mentionStart=String(caret-match[0].length);el.dataset.mentionEnd=String(caret);
- el.innerHTML=hits.length?hits.map(a=>'<button type="button" data-account-insert="'+esc(a.id)+'">'+esc(a.name)+' · '+accountTypeName(accountTypeOf(a))+'</button>').join(''):'<span class="note">没有匹配账户</span>';
+ if(!query){el.hidden=true;el.innerHTML='';return;}
+ const hits=acs.filter(a=>{const keys=[a.name,a.institution,canonicalBank(a.name),...(BANK_ALIASES[canonicalBank(a.institution||a.name)]||[])].map(accountKey);return keys.some(k=>k&&k.includes(query));}).slice(0,10);
+ if(!hits.length){el.hidden=true;el.innerHTML='';return;}
+ el.dataset.mentionStart=String(caret-match[0].length);el.dataset.mentionEnd=String(caret);el.dataset.mentionMode=mention?'mention':'plain';
+ el.innerHTML=hits.map(a=>'<button type="button" data-account-insert="'+esc(a.id)+'"><b>'+esc(a.name)+'</b><small>'+accountTypeName(accountTypeOf(a))+(a.institution?' · '+esc(a.institution):'')+'</small></button>').join('');
  el.hidden=false;
 }
 function drawPics(){$('attachments').innerHTML=images.map((x,i)=>'<div class="attachment"><img src="'+(typeof x==='string'?x:(x.previewUrl||x.dataUrl||''))+'"><button data-remove="'+i+'">×</button></div>').join('');syncExamples();}
@@ -1121,21 +1138,24 @@ async function saveSettings(){
  localStorage.setItem('ledger.endpoint',endpoint);localStorage.setItem('ledger.key',clean($('apiKey').value));localStorage.setItem('ledger.model',clean($('apiModel').value));apiMessage('设置已保存。');return true;
 }
 async function testAPI(){if(!(await saveSettings()))return;const s=settings();if(!s.endpoint||!s.key){apiMessage('请填写 Endpoint 和 API Key。','error');return;}const b=$('testApi');busy(b,true);apiMessage('正在连接…');try{const data=await post(s,{model:s.model,messages:[{role:'user',content:'只返回JSON：{"connected":true}'}],temperature:0});if(!data.choices||!data.choices.length)throw Error('接口未返回模型内容');apiMessage('连接成功 · '+(data.model||s.model));}catch(e){apiMessage('连接失败 · '+e.message,'error');}finally{busy(b,false);}}
-async function uploadFiles(files){if(!files||!files.length)return;const remaining=5-images.length;if(remaining<=0){message('一批最多上传 5 张。');return;}let added=0;for(const file of Array.from(files).slice(0,remaining)){try{images.push(await prepareImage(file));added++;}catch(e){message(file.name+'：'+e.message,'error');}}drawPics();if(added)message('已添加 '+added+' 张图片；发送时将先 OCR，再结合原图由 deepseek-flash 识别。');$('imageInput').value='';}
+async function uploadFiles(files){if(!files||!files.length)return;const remaining=5-images.length;if(remaining<=0){message('一批最多上传 5 张。');return;}let added=0;for(const file of Array.from(files).slice(0,remaining)){try{images.push(await prepareImage(file));added++;}catch(e){message(file.name+'：'+e.message,'error');}}drawPics();if(added)message('已添加 '+added+' 张图片；发送时优先由 deepseek-flash 直接识别，必要时再调用 OCR 补充。');$('imageInput').value='';}
 function xmlEsc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');}
 function xlsxColumn(n){let out='';for(n++;n;n=Math.floor((n-1)/26))out=String.fromCharCode(65+(n-1)%26)+out;return out;}
 function xlsxSheet(rows){const body=rows.map((row,ri)=>'<row r="'+(ri+1)+'">'+row.map((value,ci)=>{const ref=xlsxColumn(ci)+(ri+1);return typeof value==='number'&&Number.isFinite(value)?'<c r="'+ref+'"><v>'+value+'</v></c>':'<c r="'+ref+'" t="inlineStr"><is><t xml:space="preserve">'+xmlEsc(value)+'</t></is></c>';}).join('')+'</row>').join('');return'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'+body+'</sheetData></worksheet>';}
 function xlsxCrc32(bytes){let crc=-1;for(const b of bytes){crc^=b;for(let j=0;j<8;j++)crc=(crc>>>1)^((crc&1)?0xedb88320:0);}return(crc^-1)>>>0;}
 function makeXlsx(files){const enc=new TextEncoder(),local=[],central=[];let offset=0;for(const [name,content] of Object.entries(files)){const n=enc.encode(name),data=enc.encode(content),crc=xlsxCrc32(data),lh=new Uint8Array(30+n.length+data.length),lv=new DataView(lh.buffer);lv.setUint32(0,0x04034b50,true);lv.setUint16(4,20,true);lv.setUint16(8,0,true);lv.setUint32(14,crc,true);lv.setUint32(18,data.length,true);lv.setUint32(22,data.length,true);lv.setUint16(26,n.length,true);lh.set(n,30);lh.set(data,30+n.length);local.push(lh);const ch=new Uint8Array(46+n.length),cv=new DataView(ch.buffer);cv.setUint32(0,0x02014b50,true);cv.setUint16(4,20,true);cv.setUint16(6,20,true);cv.setUint32(16,crc,true);cv.setUint32(20,data.length,true);cv.setUint32(24,data.length,true);cv.setUint16(28,n.length,true);cv.setUint32(42,offset,true);ch.set(n,46);central.push(ch);offset+=lh.length;}const size=central.reduce((v,x)=>v+x.length,0),end=new Uint8Array(22),ev=new DataView(end.buffer);ev.setUint32(0,0x06054b50,true);ev.setUint16(8,files.length,true);ev.setUint16(10,files.length,true);ev.setUint32(12,size,true);ev.setUint32(16,offset,true);return new Blob([...local,...central,end],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});}
-async function exportData(){
- const [tx,acs,recs]=await Promise.all([all('transactions'),all('accounts'),all('reconciliations')]);
+async function exportJson(){
  const backup={schema:'ai-ledger-backup',version:VERSION,exportedAt:new Date().toISOString()};
  for(const store of STORES)backup[store]=await all(store);
  backup.preferences=(()=>{try{return JSON.parse(localStorage.getItem('ledger.preferences')||'[]');}catch(e){return[];}})();
- backup.rules=localStorage.getItem('ledger.rules')||'';
- backup.autoSave=localStorage.getItem('ledger.autosave')!=='0';
- const jsonBlob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json;charset=utf-8'}),jsonUrl=URL.createObjectURL(jsonBlob),jsonLink=document.createElement('a');
- jsonLink.href=jsonUrl;jsonLink.download='AI-Ledger-'+dayKey(Date.now())+'.json';jsonLink.click();setTimeout(()=>URL.revokeObjectURL(jsonUrl),1500);
+ backup.rules=localStorage.getItem('ledger.rules')||'';backup.autoSave=localStorage.getItem('ledger.autosave')!=='0';
+ const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download='AI-Ledger-backup-'+dayKey(Date.now())+'.json';document.body.appendChild(a);a.click();a.remove();
+ localStorage.setItem('ledger.lastBackup',String(Date.now()));localStorage.setItem('ledger.lastBackupPrompt',String(Date.now()));
+ setTimeout(()=>URL.revokeObjectURL(url),2000);toast('JSON 完整备份已导出。');
+}
+async function exportData(){
+ const [tx,acs,recs]=await Promise.all([all('transactions'),all('accounts'),all('reconciliations')]);
  const txRows=[['记录编号','日期时间','类型','金额','币种','付款账户','转入账户/收款人','商户','分类','备注','置信度'],...tx.slice().sort((a,b)=>time(a)-time(b)).map(t=>[t.id,new Date(time(t)).toLocaleString('zh-CN'),LABEL[t.type]||t.type,Number(t.amount||0),t.currency||'CNY',t.account||'',t.toPerson||t.toAccount||'',t.merchant||'',t.category||'',t.note||'',Number(t.confidence||0)])];
  const movement=[['日期时间','账户','变动类型','变动金额','关联记录编号','说明'],...tx.flatMap(t=>{const rows=[];if(t.account)rows.push([new Date(time(t)).toLocaleString('zh-CN'),t.account,t.type==='income'?'收入':t.type==='refund'?'退款':t.type==='expense'?'支出':'转出',Number(t.fromDelta??(t.type==='income'||t.type==='refund'?t.amount:-t.amount)),t.id,t.merchant||t.note||'']);if(t.type==='transfer'&&t.transferKind!=='external'&&t.toAccount)rows.push([new Date(time(t)).toLocaleString('zh-CN'),t.toAccount,'转入',Number(t.toDelta??t.amount),t.id,t.note||'']);return rows;}),...recs.map(r=>[r.occurredAt||new Date(r.createdAt).toLocaleString('zh-CN'),r.accountName||'','余额校准',Number(r.difference||0),'',r.analysis||''])];
  const accountRows=[['账户名称','账户类型','银行/机构','尾号','币种','当前余额','信用额度','可用额度','最后校准'],...acs.map(a=>[a.name,accountTypeName(accountTypeOf(a)),a.institution||'',a.last4||'',a.currency||'CNY',Number(a.balance||0),Number(a.creditLimit||0),Number(a.availableCredit||0),a.verifiedAt?new Date(a.verifiedAt).toLocaleString('zh-CN'):''])];
@@ -1146,7 +1166,7 @@ async function exportData(){
  'xl/workbook.xml':'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+names.map((n,i)=>'<sheet name="'+n+'" sheetId="'+(i+1)+'" r:id="rId'+(i+1)+'"/>').join('')+'</sheets></workbook>',
  'xl/_rels/workbook.xml.rels':'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+sheets.map((x,i)=>'<Relationship Id="rId'+(i+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet'+(i+1)+'.xml"/>').join('')+'</Relationships>'};
  sheets.forEach((rows,i)=>files['xl/worksheets/sheet'+(i+1)+'.xml']=xlsxSheet(rows));
- const blob=makeXlsx(files),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='AI-Ledger-'+dayKey(Date.now())+'.xlsx';a.click();localStorage.setItem('ledger.lastBackup',String(Date.now()));localStorage.setItem('ledger.lastBackupPrompt',String(Date.now()));setTimeout(()=>URL.revokeObjectURL(url),1500);toast('Excel 与 JSON 备份已导出。JSON 包含账户、流水、预算、Token、设置、校准和对话历史。');
+ const blob=makeXlsx(files),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='AI-Ledger-'+dayKey(Date.now())+'.xlsx';a.click();localStorage.setItem('ledger.lastBackup',String(Date.now()));localStorage.setItem('ledger.lastBackupPrompt',String(Date.now()));setTimeout(()=>URL.revokeObjectURL(url),1500);toast('Excel 报表已导出。');
 }
 async function importData(f){
  let d;try{d=JSON.parse(await f.text());}catch(e){throw Error('文件不是有效的 JSON');}
@@ -1178,7 +1198,7 @@ $('accountSuggestions').onclick=async e=>{
  const acs=await all('accounts'),a=acs.find(x=>x.id===b.dataset.accountInsert);if(!a)return;
  const input=$('naturalInput'),el=$('accountSuggestions'),start=Number(el.dataset.mentionStart),end=Number(el.dataset.mentionEnd);
  const from=Number.isFinite(start)?start:input.value.lastIndexOf('@'),to=Number.isFinite(end)?end:(input.selectionStart||input.value.length);
- const mention='@'+a.name+' ';
+ const mention=(el.dataset.mentionMode==='mention'?'@':'')+a.name+' ';
  input.value=input.value.slice(0,Math.max(0,from))+mention+input.value.slice(Math.max(to,from));
  const caret=Math.max(0,from)+mention.length;input.focus();input.setSelectionRange(caret,caret);el.hidden=true;el.innerHTML='';syncExamples();
 };
@@ -1214,7 +1234,7 @@ $('sheet').onclick=async e=>{
 $('toastUndo').onclick=async()=>{if(!undoSnap)return;const s=undoSnap;undoSnap=null;await restore(s);await renderAll();$('toastUndo').hidden=true;toast('已撤销');};
 $('resetRecords').onclick=()=>$('resetConfirm').hidden=false;$('cancelReset').onclick=()=>$('resetConfirm').hidden=true;$('confirmReset').onclick=clearData;
 $('fontScaleSlider').oninput=e=>applyFontScale(e.target.value);applyTheme('light');
-$('exportData').onclick=exportData;$('importData').onchange=e=>{const f=e.target.files&&e.target.files[0];if(f)importData(f).then(()=>apiMessage('导入完成。')).catch(err=>apiMessage('导入失败：'+err.message,'error'));e.target.value='';};
+$('exportJson').onclick=exportJson;$('exportData').onclick=exportData;$('importData').onchange=e=>{const f=e.target.files&&e.target.files[0];if(f)importData(f).then(()=>apiMessage('导入完成。')).catch(err=>apiMessage('导入失败：'+err.message,'error'));e.target.value='';};
 
 (async()=>{
  const s=settings();$('apiEndpoint').value=s.endpoint;$('apiKey').value=s.key;$('apiModel').value=s.model;$('rulesInput').value=s.rules;$('autoSave').checked=s.auto;setHistCount();
