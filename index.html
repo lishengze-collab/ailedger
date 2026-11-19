@@ -492,7 +492,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 (function(){
 'use strict';
 const $=id=>document.getElementById(id),qa=s=>Array.from(document.querySelectorAll(s));
-const DB='ai-ledger-v1',VERSION=5,STORES=['accounts','transactions','budgets','tokenUsage','settings','reconciliations','dailyBudgets','conversationHistory'],SNAP=['accounts','transactions','budgets','reconciliations','dailyBudgets'];
+const DB='ai-ledger-v1',VERSION=6,STORES=['accounts','transactions','budgets','tokenUsage','settings','reconciliations','dailyBudgets','conversationHistory'],SNAP=['accounts','transactions','budgets','reconciliations','dailyBudgets'];
 const PLACEHOLDER='输入消息，输入账户简称或用 @ 选择账户…';
 const MONEY=['expense','income','transfer','refund'];
 const TYPES=[...MONEY,'create_account','budget','daily_budget','balance_snapshot','update_transaction','delete_transaction','rename_account','delete_account','preference'];
@@ -537,6 +537,7 @@ function openDB(){return new Promise((ok,no)=>{
  r.onupgradeneeded=e=>{
   const database=r.result,tx=r.transaction;
   STORES.forEach(s=>{if(!database.objectStoreNames.contains(s))database.createObjectStore(s,{keyPath:'id'});});
+  if(database.objectStoreNames.contains('transactions')){const ts=tx.objectStore('transactions');if(!ts.indexNames.contains('occurredAt'))ts.createIndex('occurredAt','occurredAt',{unique:false});if(!ts.indexNames.contains('createdAt'))ts.createIndex('createdAt','createdAt',{unique:false});}
   // v3 曾把每日预算历史放在 budgets 的保留记录中；v4 迁移到独立 dailyBudgets 表。
   if(e.oldVersion<4&&database.objectStoreNames.contains('budgets')&&database.objectStoreNames.contains('dailyBudgets')){
    const budgetStore=tx.objectStore('budgets'),dailyStore=tx.objectStore('dailyBudgets'),countReq=dailyStore.count();
@@ -548,6 +549,14 @@ function openDB(){return new Promise((ok,no)=>{
  r.onblocked=()=>message('数据库升级正被其他打开的 AI Ledger 页面占用。请关闭其他标签页后重新加载。','error');
  });}
 function all(s){return new Promise((ok,no)=>{const r=db.transaction(s).objectStore(s).getAll();r.onsuccess=()=>ok(r.result||[]);r.onerror=()=>no(r.error);});}
+function recentTransactions(cutoffMs){
+ const store=db.transaction('transactions').objectStore('transactions'),reqs=[];
+ const collect=req=>new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result||[]);req.onerror=()=>reject(req.error);});
+ if(store.indexNames.contains('occurredAt'))reqs.push(collect(store.index('occurredAt').getAll(IDBKeyRange.lowerBound(new Date(cutoffMs-36*3600000).toISOString().slice(0,19)))));
+ if(store.indexNames.contains('createdAt'))reqs.push(collect(store.index('createdAt').getAll(IDBKeyRange.lowerBound(cutoffMs))));
+ if(!reqs.length)return all('transactions').then(rows=>rows.filter(t=>time(t)>=cutoffMs));
+ return Promise.all(reqs).then(groups=>{const map=new Map();groups.flat().forEach(t=>map.set(t.id,t));return Array.from(map.values()).filter(t=>time(t)>=cutoffMs).sort((a,b)=>time(b)-time(a));});
+}
 function put(s,x){return new Promise((ok,no)=>{const r=db.transaction(s,'readwrite').objectStore(s).put(x);r.onsuccess=()=>ok(x);r.onerror=()=>no(r.error);});}
 function del(s,id){return new Promise((ok,no)=>{const r=db.transaction(s,'readwrite').objectStore(s).delete(id);r.onsuccess=()=>ok();r.onerror=()=>no(r.error);});}
 function clear(s){return new Promise((ok,no)=>{const r=db.transaction(s,'readwrite').objectStore(s).clear();r.onsuccess=()=>ok();r.onerror=()=>no(r.error);});}
@@ -642,7 +651,8 @@ async function applyEffect(t,sign){
 
 /* ---------- AI 上下文与提示词 ---------- */
 async function context(compact=false){
- const [accounts,tx,budgets,recs]=await Promise.all([all('accounts'),all('transactions'),all('budgets'),all('reconciliations')]);
+ const [accounts,budgets,recs]=await Promise.all([all('accounts'),all('budgets'),all('reconciliations')]);
+ const tx=compact?await recentTransactions(Date.now()-3*864e5):await all('transactions');
  const now=new Date(),nowMs=Date.now(),recentCutoff=nowMs-3*864e5,recentTx=tx.filter(t=>time(t)>=recentCutoff),start=new Date(now.getFullYear(),now.getMonth(),1).getTime(),year=new Date(now.getFullYear(),0,1).getTime(),from=new Date(now.getFullYear(),now.getMonth()-11,1).getTime();
  const sum=list=>{const o={income:incOf(list),expense:expOf(list),categories:{},merchants:{}};list.forEach(t=>{if(!pl(t))return;if(t.type==='expense'||t.type==='refund'||(t.type==='transfer'&&t.transferKind==='external')){const sg=t.type==='refund'?-1:1,c=t.category||(t.type==='transfer'?'转给他人':'其他'),m=t.merchant||t.toPerson||'未注明';o.categories[c]=r2((o.categories[c]||0)+sg*amt(t));o.merchants[m]=r2((o.merchants[m]||0)+sg*amt(t));}});o.merchants=Object.fromEntries(Object.entries(o.merchants).sort((a,b)=>b[1]-a[1]).slice(0,15));o.net=r2(o.income-o.expense);o.count=list.length;return o;};
  const months={};if(!compact){tx.filter(t=>time(t)>=from).forEach(t=>{const d=new Date(time(t)),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');(months[k]||(months[k]=[])).push(t);});Object.keys(months).forEach(k=>months[k]=sum(months[k]));}
@@ -656,12 +666,12 @@ async function context(compact=false){
   accounts:accounts.map(a=>({name:a.name,balance:a.balance,currency:a.currency||'CNY',accountType:a.accountType||guessAccountType(a.name),institution:a.institution||'',last4:a.last4||'',verifiedAt:a.verifiedAt||null,creditLimit:a.creditLimit??null,availableCredit:a.availableCredit??null})),
   recent:recentTx.slice().sort((a,b)=>time(b)-time(a)).slice(0,compact?12:30).map(t=>({id:t.id,type:t.type,amount:t.amount,currency:t.currency||'CNY',account:t.account||'',toAccount:t.toAccount||'',merchant:t.merchant||'',category:t.category||'',occurredAt:t.occurredAt||'',note:t.note||'',neutral:!!t.neutral})),
   recentWindowHours:72,
-  thisMonth:sum(monthTx),thisYear:compact?undefined:sum(tx.filter(t=>time(t)>=year)),months:compact?undefined:months,categories,habits,
+  thisMonth:compact?undefined:sum(monthTx),thisYear:compact?undefined:sum(tx.filter(t=>time(t)>=year)),months:compact?undefined:months,categories,habits,
   calibrations:recs.slice().sort((a,b)=>b.createdAt-a.createdAt).slice(0,compact?3:8).map(r=>({account:r.accountName,previous:r.previousBalance,statement:r.statementBalance,difference:r.difference,date:r.occurredAt,analysis:r.analysis||''})),
-  budgets:(compact?budgets.slice(0,6):budgets).map(b=>{const dim=daysInMonth(now.getFullYear(),now.getMonth()),daily=b.dailyLimit!=null?Number(b.dailyLimit):(b.limit?r2(Number(b.limit)/dim):null);return{name:b.name,category:b.category||'',limit:b.limit,dailyLimit:daily,weeklyLimit:daily!=null?r2(daily*7):null,monthlyLimit:daily!=null?r2(daily*dim):null,usedThisMonth:expOf(monthTx.filter(t=>!b.category||t.category===b.category))};}),
+  budgets:(compact?budgets.slice(0,6):budgets).map(b=>{const dim=daysInMonth(now.getFullYear(),now.getMonth()),daily=b.dailyLimit!=null?Number(b.dailyLimit):(b.limit?r2(Number(b.limit)/dim):null);return{name:b.name,category:b.category||'',limit:b.limit,dailyLimit:daily,weeklyLimit:daily!=null?r2(daily*7):null,monthlyLimit:daily!=null?r2(daily*dim):null,usedThisMonth:compact?undefined:expOf(monthTx.filter(t=>!b.category||t.category===b.category))};}),
 dailyBudget:await (async()=>{const list=await getDailyBudgets(),today=dayKey(now.getTime()),ws=weekStartMs(now),we=ws+6*864e5,ms=start,me=new Date(now.getFullYear(),now.getMonth()+1,0).getTime();return{amount:dailyForDate(list,today),weekly:sumDaily(list,ws,we),monthly:sumDaily(list,ms,me),history:list.slice(compact?-3:-10).map(e=>({amount:e.amount,effectiveFrom:e.effectiveFrom}))};})(),
 trends:compact?{last3Days:sum(recentTx)}:{last7Days:sum(tx.filter(t=>time(t)>=now.getTime()-6*864e5)),last4Weeks:sum(tx.filter(t=>time(t)>=now.getTime()-27*864e5)),last12Months:sum(tx.filter(t=>time(t)>=from))},
-externalTransfersThisMonth:r2(monthTx.filter(t=>t.type==='transfer'&&t.transferKind==='external').reduce((s2,t)=>s2+amt(t),0))
+externalTransfersThisMonth:compact?undefined:r2(monthTx.filter(t=>t.type==='transfer'&&t.transferKind==='external').reduce((s2,t)=>s2+amt(t),0))
 };
 }
 function historyForAI(compact=false){
@@ -1346,7 +1356,7 @@ $('exportJson').onclick=exportJson;$('exportData').onclick=exportData;$('importD
  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
  const n=(await all('transactions')).length+(await all('accounts')).length,lb=Number(localStorage.getItem('ledger.lastBackup')||0),lp=Number(localStorage.getItem('ledger.lastBackupPrompt')||0);
  if(n&&Date.now()-Math.max(lb,lp)>7*864e5){toast(lb?'已超过 7 天未备份，建议导出 Excel 备份。':'建议每 7 天导出一次 Excel 备份。');localStorage.setItem('ledger.lastBackupPrompt',String(Date.now()));}
- if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=11').catch(()=>{});
+ if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=12').catch(()=>{});
 })().catch(e=>message('初始化失败：'+e.message,'error'));
 })();
 </script></body></html>
