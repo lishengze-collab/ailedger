@@ -721,7 +721,7 @@ async function deepseekOCR(file){
  const fd=new FormData();
  fd.append('file',file,file.name||'image-upload');
  fd.append('purpose','text_recognition');
- const started=Date.now(),ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),60000);
+ const started=Date.now(),ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),180000);
  try{
   const res=await fetch(OCR_ENDPOINT,{method:'POST',headers:{'Authorization':'Bearer '+s.key},body:fd,signal:ctl.signal});
   const raw=await res.text();
@@ -730,7 +730,7 @@ async function deepseekOCR(file){
   if(data.error)throw new Error(data.error.message||'OCR 服务返回错误');
   const pages=Array.isArray(data.pages)?data.pages:[];
   return{text:pages.map(p=>p&&p.text||'').filter(Boolean).join('\n'),pages:pages.length,incomplete:pages.some(p=>p&&p.finish_reason==='length')};
- }catch(e){if(e.name==='AbortError')throw new Error('OCR 请求超过 60 秒，请缩小图片后重试');throw e;}
+ }catch(e){if(e.name==='AbortError')throw new Error('OCR 请求超过 180 秒，请缩小图片后重试');throw e;}
  finally{clearTimeout(timer);lastOcrDurationMs+=Date.now()-started;}
 }
 async function deepseekOCRMany(files){
