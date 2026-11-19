@@ -661,8 +661,8 @@ function parseAmount(v){if(v==null||v==='')return null;if(typeof v==='number')re
 function normChanges(c){if(!c||typeof c!=='object')return{};const o={},am=parseAmount(c.amount);if(am!=null)o.amount=am;['account','toAccount','merchant','category','note'].forEach(k=>{if(clean(c[k]))o[k]=clean(c[k]);});if(clean(c.transferKind))o.transferKind=clean(c.transferKind);if(clean(c.toPerson))o.toPerson=clean(c.toPerson);if(clean(c.occurredAt||c.date))o.occurredAt=normalizeDate(c.occurredAt||c.date);const aa=parseAmount(c.accountAmount);if(aa!=null)o.accountAmount=aa;const ta=parseAmount(c.toAmount);if(ta!=null)o.toAmount=ta;return o;}
 function normalize(r,ctx){const src=Array.isArray(r.actions)?r.actions:(r.type?[r]:[]),meta=r.accountInfo||r.detectedAccount||r.account||{};const actions=src.filter(a=>a&&typeof a==='object').map(a=>{const institution=clean(a.institution||a.bankName||a.bank||meta.institution||meta.bankName||''),last4=clean(a.last4||a.accountLast4||a.cardLast4||meta.last4||'').replace(/\D/g,'').slice(-4),accountName=clean(a.account||a.accountName||a.bankAccount||a.cardName||meta.name||meta.accountName||'')||(institution&&last4?institution+' ****'+last4:institution),type=clean(a.type),rawBalance=a.balance??a.currentBalance??a.current_balance??a.accountBalance??(type==='balance_snapshot'?a.amount:null);let resolvedAccount=accountName;if(!resolvedAccount&&type==='balance_snapshot'&&ctx&&ctx.accounts&&ctx.accounts.length===1)resolvedAccount=ctx.accounts[0].name;const conf=(a.confidence===''||a.confidence==null||!Number.isFinite(Number(a.confidence)))?.85:Number(a.confidence);return{...a,type,amount:parseAmount(a.amount),balance:parseAmount(rawBalance),budgetLimit:parseAmount(a.budgetLimit),availableCredit:parseAmount(a.availableCredit),creditLimit:parseAmount(a.creditLimit),account:resolvedAccount,toAccount:clean(a.toAccount||a.toAccountName),merchant:clean(a.merchant||a.shopName),category:clean(a.category),budgetName:clean(a.budgetName),institution,last4,transferKind:a.transferKind==='external'||clean(a.toPerson||a.recipient)?'external':'internal',toPerson:clean(a.toPerson||a.recipient||(a.transferKind==='external'?a.toAccount:'')),effectiveFrom:clean(a.effectiveFrom)||dayKey(Date.now()),accountType:guessAccountType(resolvedAccount,a.accountType||a.cardType||meta.accountType),balanceKind:clean(a.balanceKind),items:Array.isArray(a.items)?a.items:(clean(a.items)?[clean(a.items)]:[]),occurredAt:normalizeDate(a.occurredAt||a.date||r.occurredAt),currency:(clean(a.currency||meta.currency)||'CNY').toUpperCase(),targetId:clean(a.targetId),changes:normChanges(a.changes),newName:clean(a.newName),neutral:a.neutral===true||a.neutral==='true',accountAmount:parseAmount(a.accountAmount),toAmount:parseAmount(a.toAmount),confidence:conf,note:clean(a.note||a.preference||a.value)};});if(!actions.length&&meta&&typeof meta==='object'){const institution=clean(meta.institution||meta.bankName||meta.bank||''),last4=clean(meta.last4||meta.accountLast4||'').replace(/\D/g,'').slice(-4),name=clean(meta.name||meta.accountName)||(institution&&last4?institution+' ****'+last4:institution),balance=parseAmount(meta.balance??meta.currentBalance),type=guessAccountType(name,meta.accountType||meta.cardType);if(name)actions.push({type:'create_account',account:name,accountType:type,institution,last4,currency:meta.currency||'CNY',balance:null,amount:null,occurredAt:normalizeDate(meta.date||r.occurredAt),items:[],changes:{},confidence:Number(meta.confidence||.8),note:'从账户信息中识别并创建'});if(name&&balance!=null)actions.push({type:'balance_snapshot',account:name,accountType:type,institution,last4,balance,currency:meta.currency||'CNY',occurredAt:normalizeDate(meta.date||r.occurredAt),items:[],changes:{},confidence:Number(meta.confidence||.8),note:'从资料识别的账户余额'});}actions.forEach(a=>{if(a.type==='create_account'&&actions.some(x=>x.type==='balance_snapshot'&&accountKey(x.account)===accountKey(a.account)))a.balance=null;if(a.type==='daily_budget'&&a.amount==null&&a.budgetLimit!=null)a.amount=a.budgetLimit;if(a.type==='transfer'&&a.transferKind==='external'&&!a.toPerson)a.toPerson=a.toAccount;});return{intent:clean(r.intent)||(actions.length?'record':'conversation'),answer:clean(r.answer||r.reply),analysis:clean(r.analysis),needsClarification:!!r.needsClarification,requiresConfirmation:!!r.needsConfirm,clarification:clean(r.clarification),dataRequest:r.dataRequest&&typeof r.dataRequest==='object'?r.dataRequest:null,actions};}
 /* ---------- 调用 AI（含重试、本地查询回合） ---------- */
-async function post(s,body){
- const go=async()=>{const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),90000);try{const res=await fetch(s.endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.key},body:JSON.stringify(body),signal:ctl.signal});return{res,raw:await res.text()};}catch(e){throw Error(e.name==='AbortError'?'请求超时，请重试':'网络请求失败：'+e.message);}finally{clearTimeout(tm);}};
+async function post(s,body,timeout=90000){
+ const go=async()=>{const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),timeout);try{const res=await fetch(s.endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.key},body:JSON.stringify(body),signal:ctl.signal});return{res,raw:await res.text()};}catch(e){throw Error(e.name==='AbortError'?'请求超时，请重试':'网络请求失败：'+e.message);}finally{clearTimeout(tm);}};
  let {res,raw}=await go();
  if(!res.ok&&res.status===400&&body.response_format&&/response_format|json/i.test(raw)){delete body.response_format;({res,raw}=await go());}
  if(!res.ok)throw Error('API '+res.status+' · '+raw.slice(0,220));
@@ -678,7 +678,7 @@ async function deepseekOCR(file){
  const fd=new FormData();
  fd.append('file',file,file.name||'image-upload');
  fd.append('purpose','text_recognition');
- const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),90000);
+ const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),60000);
  try{
   const res=await fetch(OCR_ENDPOINT,{method:'POST',headers:{'Authorization':'Bearer '+s.key},body:fd,signal:ctl.signal});
   const raw=await res.text();
@@ -687,7 +687,7 @@ async function deepseekOCR(file){
   if(data.error)throw new Error(data.error.message||'OCR 服务返回错误');
   const pages=Array.isArray(data.pages)?data.pages:[];
   return{text:pages.map(p=>p&&p.text||'').filter(Boolean).join('\n'),pages:pages.length,incomplete:pages.some(p=>p&&p.finish_reason==='length')};
- }catch(e){if(e.name==='AbortError')throw new Error('OCR 请求超过 90 秒，请缩小图片后重试');throw e;}
+ }catch(e){if(e.name==='AbortError')throw new Error('OCR 请求超过 60 秒，请缩小图片后重试');throw e;}
  finally{clearTimeout(timer);}
 }
 async function deepseekOCRMany(files){
@@ -713,9 +713,9 @@ async function callAI(text,pics,extra,opt){
   const userContent=imageItems.length?buildVisionContent(text,base64List,ocrText):(text||'请根据上下文理解用户的财务指令。');
   const msgs=[{role:'system',content:prompt(ctx)},...historyForAI(imageItems.length>0),{role:'user',content:userContent},...(extra||[])];
   const body=()=>({model,messages:msgs,temperature:.15,max_tokens:8192,response_format:{type:'json_object'}});
-  let data=await post(s,body()),c='',r;
+  let data=await post(s,body(),imageItems.length?60000:90000),c='',r;
   try{c=readContent(data);r=parse(c);}catch(e){
-   if(/达到长度上限/.test(e.message))throw e;
+   if(/达到长度上限/.test(e.message)||imageItems.length)throw e;
    msgs.push({role:'assistant',content:content(data)||''},{role:'user',content:'上次回复为空或不是合法 JSON。请重新分析，并且只输出一个完整、非空、可解析的 JSON 对象；不要输出 Markdown 或解释文字。'});
    data=await post(s,body());c=readContent(data);r=parse(c);
   }
@@ -727,7 +727,9 @@ async function callAI(text,pics,extra,opt){
  catch(primaryError){
   const files=imageItems.map(p=>p.ocrFile||p.file).filter(Boolean);
   if(!files.length)throw primaryError;
-  message('FLASH 识别未完成，正在使用 OCR 补充后重试…');
+  const host=(()=>{try{return new URL(s.endpoint).hostname.toLowerCase();}catch(e){return'';}})();
+  if(!(host==='deepseek.com'||host.endsWith('.deepseek.com')))throw primaryError;
+  message('FLASH 识别未完成，正在使用压缩图 OCR 补充后重试…');
   const results=await deepseekOCRMany(files),ok=results.filter(r=>r.ok&&r.text);
   let ocrText=ok.map(r=>r.text).join('\n\n--- 图片分隔 ---\n\n');
   if(results.some(r=>r.incomplete))ocrText+='\n\n【提示：部分 OCR 页面达到输出长度上限，请以原图为准。】';
