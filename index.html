@@ -87,13 +87,15 @@ body.home-locked main{flex:1 1 0;min-height:0;display:flex}
 .composer textarea{display:block;width:100%;height:42px;border:1px solid var(--line);border-radius:21px;background:var(--surface);padding:10px 42px 10px 15px;font-size:16px;line-height:20px;resize:none;outline:0;overflow:hidden}
 .expand-btn{position:absolute;right:5px;top:5px;width:32px;height:32px;border:0;border-radius:50%;background:transparent;color:var(--muted);display:grid;place-items:center}
 .expand-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+body.kb .overview,body.kb .chips-row,body.kb .hint-line{display:none}
+.composer textarea::placeholder{white-space:nowrap}
 .expand{position:fixed;z-index:90;left:0;right:0;top:var(--home-vv-top);height:var(--home-vh);background:var(--bg);display:flex;flex-direction:column;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 12px;max-width:760px;margin:auto}
 .expand[hidden]{display:none}
 .expand textarea{flex:1;min-height:0;width:100%;border:1px solid var(--line);border-radius:16px;background:var(--card);padding:14px;font-size:17px;line-height:1.6;resize:none;outline:0;overflow:auto}
 .expand-bar{display:flex;gap:8px}
 .chat-bubble .imgs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
 .chat-bubble .imgs+span{display:block}
-.chat-bubble .thumb{width:130px;height:130px;object-fit:cover;border-radius:12px;display:block}
+.chat-bubble.img-only{background:transparent!important;border:0!important;padding:0}.chat-bubble.img-only .imgs{margin:0;justify-content:flex-end}.chat-bubble .thumb{width:130px;height:130px;object-fit:cover;border-radius:12px;display:block}
 select.input{padding-right:8px}
 .composer textarea:focus{border-color:var(--accent)}
 textarea::placeholder,input::placeholder{color:var(--muted)}
@@ -224,7 +226,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   <div class="attachments" id="attachments"></div>
   <div class="composer">
    <button class="icon-btn" id="pickImages" aria-label="添加图片"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/></svg></button>
-   <div class="ta-wrap"><textarea id="naturalInput" rows="1" placeholder="说一句话：记账、查询、改账、转账…"></textarea><button class="expand-btn" id="expandBtn" type="button" aria-label="放大输入框"><svg viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg></button></div>
+   <div class="ta-wrap"><textarea id="naturalInput" rows="1" placeholder="说一句话记账或查询"></textarea><button class="expand-btn" id="expandBtn" type="button" aria-label="放大输入框"><svg viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg></button></div>
    <button class="send-btn" id="analyzeText" aria-label="发送"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
   </div>
   <input type="file" id="imageInput" accept="image/*" multiple>
@@ -386,7 +388,7 @@ async function loadHistory(){const rows=await all('conversationHistory');if(rows
 function setHistCount(){const e=$('histCount');if(e)e.textContent=history.length+' 条';}
 function renderConversation(){const log=$('conversationLog');if(!log)return;
  const recent=history.slice(-40);
- let html=recent.map(h=>{const im=h.imgs&&h.imgs.length?'<div class="imgs">'+h.imgs.map(u=>'<img class="thumb" src="'+u+'" alt="">').join('')+'</div>':'',txt=im&&/^\[图片 × \d+\]$/.test(h.content)?'':'<span>'+esc(h.content)+'</span>';return'<div class="chat-bubble '+(h.role==='user'?'user':'assistant')+'">'+im+txt+'</div>';}).join('');
+ let html=recent.map(h=>{const im=h.imgs&&h.imgs.length?'<div class="imgs">'+h.imgs.map(u=>'<img class="thumb" src="'+u+'" alt="">').join('')+'</div>':'',txt=im&&/^\[图片 × \d+\]$/.test(h.content)?'':'<span>'+esc(h.content)+'</span>';return'<div class="chat-bubble '+(h.role==='user'?'user':'assistant')+(im&&!txt?' img-only':'')+'">'+im+txt+'</div>';}).join('');
  if(!recent.length)html='<div class="welcome"><b>说一句话就能搞定</b>记账 · 查询 · 改账 · 转账<br>预算 · 校准余额 · 管理账户<br>也可以发账单截图</div>';
  if(busyAI)html+='<div class="chat-bubble assistant typing"><span></span><span></span><span></span></div>';
  log.innerHTML=html;log.scrollTop=log.scrollHeight;}
@@ -476,7 +478,7 @@ async function context(){
   dailyBudget:{todayLimit:dailyForDate(dl,dayKey(now.getTime())),spentToday:bs.day.spent,weekLimit:bs.week.limit,spentWeek:bs.week.spent,monthLimit:bs.month.limit,spentMonth:bs.month.spent}};}
 function preferenceMemory(){try{const rows=JSON.parse(localStorage.getItem('ledger.preferences')||'[]');if(!Array.isArray(rows)||!rows.length)return'无';return rows.slice(-40).reverse().map((x,i)=>(i+1)+'. '+clean(x&&x.text)).join('\n');}catch(e){return'无';}}
 function prompt(ctx){return[
- '你是 AI Ledger 的个人记账助手。用户只通过聊天完成一切：记账、查询、改账/删账、转账、预算、余额校准、账户管理、偏好设置。你输出的 actions 会被程序直接执行，务必准确，不要编造 id、账户或金额。',
+ '你是 AI Ledger 的个人记账助手。用户只通过聊天完成一切：记账、查询、改账/删账、转账、预算、余额校准、账户管理、偏好设置。你输出的 actions 会被程序直接执行，务必准确，不要编造 id、账户或金额。回复用户的文字里不要出现流水 id 等内部编号，用金额、商户、时间描述即可。',
  '【原则】明确指令直接给 actions；一句话含多笔就拆成多个 action；仅在关键信息缺失或账户有多个候选时追问（needsClarification=true，actions=[]，clarification 写清要问什么）。查询类问题用 context.summary、monthly、recent（范围见 recentScope）等数据计算并在 answer 中简明回答（金额保留两位，必要时给出占比/对比/建议），actions=[]。',
  '【账户】account 必须使用 context.accounts 中已有的账户全名（把 工行/ICBC、招行/CMB、农行、建行、微信、支付宝 等简称映射到现有账户）。唯一匹配直接用；同机构信用卡与储蓄卡并存且用户没说明时追问。用户没提账户：只有一个账户则省略 account，有多个则参考偏好，否则追问。账户不存在时不要擅自新建，追问；只有用户明确说“新建/添加账户”才返回 create_account（可带 balance 作为初始余额）。信用卡欠款/账单余额为负数。',
  '【类型】expense 支出；income 收入；refund 退款（退回原账户）；transfer 转账：自己账户之间 transferKind=internal（需 account 与 toAccount，不计收支），转给他人 transferKind=external（toPerson=对方，计入支出）。跨币种转账用 accountAmount/toAmount 表示各自账户实际变动金额。',
@@ -646,7 +648,7 @@ async function analyzeText(){
   }else pushHist('assistant',result.answer||result.analysis||'我没有理解，可以换个说法吗？');
  }catch(e){pushHist('assistant','⚠️ '+e.message);}
  finally{busyAI=false;busy($('analyzeText'),false);renderConversation();}}
-function makeThumb(src,max){max=max||360;return new Promise(ok=>{const i=new Image();i.onload=()=>{const k=Math.min(1,max/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=Math.round(i.width*k);c.height=Math.round(i.height*k);c.getContext('2d').drawImage(i,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.6));};i.onerror=()=>ok('');i.src=src;});}
+function makeThumb(src,max){max=max||360;return new Promise(ok=>{const i=new Image();i.onload=()=>{const k=Math.min(1,max/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=Math.round(i.width*k);c.height=Math.round(i.height*k);const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(i,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.6));};i.onerror=()=>ok('');i.src=src;});}
 function clearComposer(){const ta=$('naturalInput');ta.value='';ta.style.height='';images=[];renderAttachments();hideSuggest();}
 function setFocus(f){focusTx=f;const b=$('focusBar');if(f){$('focusText').textContent='✎ 正在修改：'+f.label;b.hidden=false;}else b.hidden=true;}
 function hideSuggest(){const s=$('accountSuggestions');s.innerHTML='';s.hidden=true;}
@@ -657,7 +659,7 @@ async function updateSuggest(){const ta=$('naturalInput'),v=ta.value,m=v.match(/
 function renderAttachments(){const host=$('attachments');if(!images.length){host.innerHTML='';return;}
  host.innerHTML=images.map((s,i)=>'<div class="attachment"><img src="'+s+'" alt=""><button type="button" data-i="'+i+'" aria-label="移除">×</button></div>').join('');
  host.querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{images.splice(+b.dataset.i,1);renderAttachments();});}
-function fileToImage(f,max){max=max||1280;return new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const s=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.82));};img.onerror=()=>no(new Error('图片无法读取'));img.src=r.result;};r.onerror=()=>no(r.error);r.readAsDataURL(f);});}
+function fileToImage(f,max){max=max||1280;return new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const s=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(img,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.82));};img.onerror=()=>no(new Error('图片无法读取'));img.src=r.result;};r.onerror=()=>no(r.error);r.readAsDataURL(f);});}
 
 /* ---------- 渲染 ---------- */
 async function renderHome(){
