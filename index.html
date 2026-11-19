@@ -579,8 +579,8 @@ function recentTransactions(cutoffMs){
 function put(s,x){return new Promise((ok,no)=>{const r=db.transaction(s,'readwrite').objectStore(s).put(x);r.onsuccess=()=>ok(x);r.onerror=()=>no(r.error);});}
 function del(s,id){return new Promise((ok,no)=>{const r=db.transaction(s,'readwrite').objectStore(s).delete(id);r.onsuccess=()=>ok();r.onerror=()=>no(r.error);});}
 function clear(s){return new Promise((ok,no)=>{const r=db.transaction(s,'readwrite').objectStore(s).clear();r.onsuccess=()=>ok();r.onerror=()=>no(r.error);});}
-async function snapshot(){const o={};for(const s of SNAP)o[s]=await all(s);return o;}
-async function restore(o){for(const s of SNAP){await clear(s);for(const x of(o[s]||[]))await put(s,x);}}
+async function snapshot(){const o={};for(const s of SNAP)o[s]=await all(s);o.preferences=localStorage.getItem('ledger.preferences')||'[]';return o;}
+async function restore(o){for(const s of SNAP){await clear(s);for(const x of(o[s]||[]))await put(s,x);}if(o.preferences!==undefined)localStorage.setItem('ledger.preferences',o.preferences||'[]');}
 function settings(){const endpoint=localStorage.getItem('ledger.endpoint')||'https://api.deepseek.com/chat/completions';let model=localStorage.getItem('ledger.model')||'deepseek-flash';if(/^https?:\/\/api\.deepseek\.com(?:\/|$)/i.test(endpoint)&&model==='deepseek-chat')model='deepseek-flash';return{endpoint,key:localStorage.getItem('ledger.key')||'',model,rules:localStorage.getItem('ledger.rules')||'',auto:localStorage.getItem('ledger.autosave')!=='0'};}
 /* ---------- 每日预算（源头）:周/月由每日逐日加总，中途调整只影响生效日及之后 ---------- */
 function daysInMonth(y,m){return new Date(y,m+1,0).getDate();}
