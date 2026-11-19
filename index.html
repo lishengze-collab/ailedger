@@ -1001,13 +1001,19 @@ function syncRecordButton(){
  const b=$('analyzeText');if(!b)return;
  const value=clean($('naturalInput').value),empty=!value;
  const affirmative=/^(确认|是|好|好的|执行|可以|对|没问题|同意|授权|继续|允许|读取)(吧|即可|读取|历史记录)?[。！! ]*$/i.test(value);
+ const negative=/^(取消|否|不|不要|不执行|算了|放弃)[。！! ]*$/i.test(value);
  let label='发送',mode='send';
- if(pendingHistoryRequest){if(empty||affirmative){label='确认读取';mode='history-confirm';}else{label='回复确认/取消';mode='history-wait';}}
- else if(pending&&pending.awaitingConfirmation){if(empty||affirmative){label='确认记录';mode='record-confirm';}else{label='发送修改';mode='record-edit';}}
- else if(pending){label=empty?'补充信息':'发送补充';mode='supplement';}
+ if(pendingHistoryRequest){
+  if(negative){label='取消读取';mode='history-cancel';}
+  else if(empty||affirmative){label='确认读取';mode='history-confirm';}
+  else{label='回复确认/取消';mode='history-wait';}
+ }else if(pending&&pending.awaitingConfirmation){
+  if(negative){label='取消记录';mode='record-cancel';}
+  else if(empty||affirmative){label='确认记录';mode='record-confirm';}
+  else{label='发送修改';mode='record-edit';}
+ }else if(pending){label=empty?'补充信息':'发送补充';mode='supplement';}
  b.textContent=label;b.dataset.mode=mode;b.setAttribute('aria-label',label);
 }
-
 async function openConfirm(r,sub){pending={actions:r.actions||[],awaitingConfirmation:true};syncRecordButton();pushHist('assistant',(r.answer||r.reply||r.analysis||'识别到待执行操作：')+' '+pending.actions.map(brief).join('；')+'。回复“确认”执行，回复“取消”放弃；也可以直接点击发送按钮确认。'+(sub?' '+sub:''));message('等待确认。');}
 function collectEdits(){qa('#sheetBody [data-i]').forEach(inp=>{const a=pending&&pending.actions[inp.dataset.i];if(!a)return;const f=inp.dataset.f,v=clean(inp.value);if(f==='amount')a.amount=parseAmount(v);else a[f]=v;});}
 function showAnswer(r){const text=(r.answer||r.analysis||r.clarification||'已理解。').trim();if(text)pushHist('assistant',text);message('');}
