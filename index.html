@@ -792,8 +792,8 @@ async function callAI(text,pics,extra,opt){
   pushHist('assistant','图片视觉模型未能完成识别，切换至 OCR 文字识别。原因：'+primaryError.message);
   message('视觉识别未完成，正在使用 OCR 兜底…');
   const results=await deepseekOCRMany(files),ok=results.filter(r=>r.ok&&r.text);
-  let ocrText=ok.map(r=>r.text).join('\\n\\n--- 图片分隔 ---\\n\\n');
-  if(results.some(r=>r.incomplete))ocrText+='\\n\\n【提示：部分 OCR 页面达到输出长度上限，请以原图为准。】';
+  let ocrText=ok.map(r=>r.text).join('\n\n--- 图片分隔 ---\n\n');
+  if(results.some(r=>r.incomplete))ocrText+='\n\n【提示：部分 OCR 页面达到输出长度上限，请以原图为准。】';
   if(!ocrText)throw primaryError;
   // OCR 已读取原图；后续只发文字，不再上传原始图片。
   const result=await request(ocrText,false);message('');return result;
@@ -840,7 +840,7 @@ async function recordUsage(u){await put('tokenUsage',{id:uid(),time:Date.now(),p
 
 /* ---------- 本地查询 ---------- */
 async function runQuery(q,allowOlder=false){
- const dts=(s,end)=>{s=clean(s);if(!s)return null;const d=new Date(/^\\d{4}-\\d{2}-\\d{2}$/.test(s)?s+(end?'T23:59:59.999':'T00:00:00'):s);const n=d.getTime();return Number.isFinite(n)?n:null;};
+ const dts=(s,end)=>{s=clean(s);if(!s)return null;const d=new Date(/^\d{4}-\d{2}-\d{2}$/.test(s)?s+(end?'T23:59:59.999':'T00:00:00'):s);const n=d.getTime();return Number.isFinite(n)?n:null;};
  const f=dts(q.from,false),e=dts(q.to,true),cutoff=Date.now()-3*864e5;
  let tx;
  if(allowOlder)tx=await all('transactions');
