@@ -391,9 +391,22 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 #page-home .chat-bubble.user{background:#dcecff!important;color:#153d67!important;border:1px solid #c6ddf8!important;align-self:flex-end;}
 #page-home .chat-bubble.assistant{background:#f0f2f5!important;color:#252b33!important;border:1px solid #e0e4e9!important;align-self:flex-start;}
 
+/* v14: lock the entire first tab to the visual viewport; only the conversation log may scroll. */
+:root{--home-vh:100dvh;--home-vv-top:0px}
+html.home-locked,body.home-locked{height:100%;min-height:0;overflow:hidden!important;overscroll-behavior:none!important}
+body.home-locked{position:fixed;top:var(--home-vv-top,0px);left:0;right:0;width:100%;height:var(--home-vh,100dvh);min-height:0;overflow:hidden!important}
+body.home-locked #app{height:var(--home-vh,100dvh)!important;min-height:0!important;display:flex;flex-direction:column;overflow:hidden!important;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px calc(10px + var(--safe))!important}
+body.home-locked #app>main{display:flex;flex:1 1 0;min-height:0;min-width:0;overflow:hidden}
+body.home-locked #page-home.active{display:grid!important;grid-template-rows:auto minmax(0,1fr);flex:1 1 0;height:auto!important;min-height:0!important;max-height:100%;min-width:0;margin:0;padding-bottom:0!important;overflow:hidden!important;overscroll-behavior:none!important;animation:none!important}
+body.home-locked #page-home .home-overview{min-height:0;max-height:none;overflow:hidden}
+body.home-locked #page-home .capture{min-height:0;min-width:0;height:100%;overflow:hidden}
+body.home-locked #page-home .capture-input{min-height:0;min-width:0;overflow:hidden}
+body.home-locked #page-home .conversation-log{min-height:0;max-height:none;overflow-y:auto!important;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+body.home-locked #page-home .capture-bottom{flex:0 0 auto;position:static!important}
+body.home-locked #page-home .capture-input textarea{scroll-margin:0;overscroll-behavior:contain}
 </style>
 </head>
-<body><div id="app">
+<body class="home-locked"><div id="app">
 <main>
 <section class="page active" id="page-home">
  <div class="home-overview"><div class="budget-ring-grid" id="homeBudgetRings"><div class="empty">正在计算预算…</div></div><div class="home-spend-summary" id="homeSpendSummary"></div></div>
@@ -502,7 +515,7 @@ const DB='ai-ledger-v1',VERSION=6,STORES=['accounts','transactions','budgets','t
 const PLACEHOLDER='输入消息，输入账户简称或用 @ 选择账户…';
 const MONEY=['expense','income','transfer','refund'];
 const TYPES=[...MONEY,'create_account','budget','daily_budget','balance_snapshot','update_transaction','delete_transaction','rename_account','delete_account','preference'];
-const SAFE=new Set(['expense','income','transfer','refund','create_account','budget','daily_budget','preference']);
+const SAFE=new Set(TYPES);
 const TYPE_COLOR={credit_card:'#e0733f',savings_card:'#3f7de0',debit_card:'#3f7de0',payment:'#2fa86a',wallet:'#8a5ae0',cash:'#c9a227',other:'#8a929c'};
 let db=null,pending=null,pendingHistoryRequest=null,images=[],range='month',detailRange='day',filter='all',deferredInstall=null,undoSnap=null,selCat=null,trendSel=null,trendMode='month',editId=null,busyAI=false,lastApiDurationMs=0,lastOcrDurationMs=0,lastImagePreparationMs=0,lastApiBreakdown=[];
 const EYE_ON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
@@ -685,6 +698,7 @@ function historyForAI(compact=false){
  for(let i=src.length-1;i>=0;i--){const h=src[i];let content=String(h.content||'');if(content.length>maxPerMessage)content=content.slice(-maxPerMessage)+'…（较早内容已截断）';if(used+content.length>maxChars){if(!out.length&&maxChars-used>200)content=content.slice(-(maxChars-used));else break;}out.unshift({role:h.role==='user'?'user':'assistant',content});used+=content.length;if(used>=maxChars)break;}
  return out;
 }
+function preferenceMemory(){try{const rows=JSON.parse(localStorage.getItem('ledger.preferences')||'[]');if(!Array.isArray(rows)||!rows.length)return'无';return rows.slice(-40).reverse().map((x,i)=>(i+1)+'. '+clean(x&&x.text)).filter(x=>!/^\d+\. $/.test(x)).join('\n')||'无';}catch(e){return'无';}}
 function prompt(ctx){
  return[
  '你是 AI Ledger 的个人财务执行助手。你的工作是理解自然语言并对本地账户、流水、预算、余额校准进行实际操作，而不是仅给出建议。优先使用提供的近3天对话和流水明细；不要把更早交易明细当作已经读取，也不要要求用户重复已知账户信息。',
@@ -692,18 +706,18 @@ function prompt(ctx){
  '账户匹配硬规则：工行/工商/ICBC、农行/农业/ABC、招行/招商/CMB、光大/CEB、兴业/CIB、网商、邮储/PSBC 等简称必须映射到账户列表中的现有银行。用户不需要输入尾号。除储蓄卡和信用卡外，一个银行通常只有一个账户；优先按银行机构和账户类型匹配。若唯一账户匹配，直接使用；若同名信用卡和储蓄卡并存，必须询问选择，绝不可混用。普通记账、退款和内部转账只能关联已有账户，禁止因匹配失败而创建新账户；只有用户明确要求创建/添加账户，或明确请求校准一个尚未录入的新账户时才创建。重复创建时复用/合并匹配账户。不要推断或编造卡号尾号。',
  '账户类型：credit_card=信用卡，savings_card=储蓄卡，payment=支付宝/微信等支付账户，wallet=电子钱包，cash=现金，other=其他。信用卡欠款/已用金额以负数余额表示；信用额度和可用额度单独记录，不能误认作存款或当前余额。',
  '预算以每日预算为唯一基础。用户说“每天预算 100”“每天餐饮 60”时返回 daily_budget（全局）或 budget（分类），金额是每日额度；周/月额度由系统按每日预算自动汇总。用户调整每日预算时填 effectiveFrom（默认今天），只改变生效日起的预算，不重写过去。预算环形进度用于每日/每周/每月。',
- '转账严格区分：用户自己的账户之间是 transferKind=internal，不计收入支出；转给他人是 transferKind=external，toPerson=对方，计入支出。不要为收款人创建账户。信用卡还款通常是内部转账。转账退回/退款优先根据历史流水 targetId、账户和商户匹配原记录，不要求用户提供尾号。',
+ '转账严格区分：用户自己的账户之间是 transferKind=internal，不计收入支出；转给他人是 transferKind=external，toPerson=对方，计入支出。不要为收款人创建账户。信用卡还款优先识别为本人账户之间的内部 transfer，转出账户为实际付款账户，转入账户为对应信用卡账户；内部还款不计入消费支出，信用卡负债余额按正向入账抵减欠款。若还的是贷款/他人债务且收款方不是本人账户，则按外部转账或实际支出处理。账户唯一匹配时直接执行，只有多个同银行账户且无法判断卡类型时才询问。转账退回/退款优先根据历史流水 targetId、账户和商户匹配原记录，不要求用户提供尾号。',
  '余额校准支持文字或图片，两种完全等效，图片不是必填。文字如“把招行余额校准为 12345”“账户A现在余额 8000”应直接输出 balance_snapshot。若用户未写账户而本地只有一个账户，使用唯一账户；若同银行同时有信用卡/储蓄卡则询问。图片应分别识别“当前余额/账户余额/账面余额”、信用额度、可用额度、已用额度、可用余额、最低还款额；绝不能把信用额度、可用额度或最低还款额当作当前余额。识别到当前余额必须返回 balance_snapshot，account 尽可能使用本地账户列表中对应账户名。校准时在 note/analysis 中简要比较校准前余额、近期开销收入与本次差额，说明差额可能来源；不得虚构交易或自动用差额生成收支。',
  '用户如果明确说“创建/添加账户”，返回 create_account。上传银行卡截图若用户意图为创建账户或校准，可据截图建档；但截图对应的账户若已存在，必须复用，不要重复创建。储蓄卡与信用卡即使同一银行同名，也必须区分成两个账户。',
  '修改和删除流水：优先使用 recent 里的完整 id 作为 targetId；用户不必输入编号，可以根据日期、金额、商户、账户和对话历史模糊匹配。只有目标唯一才执行 update_transaction/delete_transaction；有多个候选时给出简明候选并追问。支持通过自然语言修改金额、账户、商户、分类、时间和备注。每一条新流水都由系统生成唯一编号。',
- '账户改名返回 rename_account（account=当前账户名，newName=新账户名）。账户删除返回 delete_account（account=账户名），不能删除关联流水，只解除关联并保留原始历史。改名、删除账户、删除流水、修改重要历史数据等非普通记账操作，必须在 answer 中明确操作内容并等待用户输入肯定词确认；用户输入“确认/是/好/执行/可以/同意”才执行，“取消/否/不要/算了”则取消。无需弹窗。',
- '用户表达“以后记账时……”“记住我偏好……”“我一般用……”“默认分类……”等持久偏好时返回 preference，note 写入完整偏好。偏好可以无限追加；若新偏好与旧偏好冲突，以最新一次为准。',
+ '账户改名返回 rename_account（account=当前账户名，newName=新账户名）。账户删除返回 delete_account（account=账户名），不能删除关联流水，只解除关联并保留原始历史。对于用户明确提出且目标唯一的创建、记账、转账/还款、退款、余额校准、预算、偏好、修改、删除流水、账户改名/删除等本地操作，直接执行并在聊天气泡中反馈；这些操作有本地撤销快照，不要再要求确认或二次确认。仅在关键字段缺失、账户/流水匹配到多个候选、金额或转账方向不明、操作范围不清楚，或用户要求不可逆清空/重置全部数据时追问。删除单条流水或账户也按明确指令执行，并提醒用户可回复“撤销”。',
+ '用户表达“以后记账时……”“记住我偏好……”“我一般用……”“默认分类……”“以后优先……”等长期偏好时返回 preference，note 写入完整偏好。用户纠正此前默认选择时，也要更新对应偏好；单次交易选择不自动升级为长期偏好。最新偏好优先于旧偏好，并在后续记账、识别和查询时持续遵守。',
  '查询优先使用 recent 中最近72小时的明细。查询超过3天以前的交易、未限定日期且可能需要全部历史的明细时，必须返回 intent="need_data" 和明确的 dataRequest（包含 from/to）；系统会先在聊天框询问用户授权，未获授权不得读取更早明细。查询支持按商户、分类、账户、时间、金额范围、日期、月份、编号筛选；不得用旧的聚合统计冒充已读取的历史明细。',
  '当图片内容需要关联3天以前的流水时，先返回 need_data，同时在 answer 或 analysis 中保留已经从图片识别出的商户、金额、日期、账户等关键事实，供用户授权后继续分析。后续查询应使用这段摘要，不应要求重复上传图片。',
  '用户没有指定时间时使用本地当前时间；“今天/昨天/上周”必须换算为本地准确日期。金额输出纯数字，不带货币符号；中文金额单位“万/千/百”正确换算。默认币种 CNY。',
- '一条输入可包含多笔独立操作，按顺序输出全部 actions。金额、账户方向或目标记录等关键事实缺失时，只问最重要的一个问题；可以确定的其他操作仍正常输出。高置信度且可逆的常规记账可直接执行，低置信度或高风险操作等用户确认。',
+ '一条输入可包含多笔独立操作，按顺序输出全部 actions。金额、账户方向或目标记录等关键事实缺失时，只问最重要的一个问题；可以确定的其他操作仍正常输出。明确且可撤销的操作直接执行，不要仅因置信度略低或动作类型为删除/修改就要求确认；若关键事实不确定，只问最重要的一个问题。',
  '严格只输出合法 JSON 对象：{"intent":"record|query|reconcile|manage|conversation|clarify|need_data","answer":"","analysis":"","needsClarification":false,"clarification":"","dataRequest":null,"actions":[{"type":"expense|income|transfer|refund|create_account|budget|daily_budget|balance_snapshot|update_transaction|delete_transaction|rename_account|delete_account|preference","amount":null,"balance":null,"currency":"CNY","account":"","toAccount":"","merchant":"","category":"","items":[],"occurredAt":"","budgetName":"","budgetLimit":null,"accountType":"credit_card|savings_card|payment|wallet|cash|other","institution":"","last4":"","availableCredit":null,"creditLimit":null,"targetId":"","changes":{},"newName":"","neutral":false,"accountAmount":null,"toAmount":null,"confidence":0.0,"note":"","transferKind":"internal|external","toPerson":"","effectiveFrom":"YYYY-MM-DD"}]}。无操作时 actions=[]。所有金额字段必须是数字或 null。',
- '本地时间：'+new Date().toLocaleString('zh-CN',{hour12:false})+'；时区：'+Intl.DateTimeFormat().resolvedOptions().timeZone+'；手动记账偏好：'+(settings().rules||'无')+'；AI 记忆偏好：'+(localStorage.getItem('ledger.preferences')||'无')+'；本地财务上下文（逐笔交易明细只包含近72小时）：'+JSON.stringify(ctx)
+ '本地时间：'+new Date().toLocaleString('zh-CN',{hour12:false})+'；时区：'+Intl.DateTimeFormat().resolvedOptions().timeZone+'；手动记账偏好：'+(settings().rules||'无')+'；AI 记忆偏好（从新到旧，最新优先）：'+preferenceMemory()+'；本地财务上下文（逐笔交易明细只包含近72小时）：'+JSON.stringify(ctx)
  ].join('\n');
 }
 function parse(t){t=clean(t);const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a<0||b<a)throw Error('AI 返回格式无法识别');return JSON.parse(t.slice(a,b+1));}
@@ -939,7 +953,7 @@ async function updateTx(id,ch){
 async function applyAction(a){
  if(a.type==='budget'){const name=a.budgetName||a.category||'未命名预算',daily=r2(Number(a.budgetLimit??a.amount)),dim=daysInMonth(new Date().getFullYear(),new Date().getMonth()),limit=r2(daily*dim),list=await all('budgets'),ex=list.find(b=>clean(b.name)===name);await put('budgets',ex?{...ex,limit,dailyLimit:daily,category:a.category||ex.category||''}:{id:uid(),name,limit,dailyLimit:daily,category:a.category||'',createdAt:Date.now()});return null;}
  if(a.type==='daily_budget'){await setDailyBudget(a.amount??a.budgetLimit,a.effectiveFrom||dayKey(Date.now()));return null;}
- if(a.type==='preference'){const prefs=JSON.parse(localStorage.getItem('ledger.preferences')||'[]');prefs.push({id:uid(),text:clean(a.note),createdAt:Date.now()});localStorage.setItem('ledger.preferences',JSON.stringify(prefs));return null;}
+ if(a.type==='preference'){const prefs=JSON.parse(localStorage.getItem('ledger.preferences')||'[]'),text=clean(a.note);if(text&&!prefs.some(x=>clean(x&&x.text)===text))prefs.push({id:uid(),text,createdAt:Date.now()});localStorage.setItem('ledger.preferences',JSON.stringify(prefs));return null;}
  if(a.type==='create_account'){const ac=await ensureAccount(a.account,{accountType:a.accountType,institution:a.institution,last4:a.last4,currency:a.currency,creditLimit:a.creditLimit,availableCredit:a.availableCredit});if(a.balance!=null){ac.balance=r2(a.balance);ac.verifiedAt=Date.parse(a.occurredAt)||Date.now();ac.balanceInitialized=true;}await put('accounts',ac);return null;}
  if(a.type==='balance_snapshot'){
   const ac=await ensureAccount(a.account,{accountType:a.accountType,institution:a.institution,last4:a.last4,currency:a.currency,creditLimit:a.creditLimit,availableCredit:a.availableCredit});
@@ -1124,7 +1138,7 @@ async function route(r){
   pushHist('assistant','近3天查询已完成'+(pendingHistoryRequest.recentResult?'，匹配 '+pendingHistoryRequest.recentResult.matched+' 条':'')+'。完整回答还需要读取3天以前的记录，范围：'+pendingHistoryRequest.range+'。是否授权？请回复“确认读取”或“取消”，未经确认不会读取旧记录。');
   $('naturalInput').value='';syncExamples();syncRecordButton();message('等待你确认是否读取更早的历史记录。');return;
  }
- const actions=r.actions||[],bad=actions.filter(a=>issues(a).length),auto=settings().auto&&!r.needsClarification&&!r.requiresConfirmation&&!bad.length&&actions.length&&actions.every(a=>SAFE.has(a.type)&&a.confidence>=.75);
+ const actions=r.actions||[],bad=actions.filter(a=>issues(a).length),allReversible=actions.length>0&&actions.every(a=>SAFE.has(a.type)),auto=settings().auto&&!r.needsClarification&&!bad.length&&actions.length&&allReversible&&actions.every(a=>a.confidence>=.65)&&(!r.requiresConfirmation||allReversible);
  $('naturalInput').placeholder=PLACEHOLDER;
  if(!actions.length){showAnswer(r);$('naturalInput').value='';syncExamples();syncRecordButton();return;}
  if(bad.length||r.needsClarification||r.intent==='clarify'){pending={actions,awaitingConfirmation:false};syncRecordButton();const q=r.clarification||bad.map(a=>issues(a).join('、')).join('；')||r.answer||r.reply||'请补充缺少的信息。';pushHist('assistant','还需要补充：'+q+'。直接在输入框回答即可，不需要图片。');return;}
@@ -1318,6 +1332,8 @@ function attachSwipe(el){
  el.addEventListener('lostpointercapture',end,{passive:true});
 }
 attachSwipe($('transactionList'));
+window.addEventListener('resize',scheduleHomeViewport,{passive:true});window.addEventListener('orientationchange',()=>setTimeout(scheduleHomeViewport,180),{passive:true});if(window.visualViewport){window.visualViewport.addEventListener('resize',scheduleHomeViewport,{passive:true});window.visualViewport.addEventListener('scroll',scheduleHomeViewport,{passive:true});}
+document.addEventListener('focusin',e=>{if(e.target&&e.target.closest&&e.target.closest('#page-home'))scheduleHomeViewport();});document.addEventListener('focusout',()=>{[0,80,180,320].forEach(ms=>setTimeout(()=>{scheduleHomeViewport();if(document.body.classList.contains('home-locked')&&!['INPUT','TEXTAREA'].includes(document.activeElement&&document.activeElement.tagName))window.scrollTo(0,0);},ms));});document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleHomeViewport();});
 function syncFab(p){
  qa('.fab-item').forEach(x=>x.classList.toggle('active',x.dataset.page===p));
  const active=qa('.fab-item').find(x=>x.dataset.page===p);
@@ -1325,7 +1341,11 @@ function syncFab(p){
  if($('fabMenu'))$('fabMenu').hidden=true;
  if($('fabToggle'))$('fabToggle').setAttribute('aria-expanded','false');
 }
-function goto(p){qa('.page').forEach(x=>x.classList.toggle('active',x.id==='page-'+p));syncFab(p);if(p==='transactions')renderTransactions();if(p==='analytics')renderAnalytics();if(p==='accounts')renderAccounts();}
+function syncHomeViewport(){if(!document.body.classList.contains('home-locked'))return;const vv=window.visualViewport,h=Math.round(vv&&vv.height?vv.height:(window.innerHeight||document.documentElement.clientHeight||600)),top=Math.max(0,Math.round(vv?vv.offsetTop:0));document.documentElement.style.setProperty('--home-vh',Math.max(260,h)+'px');document.documentElement.style.setProperty('--home-vv-top',top+'px');}
+let homeViewportFrame=0;
+function scheduleHomeViewport(){if(homeViewportFrame)return;homeViewportFrame=requestAnimationFrame(()=>{homeViewportFrame=0;syncHomeViewport();});}
+function lockHomePage(enabled){document.documentElement.classList.toggle('home-locked',!!enabled);document.body.classList.toggle('home-locked',!!enabled);if(enabled){scheduleHomeViewport();requestAnimationFrame(()=>{window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0;});}else{document.documentElement.style.removeProperty('--home-vh');document.documentElement.style.removeProperty('--home-vv-top');}}
+function goto(p){qa('.page').forEach(x=>x.classList.toggle('active',x.id==='page-'+p));lockHomePage(p==='home');syncFab(p);if(p==='transactions')renderTransactions();if(p==='analytics')renderAnalytics();if(p==='accounts')renderAccounts();}
 function applyTheme(t){document.documentElement.setAttribute('data-theme','light');localStorage.setItem('ledger.theme','light');}
 function applyFontScale(v){const n=Math.max(.9,Math.min(1.2,Number(v)||1));document.documentElement.style.setProperty('--font-scale',String(n));localStorage.setItem('ledger.fontScale',String(n));if($('fontScaleLabel'))$('fontScaleLabel').textContent=Math.round(n*100)+'%';if($('fontScaleSlider'))$('fontScaleSlider').value=String(n);}
 async function saveSettings(){
@@ -1435,13 +1455,13 @@ $('fontScaleSlider').oninput=e=>applyFontScale(e.target.value);applyTheme('light
 $('exportJson').onclick=exportJson;$('exportData').onclick=exportData;$('importData').onchange=e=>{const f=e.target.files&&e.target.files[0];if(f)importData(f).then(()=>apiMessage('导入完成。')).catch(err=>apiMessage('导入失败：'+err.message,'error'));e.target.value='';};
 
 (async()=>{
- const s=settings();$('apiEndpoint').value=s.endpoint;$('apiKey').value=s.key;$('apiModel').value=s.model;$('rulesInput').value=s.rules;$('autoSave').checked=s.auto;setHistCount();
+ lockHomePage(true);const s=settings();$('apiEndpoint').value=s.endpoint;$('apiKey').value=s.key;$('apiModel').value=s.model;$('rulesInput').value=s.rules;$('autoSave').checked=s.auto;setHistCount();
  applyTheme('light');applyFontScale(localStorage.getItem('ledger.fontScale')||1);applyAnalyticsControls();syncRecordButton();
  await openDB();await loadHistory();await mergeStoredDuplicates();await renderAll();syncExamples();
  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
  const n=(await all('transactions')).length+(await all('accounts')).length,lb=Number(localStorage.getItem('ledger.lastBackup')||0),lp=Number(localStorage.getItem('ledger.lastBackupPrompt')||0);
  if(n&&Date.now()-Math.max(lb,lp)>7*864e5){chatNotice(lb?'已超过 7 天未备份，建议导出 Excel 备份。':'建议每 7 天导出一次 Excel 备份。');localStorage.setItem('ledger.lastBackupPrompt',String(Date.now()));}
- if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=13').catch(()=>{});
+ if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=14').catch(()=>{});
 })().catch(e=>message('初始化失败：'+e.message,'error'));
 })();
 </script></body></html>
