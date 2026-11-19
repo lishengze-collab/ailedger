@@ -465,7 +465,7 @@ const MONEY=['expense','income','transfer','refund'];
 const TYPES=[...MONEY,'create_account','budget','daily_budget','balance_snapshot','update_transaction','delete_transaction','rename_account','delete_account','preference'];
 const SAFE=new Set(['expense','income','transfer','refund','create_account','budget','daily_budget','preference']);
 const TYPE_COLOR={credit_card:'#e0733f',savings_card:'#3f7de0',debit_card:'#3f7de0',payment:'#2fa86a',wallet:'#8a5ae0',cash:'#c9a227',other:'#8a929c'};
-let db=null,pending=null,images=[],range='month',detailRange='day',filter='all',deferredInstall=null,undoSnap=null,selCat=null,trendSel=null,trendMode='month',toastTimer=null,editId=null,busyAI=false;
+let db=null,pending=null,pendingHistoryRequest=null,images=[],range='month',detailRange='day',filter='all',deferredInstall=null,undoSnap=null,selCat=null,trendSel=null,trendMode='month',editId=null,busyAI=false;
 const EYE_ON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
 const EYE_OFF='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/></svg>';
 let hideAmt=false;try{hideAmt=localStorage.getItem('ledger.hideAmounts')==='1';}catch(e){}
@@ -533,7 +533,7 @@ function shareOf(a,acs){const sp=balanceSplit(acs),b=Number(a.balance||0);if(b>=
 /* ---------- 提示 ---------- */
 function message(s,type){const e=$('message');e.textContent=s||'';e.className='message'+(s?' show':'')+(type?' '+type:'');}
 function apiMessage(s,type){const e=$('apiTestMessage');e.textContent=s||'';e.className='message'+(s?' show':'')+(type?' '+type:'');}
-function toast(text,undo){const t=$('toast');$('toastText').textContent=text;$('toastUndo').hidden=!undo;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>{t.hidden=true;},undo?5000:2500);try{navigator.vibrate&&navigator.vibrate(10);}catch(e){}}
+function toast(text,undo){if(!text)return;pushHist('assistant',String(text)+(undo?' 如需恢复，请在输入框回复“撤销”。':''));}
 function busy(b,on){if(on){b.dataset.prev=b.innerHTML;b.disabled=true;b.innerHTML='<span class="spinner"></span>';}else{b.disabled=false;if(b.dataset.prev){b.innerHTML=b.dataset.prev;delete b.dataset.prev;}}}
 function showSheet(o){$('sheetTitle').textContent=o.title||'';$('sheetSub').textContent=o.sub||'';$('sheetBody').innerHTML=o.body||'';$('sheetFoot').innerHTML=o.foot||'';$('sheet').hidden=false;$('sheetBody').scrollTop=0;}
 function closeSheet(){$('sheet').hidden=true;}
@@ -883,10 +883,10 @@ async function commit(actions,auto){
  undoSnap=await snapshot();const notes=[],failed=[];let ok=0;
  for(const a of good){try{const note=await applyAction(a);ok++;if(note)notes.push(note);}catch(e){failed.push({action:a,error:e.message});}}
  if(!ok)undoSnap=null;
- pushHist('assistant',(ok?'已'+(auto?'自动':'')+'执行 '+ok+' 项：'+good.filter(a=>!failed.some(x=>x.action===a)).map(brief).join('；'):'本次没有成功执行操作。')+(notes.length?'。'+notes.join('；'):'')+(failed.length?'。未完成：'+failed.map(x=>brief(x.action)+'（'+x.error+'）').join('；'):''));
+ const completed=good.filter(a=>!failed.some(x=>x.action===a));
+ pushHist('assistant',(ok?'✅ 记录成功：已'+(auto?'自动':'')+'完成 '+ok+' 项。'+completed.map(brief).join('；'):'本次没有成功保存记录。')+(notes.length?'。'+notes.join('；'):'')+(failed.length?'。未完成：'+failed.map(x=>brief(x.action)+'（'+x.error+'）').join('；'):'')+(ok?' 回复“撤销”可恢复本次操作。':''));
  await renderAll();
  const left=bad.concat(failed.map(x=>x.action));if(left.length){pending={actions:left,awaitingConfirmation:false};pushHist('assistant','剩余 '+left.length+' 项需要补充或调整：'+left.map(a=>issues(a).join('、')).join('；')+'。请直接告诉我账户或具体修改内容。');}else{pending=null;$('naturalInput').value='';images=[];drawPics();$('imageInput').value='';syncExamples();message('');}syncRecordButton();
- toast((auto?'已自动记录 ':'已记录 ')+ok+' 项'+(notes.length?'。'+notes.join(' '):''),ok>0);
  return ok>0;
 }
 /* ---------- 确认弹层 ---------- */
@@ -906,14 +906,14 @@ function cardHtml(a,i,txs,acs){
  const low=a.confidence<.75?'<span class="conf">置信度较低，请核对</span>':'';
  return'<div class="acard"><div class="acard-head"><span class="tag t-'+esc(a.type)+'">'+esc((i+1)+' · '+(LABEL[a.type]||a.type))+'</span>'+low+'</div>'+body+(p.length?'<div class="warn">待补充：'+esc(p.join('、'))+'</div>':'')+'</div>';
 }
-function syncRecordButton(){const b=$('confirmRecord');if(b)b.hidden=!(pending&&pending.awaitingConfirmation);}
-async function openConfirm(r,sub){pending={actions:r.actions||[],awaitingConfirmation:true};syncRecordButton();pushHist('assistant',(r.answer||r.reply||r.analysis||'识别到待执行操作：')+' '+pending.actions.map(brief).join('；')+'。回复“确认”执行，回复“取消”放弃。'+(sub?' '+sub:''));message('等待文字确认，也可点击“确认记录”。');}
+function syncRecordButton(){const b=$('analyzeText');if(!b)return;const empty=!clean($('naturalInput').value);b.textContent=pendingHistoryRequest&&empty?'确认读取':pending&&pending.awaitingConfirmation&&empty?'确认记录':'发送';b.dataset.mode=pendingHistoryRequest&&empty?'history-confirm':pending&&pending.awaitingConfirmation&&empty?'record-confirm':'send';}
+async function openConfirm(r,sub){pending={actions:r.actions||[],awaitingConfirmation:true};syncRecordButton();pushHist('assistant',(r.answer||r.reply||r.analysis||'识别到待执行操作：')+' '+pending.actions.map(brief).join('；')+'。回复“确认”执行，回复“取消”放弃；也可以直接点击发送按钮确认。'+(sub?' '+sub:''));message('等待确认。');}
 function collectEdits(){qa('#sheetBody [data-i]').forEach(inp=>{const a=pending&&pending.actions[inp.dataset.i];if(!a)return;const f=inp.dataset.f,v=clean(inp.value);if(f==='amount')a.amount=parseAmount(v);else a[f]=v;});}
 function showAnswer(r){const text=(r.answer||r.analysis||r.clarification||'已理解。').trim();if(text)pushHist('assistant',text);message('');}
 
 /* ---------- 主流程 ---------- */
 function syncExamples(){$('examples').style.display=$('naturalInput').value.trim()||images.length?'none':'flex';renderAccountSuggestions();}
-function renderConversation(){const el=$('conversationLog');if(!el)return;el.innerHTML=history.slice(-40).map(h=>'<div class="chat-bubble '+(h.role==='user'?'user':'assistant')+'">'+esc(h.content)+'</div>').join('');el.scrollTop=el.scrollHeight;}
+function renderConversation(){const el=$('conversationLog');if(!el)return;el.innerHTML=history.slice(-40).map(h=>'<div class="chat-bubble '+(h.role==='user'?'user':'assistant')+'">'+esc(h.content)+'</div>').join('');el.scrollTop=el.scrollHeight;syncRecordButton();}
 async function renderAccountSuggestions(){
  const el=$('accountSuggestions'),input=$('naturalInput');if(!el||!input)return;
  const caret=input.selectionStart==null?input.value.length:input.selectionStart;
@@ -935,10 +935,11 @@ async function prepareImage(f){
  const src=URL.createObjectURL(f);
  try{
   const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=()=>no(new Error('图片无法读取'));i.src=src;});
-  const scale=Math.min(1,1800/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-  const optimized=c.toDataURL('image/jpeg',.82),blob=await new Promise(resolve=>c.toBlob(resolve,'image/jpeg',.82));
-  const baseName=String(f.name||'upload').replace(/\.[^.]*$/,'')||'upload',ocrFile=blob?new File([blob],baseName+'.jpg',{type:'image/jpeg'}):f;
-  return{file:f,ocrFile,dataUrl:optimized,previewUrl:optimized};
+  const scale=Math.min(1,1400/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  const blob=await new Promise(resolve=>c.toBlob(resolve,'image/jpeg',.76));if(!blob)throw Error('图片压缩失败');
+  const optimized=await new Promise((ok,no)=>{const reader=new FileReader();reader.onload=()=>ok(reader.result);reader.onerror=()=>no(reader.error||new Error('图片编码失败'));reader.readAsDataURL(blob);});
+  const baseName=String(f.name||'upload').replace(/\.[^.]*$/,'')||'upload',ocrFile=new File([blob],baseName+'.jpg',{type:'image/jpeg'});
+  return{file:f,ocrFile,dataUrl:optimized,previewUrl:optimized,compressedBytes:blob.size};
  }finally{URL.revokeObjectURL(src);}
 }
 async function analyse(){
@@ -1158,7 +1159,7 @@ async function saveSettings(){
  localStorage.setItem('ledger.endpoint',endpoint);localStorage.setItem('ledger.key',clean($('apiKey').value));localStorage.setItem('ledger.model',clean($('apiModel').value));apiMessage('设置已保存。');return true;
 }
 async function testAPI(){if(!(await saveSettings()))return;const s=settings();if(!s.endpoint||!s.key){apiMessage('请填写 Endpoint 和 API Key。','error');return;}const b=$('testApi');busy(b,true);apiMessage('正在连接…');try{const data=await post(s,{model:s.model,messages:[{role:'user',content:'只返回JSON：{"connected":true}'}],temperature:0});if(!data.choices||!data.choices.length)throw Error('接口未返回模型内容');apiMessage('连接成功 · '+(data.model||s.model));}catch(e){apiMessage('连接失败 · '+e.message,'error');}finally{busy(b,false);}}
-async function uploadFiles(files){if(!files||!files.length)return;const remaining=5-images.length;if(remaining<=0){message('一批最多上传 5 张。');return;}let added=0;for(const file of Array.from(files).slice(0,remaining)){try{images.push(await prepareImage(file));added++;}catch(e){message(file.name+'：'+e.message,'error');}}drawPics();if(added)message('已添加 '+added+' 张图片；已自动压缩图片后发送给 deepseek-flash，识别失败时再调用 OCR 补充。');$('imageInput').value='';}
+async function uploadFiles(files){if(!files||!files.length)return;const remaining=5-images.length;if(remaining<=0){message('一批最多上传 5 张。');return;}const selected=Array.from(files).slice(0,remaining);message('正在并行压缩 '+selected.length+' 张图片…');const results=await Promise.all(selected.map(async file=>{try{return{image:await prepareImage(file)};}catch(error){return{file,error};}}));let added=0;results.forEach(r=>{if(r.image){images.push(r.image);added++;}else message((r.file&&r.file.name||'图片')+'：'+r.error.message,'error');});drawPics();if(added)message('已添加 '+added+' 张图片；已压缩并可直接识别。');$('imageInput').value='';}
 function xmlEsc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');}
 function xlsxColumn(n){let out='';for(n++;n;n=Math.floor((n-1)/26))out=String.fromCharCode(65+(n-1)%26)+out;return out;}
 function xlsxSheet(rows){const body=rows.map((row,ri)=>'<row r="'+(ri+1)+'">'+row.map((value,ci)=>{const ref=xlsxColumn(ci)+(ri+1);return typeof value==='number'&&Number.isFinite(value)?'<c r="'+ref+'"><v>'+value+'</v></c>':'<c r="'+ref+'" t="inlineStr"><is><t xml:space="preserve">'+xmlEsc(value)+'</t></is></c>';}).join('')+'</row>').join('');return'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'+body+'</sheetData></worksheet>';}
@@ -1207,9 +1208,9 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredIns
 qa('.tab').forEach(b=>b.onclick=()=>goto(b.dataset.page));
 $('pickImages').onclick=()=>$('imageInput').click();$('imageInput').onchange=e=>uploadFiles(e.target.files);
 $('attachments').onclick=e=>{const b=e.target.closest('[data-remove]');if(!b)return;images.splice(Number(b.dataset.remove),1);drawPics();};
-$('clearComposer').onclick=()=>{$('naturalInput').value='';$('naturalInput').placeholder=PLACEHOLDER;images=[];drawPics();pending=null;syncRecordButton();message('');};
-$('analyzeText').onclick=analyse;$('confirmRecord').onclick=()=>{if(!pending||!pending.awaitingConfirmation)return;$('naturalInput').value='确认';analyse();};
-$('naturalInput').oninput=syncExamples;
+$('clearComposer').onclick=()=>{$('naturalInput').value='';$('naturalInput').placeholder=PLACEHOLDER;images=[];drawPics();pending=null;pendingHistoryRequest=null;syncRecordButton();message('');};
+$('analyzeText').onclick=analyse;
+$('naturalInput').oninput=()=>{syncExamples();syncRecordButton();};
 $('naturalInput').addEventListener('click',renderAccountSuggestions);
 $('naturalInput').addEventListener('keyup',e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key))renderAccountSuggestions();});
 $('accountSuggestions').addEventListener('pointerdown',e=>e.preventDefault());
@@ -1251,7 +1252,7 @@ $('sheet').onclick=async e=>{
  else if(act==='save-edit')saveEdit();
  else if(act==='del-edit'){const id=editId;closeSheet();await deleteTx(id,'transaction');}
 };
-$('toastUndo').onclick=async()=>{if(!undoSnap)return;const s=undoSnap;undoSnap=null;await restore(s);await renderAll();$('toastUndo').hidden=true;toast('已撤销');};
+
 $('resetRecords').onclick=()=>$('resetConfirm').hidden=false;$('cancelReset').onclick=()=>$('resetConfirm').hidden=true;$('confirmReset').onclick=clearData;
 $('fontScaleSlider').oninput=e=>applyFontScale(e.target.value);applyTheme('light');
 $('exportJson').onclick=exportJson;$('exportData').onclick=exportData;$('importData').onchange=e=>{const f=e.target.files&&e.target.files[0];if(f)importData(f).then(()=>apiMessage('导入完成。')).catch(err=>apiMessage('导入失败：'+err.message,'error'));e.target.value='';};
