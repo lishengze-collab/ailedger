@@ -782,26 +782,34 @@ async function callAI(text,pics,extra,opt){
  }
 }
 function historyRequestGate(dataRequest,userText){
- const request={...(dataRequest||{})},cutoff=Date.now()-3*864e5;
+ const request={...(dataRequest||{})},now=Date.now(),cutoff=now-3*864e5;
  const parseDate=(value,end)=>{const v=clean(value);if(!v)return null;const d=new Date(/^\d{4}-\d{2}-\d{2}$/.test(v)?v+(end?'T23:59:59.999':'T00:00:00'):v);return Number.isFinite(d.getTime())?d.getTime():null;};
  const recentIntent=/(最近3天|最近三天|近3天|近三天|过去72小时|近72小时|近24小时|今天|昨天|前天)/i.test(String(userText||''));
  let from=parseDate(request.from,false),to=parseDate(request.to,true);
- if(from==null&&to==null&&recentIntent){request.from=dayKey(cutoff);request.to=dayKey(Date.now());from=cutoff;to=Date.now();}
+ if(from==null&&to==null&&recentIntent){request.from=new Date(cutoff).toISOString();request.to=new Date(now).toISOString();from=cutoff;to=now;}
  const needsApproval=from!=null?from<cutoff:(to!=null?to<cutoff||!recentIntent:true);
- const range=needsApproval?(request.from||request.to?(request.from||'未限定起始日期')+' 至 '+(request.to||'至今'):'未限定时间范围（可能涉及全部历史流水）'):'最近3天';
- return{request,needsApproval,range};
+ if(!needsApproval)return{needsApproval:false,request,recentRequest:request,olderRequest:null,range:'最近3天'};
+ const recentStart=Math.max(from==null?cutoff:from,cutoff),recentEnd=Math.min(to==null?now:to,now);
+ const recentRequest=recentStart<=recentEnd?{...request,from:new Date(recentStart).toISOString(),to:new Date(recentEnd).toISOString()}:null;
+ const olderRequest={...request,to:new Date(cutoff-1).toISOString()};
+ const range=(olderRequest.from||'最早历史记录')+' 至 '+new Date(cutoff-1).toLocaleString('zh-CN');
+ return{needsApproval:true,request:olderRequest,recentRequest,olderRequest,range};
 }
 async function converse(text,pics,opt,approvedRequest){
  const extra=[];
  if(approvedRequest){
-  const res=await runQuery(approvedRequest);
-  extra.push({role:'assistant',content:JSON.stringify({intent:'need_data',dataRequest:approvedRequest})},{role:'user',content:'用户已明确授权读取3天前的历史记录。本地查询结果（可信数据，请据此作答，intent 用 query）：'+JSON.stringify(res)});
+  const olderRequest=approvedRequest.olderRequest||approvedRequest.dataRequest||approvedRequest;
+  const olderResult=await runQuery(olderRequest),recentResult=approvedRequest.recentResult||null;
+  extra.push({role:'assistant',content:JSON.stringify({intent:'need_data',dataRequest:approvedRequest.originalRequest||olderRequest})},{role:'user',content:'用户已明确授权读取3天以前的历史记录。以下是本次查询的完整本地结果：'+JSON.stringify({recent3Days:recentResult,olderHistory:olderResult})});
  }
  for(let round=0;round<3;round++){
   const r=await callAI(text,pics,extra,opt);
   if(r.intent==='need_data'&&r.dataRequest&&round<2){
    const gate=historyRequestGate(r.dataRequest,text);
-   if(gate.needsApproval)return{...r,requiresHistoryApproval:true,historyRequest:gate.request,historyRange:gate.range,originalQuery:text};
+   if(gate.needsApproval){
+    const recentResult=gate.recentRequest?await runQuery(gate.recentRequest):null;
+    return{...r,requiresHistoryApproval:true,historyRequest:gate.olderRequest,historyRecentRequest:gate.recentRequest,historyRecentResult:recentResult,historyRange:gate.range,originalQuery:text,originalRequest:gate.request};
+   }
    const res=await runQuery(gate.request);
    extra.push({role:'assistant',content:JSON.stringify({intent:'need_data',dataRequest:gate.request})},{role:'user',content:'本地近3天查询结果（可信数据，请据此作答，intent 用 query）：'+JSON.stringify(res)});
    continue;
@@ -1007,7 +1015,7 @@ async function analyse(){
   if(yes||(!text&&!pics.length)){
    const approved=pendingHistoryRequest;pendingHistoryRequest=null;pushHist('user',text||'确认读取历史记录');
    const b=$('analyzeText');busyAI=true;busy(b,true);message('已授权，正在查询较早的历史流水…');
-   try{const r=await converse(approved.query,approved.pics||[],{},approved.dataRequest);await route(r);}
+   try{const r=await converse(approved.query,approved.pics||[],{},approved);await route(r);}
    catch(e){pushHist('assistant','历史查询失败：'+e.message);message(e.message,'error');}
    finally{busyAI=false;busy(b,false);syncRecordButton();}
    return;
@@ -1015,7 +1023,7 @@ async function analyse(){
   if(no){pushHist('user',text);pendingHistoryRequest=null;$('naturalInput').value='';syncRecordButton();pushHist('assistant','已取消读取3天以前的历史记录，本次不会查询更早流水。');message('');return;}
   pushHist('user',text);$('naturalInput').value='';pushHist('assistant','请先回复“确认”授权读取3天以前的历史记录，或回复“取消”。');syncRecordButton();return;
  }
- if(/^撤销[。！! ]*$/i.test(text)&&undoSnap){
+ if(!pending&&/^撤销[。！! ]*$/i.test(text)&&undoSnap){
   pushHist('user',text);const snap=undoSnap;undoSnap=null;
   try{await restore(snap);await renderAll();pushHist('assistant','已撤销上一次操作，数据已恢复。');}
   catch(e){pushHist('assistant','撤销失败：'+e.message);}
@@ -1035,8 +1043,8 @@ async function analyse(){
 }
 async function route(r){
  if(r.requiresHistoryApproval){
-  pendingHistoryRequest={query:r.originalQuery||'',dataRequest:r.historyRequest||r.dataRequest||{},pics:images.slice(),range:r.historyRange||''};
-  pushHist('assistant','这次查询需要读取3天以前的历史流水（'+pendingHistoryRequest.range+'）。最近3天的数据已优先处理；是否授权本次读取更早记录？请回复“确认”继续，或回复“取消”放弃。');
+  pendingHistoryRequest={query:r.originalQuery||'',dataRequest:r.historyRequest||r.dataRequest||{},olderRequest:r.historyRequest||r.dataRequest||{},recentRequest:r.historyRecentRequest||null,recentResult:r.historyRecentResult||null,originalRequest:r.originalRequest||r.dataRequest||{},pics:images.slice(),range:r.historyRange||''};
+  pushHist('assistant','已先查询近3天数据'+(pendingHistoryRequest.recentResult?'，命中 '+pendingHistoryRequest.recentResult.matched+' 条':'')+'。要完成这项查询，还需要读取更早的历史流水（'+pendingHistoryRequest.range+'）。是否授权补充读取？请回复“确认”继续，或回复“取消”只保留近3天结果。');
   $('naturalInput').value='';syncExamples();syncRecordButton();message('等待你确认是否读取更早的历史记录。');return;
  }
  const actions=r.actions||[],bad=actions.filter(a=>issues(a).length),auto=settings().auto&&!r.needsClarification&&!r.requiresConfirmation&&!bad.length&&actions.length&&actions.every(a=>SAFE.has(a.type)&&a.confidence>=.75);
