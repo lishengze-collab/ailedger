@@ -336,6 +336,23 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 .backup-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;}
 .backup-actions .btn{height:40px;padding:0 13px;font-size:13px;}
 @media(max-height:700px){#page-home .capture-input textarea{height:58px!important;min-height:58px!important}.toast{top:calc(env(safe-area-inset-top,0px) + 8px)!important}}
+
+/* 固定首页工作区：只允许对话记录与输入框内部滚动 */
+#page-home.active{height:calc(100dvh - env(safe-area-inset-top,0px) - var(--safe) - 82px)!important;min-height:0!important;overflow:hidden!important;overscroll-behavior:none!important;padding-bottom:0!important;}
+#page-home .home-overview{flex:0 0 auto;}
+#page-home .capture{flex:1 1 0!important;height:auto!important;min-height:0!important;overflow:hidden!important;}
+#page-home .capture-input{display:flex;flex:1 1 0!important;flex-direction:column;min-height:0!important;overflow:hidden!important;}
+#page-home .conversation-log{flex:1 1 0;min-height:0;max-height:none!important;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
+#page-home .capture-input textarea{flex:0 0 64px;height:64px!important;min-height:64px!important;max-height:112px!important;overflow-y:auto!important;resize:none;}
+#page-home .capture-bottom{position:static!important;bottom:auto!important;flex:0 0 auto!important;}
+#page-home .chat-bubble{font-size:16px!important;line-height:1.62!important;}
+#page-home .message{font-size:14px;}
+.backup-row{display:block!important;}
+.backup-row>span{display:block;margin-bottom:8px;}
+.backup-actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;width:100%;justify-content:stretch;flex-wrap:nowrap!important;}
+.backup-actions .btn{height:42px!important;width:100%;min-width:0;padding:0 5px!important;font-size:12px!important;white-space:nowrap;}
+.merchant-row b{font-size:11px;white-space:nowrap;}
+@media(max-width:380px){.backup-actions{gap:5px}.backup-actions .btn{font-size:11px!important;padding:0 3px!important}}
 </style>
 </head>
 <body><div id="app">
@@ -420,8 +437,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
  <div class="setting"><h3>外观</h3><div class="setting-row"><span>浅色界面</span><b>已固定</b></div><div class="font-control"><div class="setting-row"><span>界面字体</span><b id="fontScaleLabel">100%</b></div><input id="fontScaleSlider" type="range" min="0.9" max="1.2" step="0.05" value="1"></div></div>
  <div class="setting"><h3>Token 使用</h3><div class="token-grid"><div class="token"><small>输入</small><b id="promptTokens">0</b></div><div class="token"><small>输出</small><b id="completionTokens">0</b></div><div class="token"><small>合计</small><b id="totalTokens">0</b></div><div class="token"><small>请求</small><b id="requestCount">0</b></div></div></div>
  <div class="setting"><h3>数据管理</h3>
-  <div class="setting-row"><span>导出备份</span><div class="backup-actions"><button class="btn" id="exportJson">导出 JSON</button><button class="btn" id="exportData">导出 Excel</button></div></div>
-  <div class="setting-row"><span>导入备份</span><label class="btn" for="importData">选择文件</label><input id="importData" type="file" accept="application/json"></div>
+  <div class="setting-row backup-row"><span>备份与恢复</span><div class="backup-actions"><button class="btn" id="exportJson">导出 JSON</button><button class="btn" id="exportData">导出 Excel</button><label class="btn" for="importData">导入 JSON</label></div><input id="importData" type="file" accept="application/json"></div>
   <div class="reset-card"><div><b>重置账户与历史记录</b><small>清空所有账户、交易、预算与校准历史，保留 API 设置</small></div><button class="btn danger" id="resetRecords">重置</button></div>
   <div class="reset-confirm" id="resetConfirm" hidden><span>确认清空账户与所有历史记录？此操作无法撤销。</span><div><button class="btn" id="cancelReset">取消</button><button class="btn primary" id="confirmReset">确认重置</button></div></div>
   <div class="note">记账描述、上传图片和相关账户上下文会发送到你配置的 API 服务商。数据只保存在本机浏览器中，建议定期导出备份。</div>
@@ -516,7 +532,7 @@ function shareOf(a,acs){const sp=balanceSplit(acs),b=Number(a.balance||0);if(b>=
 /* ---------- 提示 ---------- */
 function message(s,type){const e=$('message');e.textContent=s||'';e.className='message'+(s?' show':'')+(type?' '+type:'');}
 function apiMessage(s,type){const e=$('apiTestMessage');e.textContent=s||'';e.className='message'+(s?' show':'')+(type?' '+type:'');}
-function toast(text,undo){const t=$('toast');$('toastText').textContent=text;$('toastUndo').hidden=!undo;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>{t.hidden=true;},undo?7000:4500);try{navigator.vibrate&&navigator.vibrate(10);}catch(e){}}
+function toast(text,undo){const t=$('toast');$('toastText').textContent=text;$('toastUndo').hidden=!undo;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>{t.hidden=true;},undo?5000:2500);try{navigator.vibrate&&navigator.vibrate(10);}catch(e){}}
 function busy(b,on){if(on){b.dataset.prev=b.innerHTML;b.disabled=true;b.innerHTML='<span class="spinner"></span>';}else{b.disabled=false;if(b.dataset.prev){b.innerHTML=b.dataset.prev;delete b.dataset.prev;}}}
 function showSheet(o){$('sheetTitle').textContent=o.title||'';$('sheetSub').textContent=o.sub||'';$('sheetBody').innerHTML=o.body||'';$('sheetFoot').innerHTML=o.foot||'';$('sheet').hidden=false;$('sheetBody').scrollTop=0;}
 function closeSheet(){$('sheet').hidden=true;}
@@ -661,7 +677,7 @@ async function deepseekOCR(file){
  const fd=new FormData();
  fd.append('file',file,file.name||'image-upload');
  fd.append('purpose','text_recognition');
- const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),180000);
+ const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),90000);
  try{
   const res=await fetch(OCR_ENDPOINT,{method:'POST',headers:{'Authorization':'Bearer '+s.key},body:fd,signal:ctl.signal});
   const raw=await res.text();
@@ -670,13 +686,11 @@ async function deepseekOCR(file){
   if(data.error)throw new Error(data.error.message||'OCR 服务返回错误');
   const pages=Array.isArray(data.pages)?data.pages:[];
   return{text:pages.map(p=>p&&p.text||'').filter(Boolean).join('\n'),pages:pages.length,incomplete:pages.some(p=>p&&p.finish_reason==='length')};
- }catch(e){if(e.name==='AbortError')throw new Error('OCR 请求超过 180 秒，请缩小图片后重试');throw e;}
+ }catch(e){if(e.name==='AbortError')throw new Error('OCR 请求超过 90 秒，请缩小图片后重试');throw e;}
  finally{clearTimeout(timer);}
 }
 async function deepseekOCRMany(files){
- const out=[];
- for(const file of files){try{const r=await deepseekOCR(file);out.push({ok:true,text:r.text,pages:r.pages,incomplete:r.incomplete});}catch(e){out.push({ok:false,text:'',error:e.message});}}
- return out;
+ return Promise.all(files.map(async file=>{try{const r=await deepseekOCR(file);return{ok:true,text:r.text,pages:r.pages,incomplete:r.incomplete};}catch(e){return{ok:false,text:'',error:e.message};}}));
 }
 function buildVisionContent(userText,base64List,ocrText){
  let t=userText||'请识别图片内容并执行相应记账操作。';
@@ -690,10 +704,7 @@ async function callAI(text,pics,extra,opt){
  const s=settings();if(!s.endpoint||!s.key)throw Error('请先在设置中配置 API。');
  const imageItems=(pics||[]).map(p=>typeof p==='string'?{file:null,dataUrl:p,previewUrl:p}:p).filter(p=>p&&(p.dataUrl||p.previewUrl));
  const ctx=await context();
- const imageBytes=imageItems.reduce((n,p)=>n+Number(p.file&&p.file.size||0),0);
- const supportedOriginal=imageItems.every(p=>!p.file||/^image\/(jpeg|png|gif|webp)$/i.test(p.file.type||''));
- const canSendOriginal=imageBytes<=30*1024*1024&&supportedOriginal;
- const base64List=imageItems.map(p=>canSendOriginal?p.dataUrl:(p.previewUrl||p.dataUrl)).filter(Boolean);
+ const base64List=imageItems.map(p=>p.previewUrl||p.dataUrl).filter(Boolean);
  const model=imageItems.length?FLASH_MODEL:(s.model||FLASH_MODEL);
  const content=d=>d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content;
  const readContent=d=>{const ch=d&&d.choices&&d.choices[0],value=content(d);if(ch&&ch.finish_reason==='length')throw Error('AI 输出达到长度上限，无法得到完整结果。请缩短本次描述或清理较早的对话历史后重试。');if(!clean(value))throw Error('AI 返回了空内容。请检查模型设置、JSON 输出状态或重试。');return value;};
@@ -919,7 +930,8 @@ async function prepareImage(f){
  const src=await new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=()=>no(r.error);r.readAsDataURL(f);});
  const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=src;});
  const scale=Math.min(1,1800/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
- return{file:f,dataUrl:src,previewUrl:c.toDataURL('image/jpeg',.84)};
+ const optimized=c.toDataURL('image/jpeg',.82);
+ return{file:f,dataUrl:optimized,previewUrl:optimized};
 }
 async function analyse(){
  if(busyAI)return;const text=clean($('naturalInput').value),pics=images.slice();if(!text&&!pics.length){message('直接输入自然语言指令即可；图片仅为可选辅助。');return;}
@@ -1065,7 +1077,7 @@ async function renderAnalytics(){
  const categories={},merchants={};expenses.forEach(t=>{const sign=t.type==='refund'?-1:1,cat=t.category||(t.type==='transfer'?'转给他人':'其他'),merchant=t.merchant||t.toPerson||'未注明商户';categories[cat]=(categories[cat]||0)+sign*amt(t);merchants[merchant]=(merchants[merchant]||0)+sign*amt(t);});
  const arr=Object.entries(categories).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]),colors=['#df4d52','#249b68','#4e5969','#e08a1e','#3f7de0','#8a5ae0','#b8bdc5'],total=arr.reduce((sum,x)=>sum+x[1],0);let at=0,st=[];arr.forEach((x,i)=>{const end=at+(total?x[1]/total*360:0);st.push(colors[i%colors.length]+' '+at+'deg '+end+'deg');at=end;});$('donut').style.background=st.length?'conic-gradient('+st.join(',')+')':'var(--soft)';$('donutLabel').textContent=selCat||'总支出';$('donutTotal').textContent=money(selCat?categories[selCat]:expense);
  $('categoryLegend').innerHTML=arr.length?arr.slice(0,8).map((x,i)=>'<button data-cat="'+esc(x[0])+'" class="'+(selCat===x[0]?'sel':'')+'"><i style="background:'+colors[i%colors.length]+'"></i><span>'+esc(x[0])+'</span><b class="expense-text">'+money(x[1])+'</b></button>').join(''):'<div class="empty">暂无支出</div>';
- const top=Object.entries(merchants).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,12),maxMer=Math.max(1,...top.map(x=>x[1]));$('merchantChart').innerHTML=top.length?top.map(([name,value])=>'<div class="merchant-row"><span>'+esc(name)+'</span><div class="merchant-bar"><i style="width:'+(value/maxMer*100).toFixed(1)+'%"></i></div><b>'+money(value)+'</b></div>').join(''):'<div class="empty">暂无商户支出数据</div>';
+ const merchantTotal=Object.values(merchants).reduce((sum,value)=>sum+Math.max(0,value),0),top=Object.entries(merchants).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,12),maxMer=Math.max(1,...top.map(x=>x[1]));$('merchantChart').innerHTML=top.length?top.map(([name,value])=>{const pct=merchantTotal?value/merchantTotal*100:0;return '<div class="merchant-row"><span>'+esc(name)+'</span><div class="merchant-bar"><i style="width:'+(value/maxMer*100).toFixed(1)+'%"></i></div><b>'+money(value)+' · '+pct.toFixed(1)+'%</b></div>';}).join(''):'<div class="empty">暂无商户支出数据</div>';
  await renderSpendCalendar(tx);
 }
 async function runFinanceAnalysis(){
@@ -1202,7 +1214,7 @@ $('accountSuggestions').onclick=async e=>{
  input.value=input.value.slice(0,Math.max(0,from))+mention+input.value.slice(Math.max(to,from));
  const caret=Math.max(0,from)+mention.length;input.focus();input.setSelectionRange(caret,caret);el.hidden=true;el.innerHTML='';syncExamples();
 };
-$('naturalInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();analyse();}});
+$('naturalInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229){e.preventDefault();analyse();}});
 $('examples').onclick=e=>{const b=e.target.closest('[data-ex]');if(!b)return;$('naturalInput').value=b.dataset.ex;syncExamples();$('naturalInput').focus();};
 /* amount visibility toggle removed: light budget-first dashboard */
 $('transactionList').onclick=e=>{
@@ -1243,7 +1255,7 @@ $('exportJson').onclick=exportJson;$('exportData').onclick=exportData;$('importD
  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
  const n=(await all('transactions')).length+(await all('accounts')).length,lb=Number(localStorage.getItem('ledger.lastBackup')||0),lp=Number(localStorage.getItem('ledger.lastBackupPrompt')||0);
  if(n&&Date.now()-Math.max(lb,lp)>7*864e5){toast(lb?'已超过 7 天未备份，建议导出 Excel 备份。':'建议每 7 天导出一次 Excel 备份。');localStorage.setItem('ledger.lastBackupPrompt',String(Date.now()));}
- if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=10').catch(()=>{});
+ if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=11').catch(()=>{});
 })().catch(e=>message('初始化失败：'+e.message,'error'));
 })();
 </script></body></html>
