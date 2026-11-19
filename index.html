@@ -799,8 +799,8 @@ async function converse(text,pics,opt,approvedRequest){
  const extra=[];
  if(approvedRequest){
   const olderRequest=approvedRequest.olderRequest||approvedRequest.dataRequest||approvedRequest;
-  const olderResult=await runQuery(olderRequest),recentResult=approvedRequest.recentResult||null;
-  extra.push({role:'assistant',content:JSON.stringify({intent:'need_data',dataRequest:approvedRequest.originalRequest||olderRequest})},{role:'user',content:'用户已明确授权读取3天以前的历史记录。以下是本次查询的完整本地结果：'+JSON.stringify({recent3Days:recentResult,olderHistory:olderResult})});
+  const olderResult=approvedRequest.allowOlder===false?null:await runQuery(olderRequest),recentResult=approvedRequest.recentResult||null;
+  extra.push({role:'assistant',content:JSON.stringify({intent:'need_data',dataRequest:approvedRequest.originalRequest||olderRequest})},{role:'user',content:(approvedRequest.allowOlder===false?'用户取消了读取3天以前的历史记录，只允许使用最近3天数据。':'用户已明确授权读取3天以前的历史记录。')+'以下是本次可用的本地查询结果：'+JSON.stringify({recent3Days:recentResult,olderHistory:olderResult})});
  }
  for(let round=0;round<3;round++){
   const r=await callAI(text,pics,extra,opt);
@@ -1020,7 +1020,14 @@ async function analyse(){
    finally{busyAI=false;busy(b,false);syncRecordButton();}
    return;
   }
-  if(no){pushHist('user',text);pendingHistoryRequest=null;$('naturalInput').value='';syncRecordButton();pushHist('assistant','已取消读取3天以前的历史记录，本次不会查询更早流水。');message('');return;}
+  if(no){
+   const rejected=pendingHistoryRequest;pendingHistoryRequest=null;pushHist('user',text);$('naturalInput').value='';syncRecordButton();
+   const b=$('analyzeText');busyAI=true;busy(b,true);message('已取消读取较早记录，正在整理近3天结果…');
+   try{const r=await converse(rejected.query,rejected.pics||[],{}, {...rejected,allowOlder:false});await route(r);}
+   catch(e){pushHist('assistant','整理近3天结果失败：'+e.message);message(e.message,'error');}
+   finally{busyAI=false;busy(b,false);syncRecordButton();}
+   return;
+  }
   pushHist('user',text);$('naturalInput').value='';pushHist('assistant','请先回复“确认”授权读取3天以前的历史记录，或回复“取消”。');syncRecordButton();return;
  }
  if(!pending&&/^撤销[。！! ]*$/i.test(text)&&undoSnap){
@@ -1036,9 +1043,14 @@ async function analyse(){
  if(!text&&!pics.length){message('直接输入自然语言指令即可；图片仅为可选辅助。');return;}
  let inputText=text;
  if(pending){inputText='继续处理上一项操作。之前待处理动作：'+JSON.stringify(pending.actions||[])+'。用户现在补充或修改为：'+text;pending=null;syncRecordButton();}
- const b=$('analyzeText');busyAI=true;busy(b,true);message(pics.length?'AI 正在快速识别压缩图片…':'AI 正在处理消息…');
- try{const r=await converse(inputText,pics);pushHist('user',text+(pics.length?'［附 '+pics.length+' 张图片］':''));await route(r);}
- catch(e){pushHist('user',text+(pics.length?'［附 '+pics.length+' 张图片］':''));pushHist('assistant','处理失败：'+e.message);message(e.message,'error');}
+ const b=$('analyzeText'),started=Date.now();busyAI=true;busy(b,true);message(pics.length?'AI 正在快速识别压缩图片…':'AI 正在处理消息…');
+ pushHist('user',text+(pics.length?'［附 '+pics.length+' 张图片］':''));
+ try{
+  const r=await converse(inputText,pics);
+  await route(r);
+  if(pics.length&&!pendingHistoryRequest)pushHist('assistant','图片识别耗时 '+((Date.now()-started)/1000).toFixed(1)+' 秒。');
+ }
+ catch(e){pushHist('assistant','处理失败：'+e.message);message(e.message,'error');}
  finally{busyAI=false;busy(b,false);syncRecordButton();}
 }
 async function route(r){
