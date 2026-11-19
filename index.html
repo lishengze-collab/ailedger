@@ -270,7 +270,7 @@ const EYE_OFF='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6.
 let hideAmt=false;try{hideAmt=localStorage.getItem('ledger.hide')==='1';}catch(e){}
 let hideAnalyticsAssets=false,analyticsAccountsCollapsed=true;
 try{hideAnalyticsAssets=localStorage.getItem('ledger.analyticsAssetsHidden')==='1';analyticsAccountsCollapsed=localStorage.getItem('ledger.analyticsAccountsCollapsed')!=='0';}catch(e){}
-let history=[];try{const savedHistory=JSON.parse(localStorage.getItem('ledger.hist')||sessionStorage.getItem('ledger.hist')||'[]');if(Array.isArray(savedHistory))history=savedHistory;}catch(e){}
+let history=[],historyReady=false;try{const savedHistory=JSON.parse(localStorage.getItem('ledger.hist')||sessionStorage.getItem('ledger.hist')||'[]');if(Array.isArray(savedHistory))history=savedHistory;}catch(e){}
 function histAllowed(){return true;}
 function setHistCount(){const e=$('histCount');if(e)e.textContent=history.length+' 条';}
 const uid=()=>crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);
@@ -683,13 +683,9 @@ async function deleteTx(id,kind){
  }catch(e){undoSnap=null;toast('删除失败：'+e.message);}
 }
 async function openEdit(id){
- const t=(await all('transactions')).find(x=>x.id===id);if(!t)return;editId=id;
- const loc=new Date(time(t)-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
- const e=(f,l,v,m)=>'<label class="fld"><span>'+l+'</span><input class="f-input" data-edit="'+f+'" value="'+esc(v==null?'':v)+'"'+(m?' inputmode="'+m+'"':'')+'></label>';
- const targets=t.type==='transfer'?'<div data-transfer-target="internal"'+(t.transferKind==='external'?' hidden':'')+'>'+e('toAccount','转入账户',t.transferKind==='external'?'':t.toAccount)+'</div><div data-transfer-target="external"'+(t.transferKind==='external'?'':' hidden')+'>'+e('toPerson','转给（他人）',t.transferKind==='external'?(t.toPerson||t.toAccount):'')+'</div>':'';
- const body='<div class="grid2">'+e('amount','金额（'+(t.currency||'CNY')+'）',t.amount,'decimal')+e('account',t.type==='transfer'?'转出账户':'账户',t.account)+(t.type==='transfer'?targets:e('merchant','商户',t.merchant))+e('category','分类',t.category)+e('note','备注',t.note)+'</div>'+(t.type==='transfer'?'<label class="fld" style="margin-top:8px"><span>转账类型</span><select class="f-input" data-edit="transferKind"><option value="internal"'+(t.transferKind!=='external'?' selected':'')+'>内部账户间互转（不计收支）</option><option value="external"'+(t.transferKind==='external'?' selected':'')+'>转出给他人（计入支出）</option></select></label>':'')+'<label class="fld" style="margin-top:8px"><span>时间</span><input class="f-input" type="datetime-local" data-edit="time" value="'+loc+'"></label>'+(t.neutral?'<div class="meta">此记录不计入收支统计</div>':'');
- showSheet({title:'编辑记录',sub:LABEL[t.type]||'',body,foot:'<button class="btn danger" data-act="del-edit">删除</button><button class="btn flex" data-act="close">取消</button><button class="btn primary flex" data-act="save-edit">保存</button>'});
- if(t.type==='transfer'){const selector=$('sheetBody').querySelector('[data-edit="transferKind"]');if(selector)selector.addEventListener('change',()=>qa('#sheetBody [data-transfer-target]').forEach(el=>{el.hidden=el.dataset.transferTarget!==selector.value;}));}
+ const t=(await all('transactions')).find(x=>x.id===id);if(!t)return;
+ const prompt='修改记录 '+t.id+'：'+when(t)+' '+(t.merchant||t.category||LABEL[t.type])+' '+fmt(t.amount,t.currency)+'，账户 '+(t.account||'未关联')+'。请告诉我需要改成什么。';
+ $('naturalInput').value=prompt;$('naturalInput').focus();pushHist('assistant',prompt);
 }
 async function saveEdit(){
  const ch={};let invalidAmount=false;qa('#sheetBody [data-edit]').forEach(i=>{const f=i.dataset.edit,v=clean(i.value);if(f==='amount'){const n=parseAmount(v);if(n==null||n<=0||n>1e9)invalidAmount=true;else ch.amount=n;}else if(f==='time'){if(v)ch.occurredAt=normalizeDate(v);}else ch[f]=v;});
@@ -706,6 +702,7 @@ function txHtml(t){
 }
 function isDetailRange(t){
  const d=new Date(time(t)),n=new Date(),ts=time(t);
+ if(detailRange==='date'){const picked=$('transactionDate')&&$('transactionDate').value||dayKey(Date.now());return dayKey(ts)===picked;}
  if(detailRange==='day')return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate();
  if(detailRange==='week'){const start=new Date(n.getFullYear(),n.getMonth(),n.getDate()-((n.getDay()+6)%7));return ts>=start.getTime()&&ts<=Date.now();}
  return ts>=new Date(n.getFullYear(),n.getMonth(),1).getTime()&&ts<=Date.now();
@@ -721,68 +718,66 @@ const between=(t,s,e)=>{const x=time(t);return x>=s&&x<=e;};
 const inRange=(t,period)=>{const b=bounds(period);return between(t,b.s,b.e);};
 function dlt(label,cur,prev){if(!prev)return cur?label+' 新增':'';const p=(cur-prev)/Math.abs(prev)*100;return label+' '+(p>=0?'+':'')+p.toFixed(0)+'%';}
 function balanceSplit(acs){let assets=0,liab=0,net=0;const other={};acs.forEach(a=>{const c=a.currency||'CNY',b=Number(a.balance||0);if(c==='CNY'){net+=b;if(b>=0)assets+=b;else liab+=-b;}else other[c]=(other[c]||0)+b;});return{assets:r2(assets),liab:r2(liab),net:r2(net),other};}
-async function renderHome(){
- const [tx,acs]=await Promise.all([all('transactions'),all('accounts')]),month=tx.filter(t=>inRange(t,'month')),sp=balanceSplit(acs);
- $('heroAssets').textContent=money(sp.net);
- $('heroSub').textContent=hideAmt?'':[acs.length?'资产 '+fmt(sp.assets)+(sp.liab?' · 负债 '+fmt(sp.liab):''):'',...Object.entries(sp.other).map(([c,v])=>c+' '+fmt(v,c))].filter(Boolean).join(' · ');
- $('heroIncome').textContent=money(incOf(month));$('heroExpense').textContent=money(expOf(month));
- $('toggleHide').innerHTML=hideAmt?EYE_OFF:EYE_ON;
- $('overviewDate').textContent=new Date().toLocaleDateString('zh-CN',{month:'long',day:'numeric'});
- $('homeAccounts').innerHTML=acs.length?acs.map(a=>{const sh=shareOf(a,acs);return '<button class="account-chip" style="--c:'+(TYPE_COLOR[a.accountType]||TYPE_COLOR.other)+'" data-home-account="'+esc(a.id)+'"><b>'+esc(a.name)+'</b><small>'+accountTypeName(a.accountType||guessAccountType(a.name))+(a.last4?' · ****'+esc(a.last4):'')+' · '+money(a.balance,a.currency)+'</small>'+(sh.pct?'<small>'+sh.label+' '+sh.pct.toFixed(0)+'%</small>':'')+'</button>';}).join(''):'<div class="empty">上传账户截图或用文字描述即可自动创建</div>';
+async function renderBudgetRings(tx){
+ const list=await getDailyBudgets();window.__dailyBudgets=list;
+ const now=new Date(),today=dayKey(now.getTime()),ws=weekStartMs(now),we=ws+6*864e5,ms=new Date(now.getFullYear(),now.getMonth(),1).getTime(),me=new Date(now.getFullYear(),now.getMonth()+1,1).getTime()-1;
+ const db=dailyForDate(list,today),wb=sumDaily(list,ws,we),mb=sumDaily(list,ms,me);
+ const du=expOf(tx.filter(t=>dayKey(time(t))===today)),wu=expOf(tx.filter(t=>time(t)>=ws&&time(t)<=we+86399999)),mu=expOf(tx.filter(t=>time(t)>=ms&&time(t)<=me));
+ const row=(label,used,budget)=>{const ok=Number(budget)>0,pct=ok?Math.max(0,Math.min(100,used/budget*100)):0,remaining=ok?Math.max(0,budget-used):0,over=ok&&used>budget;return '<div class="budget-ring'+(over?' over':'')+'"><div class="budget-ring-visual" style="--p:'+pct+'%"><div class="budget-ring-center"><b>'+(ok?money(remaining):'—')+'</b><small>剩余</small></div></div><div class="budget-ring-label">'+label+'</div><div class="budget-ring-meta">'+(ok?money(used)+' / '+money(budget):'未设置预算')+'</div></div>';};
+ const ring=$('homeBudgetRings');if(ring)ring.innerHTML=row('日预算',du,db)+row('周预算',wu,wb)+row('月预算',mu,mb);
+ const sum=$('homeSpendSummary');if(sum)sum.innerHTML='<div><span>本月支出</span><b class="expense-text">'+money(mu)+'</b></div><div class="remaining"><span>预算剩余</span><b>'+(mb>0?money(Math.max(0,mb-mu)):'未设置')+'</b></div>';
+ const hint=$('todayBudgetHint');if(hint)hint.textContent='今日已消费 '+fmt(du)+' · '+(db>0?('预算剩余 '+fmt(Math.max(0,db-du))+(du>db?' · 已超支 '+fmt(du-db):' · '+(du/db*100).toFixed(0)+'%')):'尚未设置日预算')+'；输入“每天预算 100”即可调整。';
 }
+async function renderHome(){const tx=await all('transactions');await renderBudgetRings(tx);}
 async function renderTransactions(){
- const [tx,recs]=await Promise.all([all('transactions'),all('reconciliations')]),q=clean($('transactionSearch').value).toLowerCase();
+ const tx=await all('transactions'),q=clean($('transactionSearch').value).toLowerCase(),date=$('transactionDate');
+ if(date&&!date.value)date.value=dayKey(Date.now());
  const detail=tx.filter(isDetailRange),income=incOf(detail),expense=expOf(detail);
  $('detailIncome').textContent=money(income);$('detailExpense').textContent=money(expense);$('detailNet').textContent=money(r2(income-expense));
- const snaps=recs.map(r=>({id:r.id,type:'balance_adjustment',amount:r.difference==null?r.statementBalance:r.difference,account:r.accountName,merchant:'余额校准',occurredAt:r.occurredAt,createdAt:r.createdAt,sourceReconciliation:true}));
- const rows=tx.concat(snaps).sort((a,b)=>time(b)-time(a)).filter(t=>(filter==='all'||filter===t.type||(filter==='income'&&t.type==='refund')||(filter==='transfer_external'&&t.type==='transfer'&&t.transferKind==='external'))&&(!q||[t.merchant,t.account,t.toPerson,t.category,t.note].join(' ').toLowerCase().includes(q)));
+ const rows=tx.slice().sort((a,b)=>time(b)-time(a)).filter(t=>(filter==='all'||filter===t.type||(filter==='income'&&t.type==='refund')||(filter==='transfer_external'&&t.type==='transfer'&&t.transferKind==='external'))&&(!q||[t.id,t.merchant,t.account,t.toPerson,t.toAccount,t.category,t.note].join(' ').toLowerCase().includes(q)));
  $('transactionCount').textContent=rows.length+' 条';
  if(!rows.length){$('transactionList').innerHTML='<div class="empty">没有匹配记录</div>';return;}
  const groups=[];rows.forEach(t=>{const k=dayKey(time(t)),g=groups[groups.length-1];if(g&&g.k===k)g.l.push(t);else groups.push({k,l:[t]});});
- $('transactionList').innerHTML=groups.map(g=>{const d=new Date(g.k+'T12:00:00'),real=g.l.filter(t=>!t.sourceReconciliation);return'<div class="day-head"><span>'+d.toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'short'})+'</span><span>'+(real.length?'支 '+money(expOf(real))+' · 收 '+money(incOf(real)):'')+'</span></div><div class="list">'+g.l.map(txHtml).join('')+'</div>';}).join('');
+ $('transactionList').innerHTML=groups.map(g=>{const d=new Date(g.k+'T12:00:00'),real=g.l;return '<div class="day-head"><span>'+d.toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'short'})+'</span><span>'+'支 '+money(expOf(real))+' · 收 '+money(incOf(real))+'</span></div><div class="list">'+g.l.map(txHtml).join('')+'</div>';}).join('');
 }
 function curvePath(p){let d='M'+p[0][0]+','+p[0][1];for(let i=0;i<p.length-1;i++){const [x0,y0]=p[i],[x1,y1]=p[i+1],cx=(x0+x1)/2;d+='C'+cx+','+y0+' '+cx+','+y1+' '+x1+','+y1;}return d;}
-async function renderDailyBudget(){
- const el=$('dailyDerived');if(!el)return;
- const [tx,list]=await Promise.all([all('transactions'),getDailyBudgets()]);
- const now=new Date(),today=dayKey(now.getTime()),ws=weekStartMs(now),we=ws+6*864e5;
- const ms=new Date(now.getFullYear(),now.getMonth(),1).getTime(),me=new Date(now.getFullYear(),now.getMonth()+1,1).getTime()-1;
- const daily=dailyForDate(list,today),weekBudget=sumDaily(list,ws,we),monthBudget=sumDaily(list,ms,me);
- const usedToday=expOf(tx.filter(t=>dayKey(time(t))===today));
- const usedWeek=expOf(tx.filter(t=>time(t)>=ws&&time(t)<=we+86399999));
- const usedMonth=expOf(tx.filter(t=>time(t)>=ms&&time(t)<=me));
- const row=(label,used,budget,sub)=>{
-  const hasBudget=Number.isFinite(Number(budget))&&Number(budget)>0,pct=hasBudget?used/Number(budget)*100:0,width=hasBudget?Math.max(0,Math.min(100,pct)):0,over=hasBudget&&pct>100,left=hasBudget?Number(budget)-used:0;
-  return '<div class="budget-visual-row'+(over?' over':'')+'"><div class="budget-visual-head"><div><strong>'+label+'</strong><b class="expense-text">'+money(used)+'</b></div><small>'+(hasBudget?'预算 '+money(budget):'尚未设置预算')+'</small></div><div class="budget-visual-track"><i style="width:'+width.toFixed(1)+'%"></i></div><div class="budget-visual-foot"><span>'+(hasBudget?pct.toFixed(0)+'% 已使用':(sub||'通过自然语言设置预算'))+'</span><strong>'+(hasBudget?(left>=0?'剩余 '+money(left):'超出 '+money(-left)):'未设置')+'</strong></div></div>';
- };
- el.innerHTML=row('今日',usedToday,daily,'用自然语言告诉 AI 每日预算')+row('本周',usedWeek,weekBudget,'本周暂无可用预算')+row('本月',usedMonth,monthBudget,'本月暂无可用预算');
-} async function renderAnalytics(){
- const [tx,acs,bud]=await Promise.all([all('transactions'),all('accounts'),all('budgets')]),b=bounds(range),p=tx.filter(t=>between(t,b.s,b.e)),pp=tx.filter(t=>between(t,b.ps,b.pe));
- const exp=expOf(p),inc=incOf(p),sp=balanceSplit(acs);
- $('totalAssets').textContent=hideAnalyticsAssets?'••••':money(sp.net);$('netFlow').textContent=money(r2(inc-exp));$('periodIncome').textContent=money(inc);$('periodExpense').textContent=money(exp);$('assetsOnly').textContent=hideAnalyticsAssets?'••••':money(sp.assets);$('liabOnly').textContent=hideAnalyticsAssets?'••••':money(sp.liab);
- $('incDlt').textContent=hideAmt?'':dlt(b.label,inc,incOf(pp));$('expDlt').textContent=hideAmt?'':dlt(b.label,exp,expOf(pp));
- $('analyticsPeriod').textContent=range==='week'?'近7日':range==='year'?'本年':'本月';
- const now=new Date(),pts=[];if(trendMode==='day'){for(let i=6;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth(),now.getDate()-i);pts.push({key:dayKey(d.getTime()),label:(d.getMonth()+1)+'/'+d.getDate(),in:0,out:0});}tx.forEach(t=>{if(!pl(t))return;const p=pts.find(x=>x.key===dayKey(time(t)));if(p){if(t.type==='income')p.in+=amt(t);if(t.type==='expense'||(t.type==='transfer'&&t.transferKind==='external'))p.out+=amt(t);if(t.type==='refund')p.out-=amt(t);}});}else if(trendMode==='week'){for(let i=3;i>=0;i--){const e=new Date(now.getFullYear(),now.getMonth(),now.getDate()-i*7),st=new Date(e);st.setDate(st.getDate()-6);pts.push({s:st.getTime(),e:e.getTime()+86399999,label:(st.getMonth()+1)+'/'+st.getDate()+'起',in:0,out:0});}tx.forEach(t=>{if(!pl(t))return;const ts=time(t),p=pts.find(x=>ts>=x.s&&ts<=x.e);if(p){if(t.type==='income')p.in+=amt(t);if(t.type==='expense'||(t.type==='transfer'&&t.transferKind==='external'))p.out+=amt(t);if(t.type==='refund')p.out-=amt(t);}});}else{for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');pts.push({key:k,label:(d.getMonth()+1)+'月',in:0,out:0});}tx.forEach(t=>{if(!pl(t))return;const d=new Date(time(t)),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),p=pts.find(x=>x.key===k);if(p){if(t.type==='income')p.in+=amt(t);if(t.type==='expense'||(t.type==='transfer'&&t.transferKind==='external'))p.out+=amt(t);if(t.type==='refund')p.out-=amt(t);}});}
- 
- const max=Math.max(1,...pts.map(x=>Math.max(x.in,x.out))),xx=i=>pts.length>1?50+i*(500/(pts.length-1)):300,yy=v=>157-Math.max(0,v)/max*130,ip=pts.map((a,i)=>[xx(i),yy(a.in)]),op=pts.map((a,i)=>[xx(i),yy(a.out)]);
- $('trendChart').innerHTML=[0,.5,1].map(v=>'<line x1="20" x2="590" y1="'+(157-v*130)+'" y2="'+(157-v*130)+'" stroke="var(--line)" stroke-dasharray="3 5"/>').join('')+'<path d="'+curvePath(ip)+'" fill="none" stroke="var(--income)" stroke-width="3" stroke-linecap="round"/><path d="'+curvePath(op)+'" fill="none" stroke="var(--expense)" stroke-width="3.5" stroke-linecap="round"/>'+pts.map((a,i)=>'<circle cx="'+xx(i)+'" cy="'+yy(a.in)+'" r="'+(trendSel===i?6:3.5)+'" fill="var(--income)"/><circle cx="'+xx(i)+'" cy="'+yy(a.out)+'" r="'+(trendSel===i?6:4)+'" fill="var(--expense)"/><rect data-m="'+i+'" x="'+(xx(i)-(pts.length>1?250/(pts.length-1):50))+'" y="0" width="'+(pts.length>1?500/(pts.length-1):100)+'" height="190" fill="transparent"/>').join('');
- $('trendLabels').innerHTML=pts.map(a=>'<span>'+a.label+'</span>').join('');
- const si=trendSel==null?pts.length-1:trendSel,sa=pts[si];$('trendInfo').textContent=hideAmt?'':sa.label+'：收入 '+fmt(r2(sa.in))+'，支出 '+fmt(r2(sa.out))+'，结余 '+fmt(r2(sa.in-sa.out));
- const cats={};p.forEach(t=>{if(!pl(t)||(t.type!=='expense'&&t.type!=='refund'&&!(t.type==='transfer'&&t.transferKind==='external')))return;const k=t.category||(t.type==='transfer'?'转给他人':'其他');cats[k]=(cats[k]||0)+(t.type==='refund'?-amt(t):amt(t));});
- const arr=Object.entries(cats).filter(a=>a[1]>0).sort((a,b)=>b[1]-a[1]),cols=['#df4d52','#249b68','#4e5969','#e08a1e','#3f7de0','#8a5ae0','#b8bdc5'],pos=arr.reduce((s,a)=>s+a[1],0);let at=0;const st=[];
- if(selCat&&!cats[selCat])selCat=null;
- arr.forEach((a,i)=>{const end=at+(pos?a[1]/pos*360:0);st.push((selCat&&a[0]!==selCat?cols[i%cols.length]+'55':cols[i%cols.length])+' '+at+'deg '+end+'deg');at=end;});
- $('donut').style.background=st.length?'conic-gradient('+st.join(',')+')':'var(--soft)';
- $('donutLabel').textContent=selCat||'总支出';$('donutTotal').textContent=money(selCat?cats[selCat]:exp);
- $('categoryLegend').innerHTML=arr.length?arr.slice(0,7).map((a,i)=>'<button data-cat="'+esc(a[0])+'" class="'+(selCat===a[0]?'sel':'')+'"><i style="background:'+cols[i%cols.length]+'"></i><span>'+esc(a[0])+'</span><b class="expense-text">'+money(a[1])+'</b></button>').join(''):'<div class="empty">暂无支出</div>';
- $('accountAnalytics').innerHTML=acs.length?acs.map(a=>{
-  const lim=Number(a.creditLimit),hasLim=Number.isFinite(lim)&&lim>0&&a.creditLimit!=null;let credit='';
-  if(hasLim){const av=a.availableCredit!=null?Number(a.availableCredit):null,used=av!=null&&Number.isFinite(av)?lim-av:Math.max(0,-Number(a.balance||0)),pct=Math.max(0,Math.min(100,used/lim*100));credit='<div class="bar'+(pct>=80?' hot':'')+'"><i style="width:'+pct+'%"></i></div><div class="bar-note">额度使用 '+pct.toFixed(0)+'%'+(hideAmt||hideAnalyticsAssets?'':' · 已用 '+fmt(used,a.currency)+' / 额度 '+fmt(lim,a.currency))+'</div>';}
-  return'<button class="acct-card" style="--c:'+(TYPE_COLOR[a.accountType]||TYPE_COLOR.other)+'" data-account-id="'+esc(a.id)+'"><div class="acct-top"><span><b>'+esc(a.name)+'</b><small>'+accountTypeName(a.accountType||guessAccountType(a.name))+(a.last4?' · ****'+esc(a.last4):'')+(a.verifiedAt?' · 已校准':' · 账面推算')+'</small></span><span><b>'+(hideAnalyticsAssets?'••••':money(a.balance,a.currency))+'</b><span class="acct-pct">'+(function(){const sh=shareOf(a,acs);return !hideAnalyticsAssets&&sh.pct?sh.label+' '+sh.pct.toFixed(1)+'%':'';})()+'</span></span></div>'+credit+'</button>';
- }).join(''):'<div class="empty">暂无账户</div>';
- applyAnalyticsControls();
- const mtx=tx.filter(t=>inRange(t,'month'));
- $('budgetList').innerHTML=bud.length?bud.map(bg=>{const dim=daysInMonth(new Date().getFullYear(),new Date().getMonth()),daily=bg.dailyLimit!=null?Number(bg.dailyLimit):(bg.limit?r2(Number(bg.limit)/dim):0),monthLimit=r2(daily*dim),weekLimit=r2(daily*7),used=expOf(mtx.filter(t=>!bg.category||t.category===bg.category)),pct=monthLimit?Math.min(100,used/monthLimit*100):0,left=r2(monthLimit-used);return'<div class="budget"><div class="budget-row"><b>'+esc(bg.name)+'</b><span>'+money(used)+' / '+money(monthLimit)+'</span></div><div class="bar'+(pct>=90?' hot':'')+'"><i style="width:'+pct+'%"></i></div><div class="bar-note">'+(hideAmt?'':'每日 '+fmt(daily)+' · 每周 '+fmt(weekLimit)+' · '+(left>=0?'剩余 '+fmt(left):'已超支 '+fmt(-left)))+'</div></div>';}).join(''):'<div class="empty">暂无预算，可对 AI 说“餐饮每天预算 60”</div>';await renderDailyBudget();
+async function renderDailyBudget(){const tx=await all('transactions');await renderBudgetRings(tx);}
+async function renderSpendCalendar(tx){
+ const el=$('spendCalendar');if(!el)return;
+ const now=new Date(),year=now.getFullYear(),month=now.getMonth(),first=new Date(year,month,1),days=daysInMonth(year,month),offset=(first.getDay()+6)%7,list=await getDailyBudgets(),today=dayKey(now.getTime()),totals={};
+ tx.forEach(t=>{if(t.type==='expense'||t.type==='refund'||(t.type==='transfer'&&t.transferKind==='external')){const k=dayKey(time(t));totals[k]=(totals[k]||0)+(t.type==='refund'?-amt(t):amt(t));}});
+ const weekdays=['一','二','三','四','五','六','日'].map(x=>'<div class="calendar-weekday">'+x+'</div>').join('');let cells='';for(let i=0;i<offset;i++)cells+='<div class="calendar-day empty"></div>';
+ for(let d=1;d<=days;d++){const key=year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'),used=r2(totals[key]||0),budget=dailyForDate(list,key),over=budget!=null&&budget>0&&used>budget;cells+='<div class="calendar-day'+(over?' over':'')+(key===today?' today':'')+'" title="'+key+' · 支出 '+fmt(used)+(budget?' · 日预算 '+fmt(budget):'')+'"><strong>'+d+'</strong><small>'+(used?money(used):'—')+'</small></div>';}
+ el.innerHTML='<div class="calendar-weekday" style="grid-column:1/-1;text-align:left;font-size:12px;font-weight:700;color:var(--text)">'+year+'年'+(month+1)+'月</div>'+weekdays+cells;
+}
+async function renderAccounts(){
+ const [acs,recs]=await Promise.all([all('accounts'),all('reconciliations')]);
+ const type=a=>accountTypeOf(a),isDebt=a=>type(a)==='credit_card'||Number(a.balance)<0;
+ const sorted=acs.slice().sort((a,b)=>Number(isDebt(a))-Number(isDebt(b))||String(a.name).localeCompare(String(b.name),'zh-CN'));
+ const mark=a=>{const k=canonicalBank(a.institution||a.name),banks={'工商银行':['工','#b8202d','#fff'],'农业银行':['农','#16854a','#fff'],'招商银行':['招','#c92735','#fff'],'光大银行':['光','#1d73b8','#fff'],'兴业银行':['兴','#2578b8','#fff'],'网商银行':['网','#e28a21','#fff'],'邮储银行':['邮','#26965f','#fff'],'建设银行':['建','#1769aa','#fff'],'中国银行':['中','#b31f2b','#fff']},v=banks[k];return v?'<span class="account-bank-mark" style="--bank-bg:'+v[1]+';--bank-fg:'+v[2]+'">'+v[0]+'</span>':'<span class="account-bank-mark">'+catIcon(a.name,'account')+'</span>';};
+ const row=a=>'<button class="acct-card" data-account-id="'+esc(a.id)+'" style="--c:'+(TYPE_COLOR[a.accountType]||TYPE_COLOR.other)+'"><div class="acct-top"><span style="display:flex;align-items:center;gap:10px">'+mark(a)+'<span><b>'+esc(a.name)+'</b><small>'+accountTypeName(type(a))+(a.institution?' · '+esc(a.institution):'')+(a.last4?' · ****'+esc(a.last4):'')+(a.verifiedAt?' · 已校准':' · 账面推算')+'</small></span></span><span><b class="'+(isDebt(a)?'expense-text':'')+'">'+money(a.balance,a.currency)+'</b></span></div></button>';
+ const assets=sorted.filter(a=>!isDebt(a)),debts=sorted.filter(isDebt);
+ $('assetAccounts').innerHTML=assets.length?assets.map(row).join(''):'<div class="empty">暂无资产账户</div>';
+ $('liabilityAccounts').innerHTML=debts.length?debts.map(row).join(''):'<div class="empty">暂无负债账户</div>';
+ $('accountSummary').textContent=assets.length+' 个资产 · '+debts.length+' 个负债';
+ $('accountCalibrations').innerHTML=recs.length?recs.slice().sort((a,b)=>Number(b.createdAt)-Number(a.createdAt)).map(r=>'<div class="budget"><div class="budget-row"><b>'+esc(r.accountName||'账户')+'</b><span>'+new Date(r.createdAt).toLocaleDateString('zh-CN')+'</span></div><div class="bar-note">校准后 '+fmt(r.statementBalance)+' · 差额 '+(r.difference==null?'首次校准':fmt(r.difference))+' · '+esc(r.analysis||'')+'</div></div>').join(''):'<div class="empty">暂无校准记录</div>';
+}
+async function renderAnalytics(){
+ const tx=await all('transactions'),b=bounds(range),filtered=tx.filter(t=>between(t,b.s,b.e)),prior=tx.filter(t=>between(t,b.ps,b.pe)),expenses=filtered.filter(t=>t.type==='expense'||t.type==='refund'||(t.type==='transfer'&&t.transferKind==='external')),expense=expOf(filtered);
+ $('periodExpense').textContent=money(expense);$('avgDailyExpense').textContent=money(r2(expense/Math.max(1,Math.ceil((b.e-b.s)/864e5)+1)));$('expenseCount').textContent=expenses.length.toLocaleString();$('expDlt').textContent=hideAmt?'':dlt(b.label,expense,expOf(prior));$('analyticsPeriod').textContent=range==='week'?'近7日':range==='year'?'本年':'本月';
+ const now=new Date(),pts=[];
+ if(trendMode==='day'){for(let i=6;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth(),now.getDate()-i);pts.push({key:dayKey(d.getTime()),label:(d.getMonth()+1)+'/'+d.getDate(),out:0});}}
+ else if(trendMode==='week'){for(let i=3;i>=0;i--){const end=new Date(now.getFullYear(),now.getMonth(),now.getDate()-i*7),start=new Date(end);start.setDate(start.getDate()-6);pts.push({s:start.getTime(),e:end.getTime()+86399999,label:(start.getMonth()+1)+'/'+start.getDate()+'起',out:0});}}
+ else {for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');pts.push({key,label:(d.getMonth()+1)+'月',out:0});}}
+ tx.forEach(t=>{if(!pl(t))return;const spend=t.type==='expense'||(t.type==='transfer'&&t.transferKind==='external')?amt(t):t.type==='refund'?-amt(t):0;if(!spend)return;const d=new Date(time(t)),key=dayKey(time(t));let p=trendMode==='week'?pts.find(x=>time(t)>=x.s&&time(t)<=x.e):pts.find(x=>x.key===(trendMode==='month'?d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'):key));if(p)p.out+=spend;});
+ const max=Math.max(1,...pts.map(x=>x.out)),xx=i=>pts.length>1?50+i*(500/(pts.length-1)):300,yy=v=>157-Math.max(0,v)/max*130,op=pts.map((a,i)=>[xx(i),yy(a.out)]);
+ $('trendChart').innerHTML=[0,.5,1].map(v=>'<line x1="20" x2="590" y1="'+(157-v*130)+'" y2="'+(157-v*130)+'" stroke="var(--line)" stroke-dasharray="3 5"/>').join('')+'<path d="'+curvePath(op)+'" fill="none" stroke="var(--expense)" stroke-width="3.5" stroke-linecap="round"/>'+pts.map((a,i)=>'<circle cx="'+xx(i)+'" cy="'+yy(a.out)+'" r="'+(trendSel===i?6:4)+'" fill="var(--expense)"/><rect data-m="'+i+'" x="'+(xx(i)-(pts.length>1?250/(pts.length-1):50))+'" y="0" width="'+(pts.length>1?500/(pts.length-1):100)+'" height="190" fill="transparent"/>').join('');
+ $('trendLabels').innerHTML=pts.map(a=>'<span>'+a.label+'</span>').join('');const idx=trendSel==null?pts.length-1:Math.max(0,Math.min(pts.length-1,trendSel)),selected=pts[idx];$('trendInfo').textContent=hideAmt?'':selected.label+'：消费 '+fmt(r2(selected.out));
+ const categories={},merchants={};expenses.forEach(t=>{const sign=t.type==='refund'?-1:1,cat=t.category||(t.type==='transfer'?'转给他人':'其他'),merchant=t.merchant||t.toPerson||'未注明商户';categories[cat]=(categories[cat]||0)+sign*amt(t);merchants[merchant]=(merchants[merchant]||0)+sign*amt(t);});
+ const arr=Object.entries(categories).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]),colors=['#df4d52','#249b68','#4e5969','#e08a1e','#3f7de0','#8a5ae0','#b8bdc5'],total=arr.reduce((sum,x)=>sum+x[1],0);let at=0,st=[];arr.forEach((x,i)=>{const end=at+(total?x[1]/total*360:0);st.push(colors[i%colors.length]+' '+at+'deg '+end+'deg');at=end;});$('donut').style.background=st.length?'conic-gradient('+st.join(',')+')':'var(--soft)';$('donutLabel').textContent=selCat||'总支出';$('donutTotal').textContent=money(selCat?categories[selCat]:expense);
+ $('categoryLegend').innerHTML=arr.length?arr.slice(0,8).map((x,i)=>'<button data-cat="'+esc(x[0])+'" class="'+(selCat===x[0]?'sel':'')+'"><i style="background:'+colors[i%colors.length]+'"></i><span>'+esc(x[0])+'</span><b class="expense-text">'+money(x[1])+'</b></button>').join(''):'<div class="empty">暂无支出</div>';
+ const top=Object.entries(merchants).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,12),maxMer=Math.max(1,...top.map(x=>x[1]));$('merchantChart').innerHTML=top.length?top.map(([name,value])=>'<div class="merchant-row"><span>'+esc(name)+'</span><div class="merchant-bar"><i style="width:'+(value/maxMer*100).toFixed(1)+'%"></i></div><b>'+money(value)+'</b></div>').join(''):'<div class="empty">暂无商户支出数据</div>';
+ await renderSpendCalendar(tx);
 }
 async function runFinanceAnalysis(){
  const box=$('financeAnalysis'),b=$('runFinanceAnalysis');box.textContent='正在结合本地流水、账户余额和预算进行分析……请稍候';box.classList.add('skeleton');busy(b,true);
@@ -790,25 +785,22 @@ async function runFinanceAnalysis(){
  catch(e){box.textContent='分析失败：'+e.message;}finally{box.classList.remove('skeleton');busy(b,false);}
 }
 async function openAccountModal(id){
- const [acs,tx,recs]=await Promise.all([all('accounts'),all('transactions'),all('reconciliations')]),a=acs.find(x=>x.id===id);if(!a)return;
- const items=tx.filter(t=>t.accountId===id||t.toAccountId===id||clean(t.account)===clean(a.name)||clean(t.toAccount)===clean(a.name)).map(t=>({date:time(t),label:LABEL[t.type]||'支出',detail:[t.merchant,t.category,t.note].filter(Boolean).join(' · '),amount:Number(t.amount||0),cur:t.currency,type:t.type}));
- recs.filter(r=>r.accountId===id).forEach(r=>items.push({date:Number(r.createdAt||time(r)),label:'资金校准',detail:r.analysis||'截图余额 '+fmt(r.statementBalance,a.currency)+'，校准前 '+fmt(r.previousBalance,a.currency),amount:r.difference,cur:a.currency,type:'balance_snapshot'}));
- items.sort((x,y)=>y.date-x.date);
- const body='<div class="modal-balance">'+money(a.balance,a.currency)+'</div><div class="meta" style="margin:0 0 6px">'+(function(){const sh=shareOf(a,acs);return sh.pct?sh.label+' '+sh.pct.toFixed(1)+'%':'';})()+'</div><div class="meta" style="margin:0 0 6px">近期资金流转</div>'+(items.length?items.slice(0,30).map(t=>'<div class="modal-tx"><time>'+new Date(t.date).toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'})+'</time><div><b>'+esc(t.label)+'</b><small>'+esc(t.detail||'未注明详情')+'</small></div><strong class="'+(t.type==='income'||t.type==='refund'?'income-text':t.type==='expense'?'expense-text':'')+'">'+(t.amount==null?'—':money(t.amount,t.cur))+'</strong></div>').join(''):'<div class="empty">该账户暂无流水</div>');
- showSheet({title:a.name,sub:[accountTypeName(a.accountType||guessAccountType(a.name)),a.institution,a.last4?'尾号 '+a.last4:'',a.currency&&a.currency!=='CNY'?a.currency:'',a.verifiedAt?'已校准':'账面推算'].filter(Boolean).join(' · '),body,foot:'<button class="btn primary flex" data-act="close">关闭</button>'});
+ const [acs,tx]=await Promise.all([all('accounts'),all('transactions')]),a=acs.find(x=>x.id===id);if(!a)return;
+ const recent=tx.filter(t=>t.accountId===id||t.toAccountId===id).sort((x,y)=>time(y)-time(x)).slice(0,10).map(t=>(LABEL[t.type]||t.type)+' '+fmt(t.amount,t.currency)+' '+(t.merchant||t.category||'')+' '+when(t));
+ pushHist('assistant',a.name+'（'+accountTypeName(accountTypeOf(a))+'）当前余额 '+fmt(a.balance,a.currency)+(a.last4?'，尾号 '+a.last4:'')+'。近期流水：'+(recent.join('；')||'暂无')+'。可直接输入“把'+a.name+'改名为…”、“删除'+a.name+'账户”或“把'+a.name+'校准为金额”。');
 }
 function applyAnalyticsControls(){
  const eye=$('toggleAnalyticsAssets');if(eye){eye.innerHTML=hideAnalyticsAssets?EYE_OFF:EYE_ON;eye.setAttribute('aria-pressed',String(hideAnalyticsAssets));eye.setAttribute('aria-label',hideAnalyticsAssets?'显示资产数据':'隐藏资产数据');eye.title=hideAnalyticsAssets?'显示资产数据':'隐藏资产数据';}
  const accounts=$('accountAnalytics'),button=$('toggleAccountAnalytics');if(accounts)accounts.hidden=analyticsAccountsCollapsed;if(button){button.textContent=analyticsAccountsCollapsed?'展开 ↓':'收起 ↑';button.setAttribute('aria-expanded',String(!analyticsAccountsCollapsed));}
 }
 async function renderTokens(){const a=await all('tokenUsage');$('promptTokens').textContent=a.reduce((s,x)=>s+x.prompt,0).toLocaleString();$('completionTokens').textContent=a.reduce((s,x)=>s+x.completion,0).toLocaleString();$('totalTokens').textContent=a.reduce((s,x)=>s+x.total,0).toLocaleString();$('requestCount').textContent=a.length.toLocaleString();}
-async function renderAll(){await Promise.all([renderHome(),renderTransactions(),renderAnalytics(),renderTokens()]);}
+async function renderAll(){await Promise.all([renderHome(),renderTransactions(),renderAnalytics(),renderAccounts(),renderTokens()]);}
 
 /* ---------- 交互 ---------- */
 function attachSwipe(el){let active=null,startX=0,startY=0,base=0,cur=0,dragging=false,locked=null,raf=0;const content=s=>s.querySelector('.swipe-content');el.addEventListener('pointerdown',e=>{const shell=e.target.closest('.swipe-shell');if(!shell||e.target.closest('[data-delete]'))return;active=shell;startX=e.clientX;startY=e.clientY;base=shell.classList.contains('open')?-88:0;cur=base;dragging=false;locked=null;},{passive:true});el.addEventListener('pointermove',e=>{if(!active)return;const dx=e.clientX-startX,dy=e.clientY-startY;if(!locked){if(Math.abs(dx)<6&&Math.abs(dy)<6)return;locked=Math.abs(dx)>Math.abs(dy)?'x':'y';if(locked==='y'){active=null;return;}dragging=true;qa('.swipe-shell.open').forEach(s2=>{if(s2!==active)s2.classList.remove('open');});const c=content(active);if(c)c.classList.add('dragging');}if(locked==='x'){cur=Math.max(-88,Math.min(0,base+dx));if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{const c=active&&content(active);if(c)c.style.transform='translateX('+cur+'px)';});e.preventDefault();}},{passive:false});const end=()=>{if(!active)return;const shell=active,c=content(shell);if(raf)cancelAnimationFrame(raf);if(c){c.classList.remove('dragging');c.style.transform='';}if(dragging){if(cur<-44)shell.classList.add('open');else shell.classList.remove('open');window.__swipeSuppress=Date.now();}active=null;dragging=false;locked=null;};el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);}
 attachSwipe($('transactionList'));
-function goto(p){qa('.page').forEach(x=>x.classList.toggle('active',x.id==='page-'+p));qa('.tab').forEach(x=>x.classList.toggle('active',x.dataset.page===p));if(p==='transactions')renderTransactions();if(p==='analytics')renderAnalytics();}
-function applyTheme(t){if(t==='system')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);localStorage.setItem('ledger.theme',t);qa('#themeSelect button').forEach(b=>b.classList.toggle('active',b.dataset.theme===t));}
+function goto(p){qa('.page').forEach(x=>x.classList.toggle('active',x.id==='page-'+p));qa('.tab').forEach(x=>x.classList.toggle('active',x.dataset.page===p));if(p==='transactions')renderTransactions();if(p==='analytics')renderAnalytics();if(p==='accounts')renderAccounts();}
+function applyTheme(t){document.documentElement.setAttribute('data-theme','light');localStorage.setItem('ledger.theme','light');}
 function applyFontScale(v){const n=Math.max(.9,Math.min(1.2,Number(v)||1));document.documentElement.style.setProperty('--font-scale',String(n));localStorage.setItem('ledger.fontScale',String(n));if($('fontScaleLabel'))$('fontScaleLabel').textContent=Math.round(n*100)+'%';if($('fontScaleSlider'))$('fontScaleSlider').value=String(n);}
 async function saveSettings(){
  const endpoint=clean($('apiEndpoint').value);
