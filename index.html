@@ -213,6 +213,29 @@ textarea.input{height:96px;padding:10px 11px;line-height:1.5;resize:vertical}
 .swipe-content.dragging,.swipe-shell.open .swipe-content{will-change:transform}
 @media(max-width:380px){#page-home .capture-actions{grid-template-columns:minmax(0,1.1fr) minmax(52px,.7fr) minmax(78px,1fr);gap:6px}#page-home .capture-actions .upload-action{gap:5px;font-size:13px;padding:0 7px}#page-home .capture-actions .send{font-size:15px}}
 
+
+/* 2026-11: fixed first-tab workspace and polished controls */
+:root{--focus:rgba(52,94,150,.16);--button-hover:#eef3f8}
+button{transition:background-color .16s ease,border-color .16s ease,color .16s ease,transform .08s ease,box-shadow .16s ease}button:active{transform:translateY(1px)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+#page-home.active{display:grid;grid-template-rows:auto minmax(0,1fr);gap:10px;height:calc(100dvh - env(safe-area-inset-top,0px) - var(--safe) - 116px);min-height:0;overflow:hidden;overscroll-behavior:none}
+#page-home .home-overview{min-height:0;max-height:clamp(150px,27dvh,230px);overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
+#page-home .capture{min-height:0;height:100%;overflow:hidden;border-radius:22px;display:flex;flex-direction:column}
+#page-home .capture-input{flex:1 1 0;min-height:0;padding:12px 12px 8px;display:flex;flex-direction:column;gap:8px;overflow:hidden}
+#page-home .conversation-log{flex:1 1 0;min-height:0;max-height:none;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;padding:3px 2px 8px;scroll-padding-bottom:12px}
+#page-home .conversation-log:empty::before{content:"可以直接描述一笔收支、查询账目，或管理账户与预算";display:flex;align-items:center;justify-content:center;min-height:100%;padding:24px;text-align:center;color:var(--muted);font-size:13px;line-height:1.6}
+#page-home .chat-bubble{max-width:min(92%,560px);padding:10px 12px;border-radius:15px}#page-home .chat-bubble.user{border-bottom-right-radius:5px}#page-home .chat-bubble.assistant{border-bottom-left-radius:5px}
+#page-home .account-suggestions{flex:0 0 auto}
+#page-home .capture-input textarea{flex:0 0 auto;width:100%;height:74px;min-height:74px;max-height:116px;padding:10px 12px;resize:none;border:1px solid var(--line);border-radius:15px;background:var(--surface);line-height:1.5}
+#page-home .today-budget-hint{flex:0 0 auto;padding:0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#page-home .capture-bottom{position:static;flex:0 0 auto;z-index:auto;border-radius:0;padding:9px 11px 11px;box-shadow:none;background:var(--card)}
+#page-home .examples{padding-bottom:1px}#page-home .examples button,#page-home .capture-actions button{border-radius:13px}
+#page-home .examples button:hover,#page-home .upload-action:hover,#page-home .upload-clear:hover{background:var(--button-hover);border-color:#d4dbe4;color:var(--text)}#page-home .send:hover{filter:brightness(1.08)}
+#page-home .capture-actions{grid-template-columns:minmax(0,1.15fr) minmax(62px,.72fr) minmax(92px,1fr);gap:7px}
+.btn,.input,.search,.f-input,.themes button,.collapse-btn,.acct-delete{border-radius:12px}.btn:hover,.themes button:hover,.collapse-btn:hover,.acct-delete:hover{background:var(--button-hover);border-color:#d1d8e1}.btn.primary:hover{filter:brightness(1.08)}
+.tab{border-radius:11px}.tab:hover{background:var(--button-hover);color:var(--text)}.tab.active:hover{background:#e3e9f0}.chart,.setting,.list,.detail-summary{box-shadow:0 6px 20px rgba(32,43,58,.045)}.section-head button:hover{color:var(--text);background:var(--soft);border-radius:10px}
+@media(max-height:700px){#page-home .home-overview{max-height:175px;padding:10px 12px}#page-home .budget-ring-visual{width:72px;height:72px}#page-home .capture-input textarea{height:62px;min-height:62px}#page-home .capture-actions,#page-home .capture-actions .upload-action,#page-home .capture-actions .upload-clear,#page-home .capture-actions .send{min-height:46px;height:46px}}
+@media(max-width:380px){#page-home .capture-input{padding-left:9px;padding-right:9px}#page-home .capture-bottom{padding-left:9px;padding-right:9px}#page-home .capture-actions{grid-template-columns:minmax(0,1.1fr) minmax(54px,.66fr) minmax(82px,.9fr)}#page-home .upload-action span{font-size:12px}}
 </style>
 </head>
 <body><div id="app">
@@ -220,7 +243,7 @@ textarea.input{height:96px;padding:10px 11px;line-height:1.5;resize:vertical}
 <section class="page active" id="page-home">
  <div class="home-overview"><div class="budget-ring-grid" id="homeBudgetRings"><div class="empty">正在计算预算…</div></div><div class="home-spend-summary" id="homeSpendSummary"></div></div>
  <div class="capture">
-  <div class="capture-input"><div id="conversationLog" class="conversation-log" aria-live="polite"></div><div id="accountSuggestions" class="account-suggestions" hidden></div><textarea id="naturalInput" placeholder="输入记账、修改、账户管理或金额校准指令；@ 可快捷选择账户，无需上传图片。"></textarea><div id="todayBudgetHint" class="today-budget-hint"></div></div>
+  <div class="capture-input"><div id="conversationLog" class="conversation-log" aria-live="polite"></div><div id="accountSuggestions" class="account-suggestions" hidden></div><textarea id="naturalInput" placeholder="输入消息，或用 @ 选择账户…"></textarea><div id="todayBudgetHint" class="today-budget-hint"></div></div>
   <div class="capture-bottom">
    <div class="examples" id="examples">
     <button data-ex="午饭 28 微信">午饭 28 微信</button><button data-ex="昨天打车 35">昨天打车 35</button><button data-ex="工资到账 12000 招行">工资到账 12000</button><button data-ex="本月餐饮花了多少">本月餐饮花了多少</button><button data-ex="把上一笔改成微信支付">改上一笔</button><button data-ex="每天预算 100">每天预算 100</button><button data-ex="转给妈妈 500 微信">转给妈妈 500</button>
@@ -321,7 +344,7 @@ textarea.input{height:96px;padding:10px 11px;line-height:1.5;resize:vertical}
 'use strict';
 const $=id=>document.getElementById(id),qa=s=>Array.from(document.querySelectorAll(s));
 const DB='ai-ledger-v1',VERSION=5,STORES=['accounts','transactions','budgets','tokenUsage','settings','reconciliations','dailyBudgets','conversationHistory'],SNAP=['accounts','transactions','budgets','reconciliations','dailyBudgets'];
-const PLACEHOLDER='描述一笔收支，或上传银行卡 / 支付截图……';
+const PLACEHOLDER='输入消息，或用 @ 选择账户…';
 const MONEY=['expense','income','transfer','refund'];
 const TYPES=[...MONEY,'create_account','budget','daily_budget','balance_snapshot','update_transaction','delete_transaction','rename_account','delete_account','preference'];
 const SAFE=new Set(['expense','income','transfer','refund','create_account','budget','daily_budget','preference']);
