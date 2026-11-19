@@ -267,7 +267,7 @@ const TYPE_COLOR={credit_card:'#e0733f',savings_card:'#3f7de0',debit_card:'#3f7d
 let db=null,pending=null,images=[],range='month',detailRange='day',filter='all',deferredInstall=null,undoSnap=null,selCat=null,trendSel=null,trendMode='month',toastTimer=null,editId=null,busyAI=false;
 const EYE_ON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
 const EYE_OFF='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/></svg>';
-let hideAmt=false;try{hideAmt=localStorage.getItem('ledger.hide')==='1';}catch(e){}
+let hideAmt=false;
 let hideAnalyticsAssets=false,analyticsAccountsCollapsed=true;
 try{hideAnalyticsAssets=localStorage.getItem('ledger.analyticsAssetsHidden')==='1';analyticsAccountsCollapsed=localStorage.getItem('ledger.analyticsAccountsCollapsed')!=='0';}catch(e){}
 let history=[],historyReady=false;try{const savedHistory=JSON.parse(localStorage.getItem('ledger.hist')||sessionStorage.getItem('ledger.hist')||'[]');if(Array.isArray(savedHistory))history=savedHistory;}catch(e){}
@@ -391,7 +391,7 @@ async function context(){
  const monthTx=tx.filter(t=>time(t)>=start);
  return{
   accounts:accounts.map(a=>({name:a.name,balance:a.balance,currency:a.currency||'CNY',accountType:a.accountType||guessAccountType(a.name),institution:a.institution||'',last4:a.last4||'',verifiedAt:a.verifiedAt||null,creditLimit:a.creditLimit??null,availableCredit:a.availableCredit??null})),
-  recent:tx.slice().sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0)).slice(0,30).map(t=>({id:t.id,type:t.type,amount:t.amount,currency:t.currency||'CNY',account:t.account||'',toAccount:t.toAccount||'',merchant:t.merchant||'',category:t.category||'',occurredAt:t.occurredAt||'',neutral:!!t.neutral})),
+  recent:tx.slice().sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0)).slice(0,120).map(t=>({id:t.id,type:t.type,amount:t.amount,currency:t.currency||'CNY',account:t.account||'',toAccount:t.toAccount||'',merchant:t.merchant||'',category:t.category||'',occurredAt:t.occurredAt||'',note:t.note||'',neutral:!!t.neutral})),
   thisMonth:sum(monthTx),thisYear:sum(tx.filter(t=>time(t)>=year)),months,categories,habits,
   calibrations:recs.slice().sort((a,b)=>b.createdAt-a.createdAt).slice(0,15).map(r=>({account:r.accountName,previous:r.previousBalance,statement:r.statementBalance,difference:r.difference,date:r.occurredAt,analysis:r.analysis||''})),
   budgets:budgets.map(b=>{const dim=daysInMonth(now.getFullYear(),now.getMonth()),daily=b.dailyLimit!=null?Number(b.dailyLimit):(b.limit?r2(Number(b.limit)/dim):null);return{name:b.name,category:b.category||'',limit:b.limit,dailyLimit:daily,weeklyLimit:daily!=null?r2(daily*7):null,monthlyLimit:daily!=null?r2(daily*dim):null,usedThisMonth:expOf(monthTx.filter(t=>!b.category||t.category===b.category))};}),
@@ -402,29 +402,23 @@ externalTransfersThisMonth:r2(monthTx.filter(t=>t.type==='transfer'&&t.transferK
 }
 function prompt(ctx){
  return[
- '你是个人财务 AI 管家，必须像真正理解业务的财务助理一样执行，不是表单抽取器。理解任意自然语言、口语、简称、错别字、省略、上下文、指代（“刚才那笔”“上一笔”“还是用招行”）和连续多件事务。你可以看到最近几轮对话，请结合它们理解当前这句话。',
- '首先判断用户意图：记账(record)、查询(query)、创建账户、资金校准(reconcile)、修改或删除已有记录(manage)、解释或普通对话(conversation)。不要把查询误当作交易。',
- '一句话可以包含多笔操作，按顺序全部输出。普通支出/收入只要求可靠金额；账户、商户、分类、时间、商品等可以结合历史习惯(habits)和常识推断，没有必要时留空。不得编造金额、账户或资金流向。',
- '分类必须优先复用上下文 categories 里已有的分类名和 habits 里该商户的惯用分类与账户，只有确实没有合适分类时才新建，避免“餐饮/吃饭/饮食”这类同义分类并存。',
-'不要先设月度预算。用户说“每天预算 100”“每日花 80”“每天餐饮 60”时返回 daily_budget（全局）或 budget（分类），budgetLimit 填的是每日额度，不是月度；周预算 = 每日×7，月预算 = 每日×当月天数，系统会自动推算，你不要自己算月度总额填进去。用户说“每月餐饮预算 2000”时，先除以当月天数换算成每日额度再返回 budget。用户说“把每天预算改成 120”“从今天起每天 80”时返回 daily_budget，amount=新每日额，effectiveFrom=生效日期（默认今天）；中途调整只影响生效日及之后，之前的日子按旧额度算，你不要回溯改写。',
-'①内部账户间互转：转出账户和转入账户都是用户自己的账户（储蓄卡/信用卡/微信/支付宝等），transferKind="internal"，不计入收支统计。②转出给他人：收款方是人（妈妈、张三、房东、朋友等），不是用户自己的账户，transferKind="external"，toPerson=对方姓名，toAccount 也填对方姓名，这笔钱要计入支出（类别默认“转给他人”，除非用户明确说了类别）。不要为收款人创建一个假账户。用户只说“转 500 给妈妈”没说从哪个账户出时，按“账户缺失”规则追问或按习惯判断，不得默认转入某个账户。信用卡还款是内部转账。',
-'一张截图、一条流水、一行文字里同时出现信用卡和储蓄卡（或多张卡）时，每张卡各返回一个 create_account / balance_snapshot，绝不合并成一个账户。区分键是“机构 + 末四位 + 类型”：同一末四位但一个是信用卡、一个是储蓄卡，就是两个账户。信用卡的余额按负债记（已欠/应还记负数），储蓄卡按资产记正数；绝不能把信用额度、可用额度当成储蓄余额，也不能把储蓄余额当成信用卡欠款。同一行里只写了“可用额度”没有余额的信用卡，只写 availableCredit / creditLimit，不伪造 balance。',
-'系统会把本地保存的最近对话历史发给你，你要结合它理解指代和偏好（“还是用上次那张卡”“按我之前说的算”“每天预算还是那个数”）。用户在历史里提过的预算、常用账户、分类习惯、目标，在没有新指示时继续沿用；用户改了主意时以最新一次为准，并在 answer 里说明你沿用了哪条历史信息。',
- '当描述中出现一个新账户名称或截图显示新账户，应主动创建账户，不要只把名称放在交易备注里。返回 create_account，且给出 account、accountType、institution、last4、currency。若同一截图还显示明确的当前余额，再同时返回 balance_snapshot。已有账户应匹配已有账户，不要重复创建。',
- '账户必须区分类型：credit_card=信用卡，savings_card=储蓄卡，payment=支付宝/微信等支付账户，wallet=电子钱包，cash=现金，other=其他。银行名称放 institution，末四位放 last4。若账户名称只识别出银行+末四位，可用“银行名称 ****1234”作为账户名称。',
- '银行卡截图识别规则：识别银行/机构、账户名、账户末四位、账户类型、截图日期、币种、当前余额、可用余额、可用额度、信用额度、已用额度、账单应还。绝不能把信用额度、可用额度或最低还款额误当作储蓄余额。储蓄卡/支付账户只有明确当前余额才写 balance；信用卡若显示已欠/已用/当前应还，按负债记为负数 balance；若只有可用额度，则写 availableCredit（有信用额度时同时写 creditLimit），不要伪造账户余额，也不要返回 balance_snapshot；仍然可以创建账户并记录额度信息。',
- '资金校准应创建或匹配账户，并保存 balance_snapshot。比较截图余额与本地账面余额、历史收支和上次校准的差异，在 answer/analysis 里给出差额解释、可能的遗漏流水和需要核实事项；不能仅凭差额自动制造收入或支出。账户不存在时先自动创建。',
- '上传小票/支付截图：识别商户、金额、时间、商品、分类、支付账户；结合文字判断用户是想记录、查询还是仅分析。上传银行流水截图时，只有用户明确要求导入流水，才批量创建交易，避免把余额摘要重复记成交易。',
- '记录时间以用户本地时区为准。将今天、昨天、上周等自动换算为准确日期；没有时间时使用当前本地时间。occurredAt 输出带时区偏移的 ISO 8601 时间。禁止把 UTC 日期当作当地日期。',
- '查询：优先用本地统计上下文作答。若回答需要上下文里没有的明细或统计（某商户/分类/账户在某时间段的合计与明细、排名、同比环比、最大一笔等），不要猜测，返回 intent="need_data" 并给出 dataRequest：{"type":"expense|income|refund|transfer|all","merchant":"","category":"","account":"","keyword":"","from":"YYYY-MM-DD","to":"YYYY-MM-DD","minAmount":null,"maxAmount":null,"groupBy":"none|category|merchant|account|day|month","sort":"amount_desc|date_desc","limit":15}。系统会在本地计算后把结果交还给你（最多两轮），你再据此在 answer 中给出清晰结论、构成、变化、异常和建议；不得凭空补足没有记录的数字。',
- '修改/删除已有记录：用 recent 里的 id 作为 targetId（“上一笔”指 recent 第一条）。修改返回 update_transaction，changes 只包含要改的字段(amount/account/toAccount/merchant/category/note/occurredAt)；删除返回 delete_transaction。找不到唯一对应记录时先追问。账户改名返回 rename_account（account=旧名，newName=新名）。预算返回 budget（budgetName、category、budgetLimit；同名预算会被更新）。',
- '特殊场景：①退款返回 refund（金额为正，尽量带上原交易 targetId，会自动冲减对应支出）；②信用卡还款=transfer（internal），从付款账户转入该信用卡账户；③借入/借出/收回借款/代付垫付/AA 中别人应承担的部分，这类不属于自己的真实收支，设 neutral=true（余额照常变动，但不计入收支统计）；AA 时自己的份额记正常支出，其余垫付部分记 neutral 支出；④工资、报销到账等是 income。注意：转给他人不是借出垫付，不要设 neutral=true，它就是一笔支出。',
-'财务分析要充分用本地数据：结合每日预算与实际日均花费判断本月会不会超支，结合日/周/月三档趋势（trends.last7Days / last4Weeks / last12Months）指出变化和异常，结合账户余额与信用卡负债、转给他人支出、对话历史里的目标和偏好，给出具体、可执行的建议，不要只复述数字。没有数据的部分明确说没有，不要编造。',
- '币种：默认 CNY。若交易币种与所用账户币种不同，需在 accountAmount（转账时转入侧为 toAmount）给出按账户币种折算后的金额，否则不会改动该账户余额；无法确定汇率时追问。',
- '只在金额、转账资金流向、要修改的目标记录等关键事实缺失时追问一个最重要的问题（needsClarification=true，clarification 写问题）。普通支出/收入账户缺失时：本地仅有一个账户则默认关联该账户；若有多个账户且无法借助 habits 可靠判断支付账户，应先追问账户名称，不得猜测扣款账户；若本地没有账户，可以保存未关联流水，但必须明确说明该笔不会改变账户余额。多个操作可部分保存，不能因为其中一项缺信息而丢弃其他有效操作。每个 action 都要给出 confidence(0-1)，不确定就降低它。',
- '严格输出JSON：{"intent":"record|query|reconcile|manage|conversation|clarify|need_data","answer":"","analysis":"","needsClarification":false,"clarification":"","dataRequest":null,"actions":[{"type":"expense|income|transfer|refund|create_account|budget|daily_budget|balance_snapshot|update_transaction|delete_transaction|rename_account","amount":null,"currency":"CNY","account":"","toAccount":"","merchant":"","category":"","items":[],"occurredAt":"","budgetName":"","budgetLimit":null,"balance":null,"accountType":"credit_card|savings_card|payment|wallet|cash|other","institution":"","last4":"","availableCredit":null,"creditLimit":null,"balanceKind":"","targetId":"","changes":{},"newName":"","neutral":false,"accountAmount":null,"toAmount":null,"confidence":0.0,"note":"","transferKind":"internal|external","toPerson":"","effectiveFrom":"YYYY-MM-DD"}]}。无操作时 actions 必须是空数组。所有金额字段必须数字或 null，不得输出格式化货币文本。',
- '本地时间：'+new Date().toLocaleString('zh-CN',{hour12:false})+'；时区：'+Intl.DateTimeFormat().resolvedOptions().timeZone+'；用户记账偏好：'+(settings().rules||'无')+'；本地财务上下文：'+JSON.stringify(ctx)
- ].join('\n');
+ '你是 AI Ledger 的个人财务执行助手。你的工作是理解自然语言并对本地账户、流水、预算、余额校准进行实际操作，而不是仅给出建议。必须结合提供的完整历史对话、账户列表、历史流水、校准记录和记账偏好判断上下文；不要要求用户重复已经给过的信息。',
+ '支持自然语言：记账、查询、创建账户、账户改名、账户删除、修改或删除流水、文字余额校准、图片余额校准、预算调整、保存新的记账偏好。用户不需要知道内部 action 类型。若有可靠信息直接执行，不得因为某功能之前没有 UI 按钮就拒绝。',
+ '账户匹配硬规则：工行/工商/ICBC、农行/农业/ABC、招行/招商/CMB、光大/CEB、兴业/CIB、网商、邮储/PSBC 等简称必须映射到账户列表中的现有银行。用户不需要输入尾号。除储蓄卡和信用卡外，一个银行通常只有一个账户；优先按银行机构和账户类型匹配。若唯一账户匹配，直接使用；若同名信用卡和储蓄卡并存，必须询问选择，绝不可混用。普通记账、退款和内部转账只能关联已有账户，禁止因匹配失败而创建新账户；只有用户明确要求创建/添加账户，或明确请求校准一个尚未录入的新账户时才创建。重复创建时复用/合并匹配账户。不要推断或编造卡号尾号。',
+ '账户类型：credit_card=信用卡，savings_card=储蓄卡，payment=支付宝/微信等支付账户，wallet=电子钱包，cash=现金，other=其他。信用卡欠款/已用金额以负数余额表示；信用额度和可用额度单独记录，不能误认作存款或当前余额。',
+ '预算以每日预算为唯一基础。用户说“每天预算 100”“每天餐饮 60”时返回 daily_budget（全局）或 budget（分类），金额是每日额度；周/月额度由系统按每日预算自动汇总。用户调整每日预算时填 effectiveFrom（默认今天），只改变生效日起的预算，不重写过去。预算环形进度用于每日/每周/每月。',
+ '转账严格区分：用户自己的账户之间是 transferKind=internal，不计收入支出；转给他人是 transferKind=external，toPerson=对方，计入支出。不要为收款人创建账户。信用卡还款通常是内部转账。转账退回/退款优先根据历史流水 targetId、账户和商户匹配原记录，不要求用户提供尾号。',
+ '余额校准支持文字或图片，两种完全等效，图片不是必填。文字如“把招行余额校准为 12345”“账户A现在余额 8000”应直接输出 balance_snapshot。若用户未写账户而本地只有一个账户，使用唯一账户；若同银行同时有信用卡/储蓄卡则询问。图片应分别识别“当前余额/账户余额/账面余额”、信用额度、可用额度、已用额度、可用余额、最低还款额；绝不能把信用额度、可用额度或最低还款额当作当前余额。识别到当前余额必须返回 balance_snapshot，account 尽可能使用本地账户列表中对应账户名。校准时在 note/analysis 中简要比较校准前余额、近期开销收入与本次差额，说明差额可能来源；不得虚构交易或自动用差额生成收支。',
+ '用户如果明确说“创建/添加账户”，返回 create_account。上传银行卡截图若用户意图为创建账户或校准，可据截图建档；但截图对应的账户若已存在，必须复用，不要重复创建。储蓄卡与信用卡即使同一银行同名，也必须区分成两个账户。',
+ '修改和删除流水：优先使用 recent 里的完整 id 作为 targetId；用户不必输入编号，可以根据日期、金额、商户、账户和对话历史模糊匹配。只有目标唯一才执行 update_transaction/delete_transaction；有多个候选时给出简明候选并追问。支持通过自然语言修改金额、账户、商户、分类、时间和备注。每一条新流水都由系统生成唯一编号。',
+ '账户改名返回 rename_account（account=当前账户名，newName=新账户名）。账户删除返回 delete_account（account=账户名），不能删除关联流水，只解除关联并保留原始历史。改名、删除账户、删除流水、修改重要历史数据等非普通记账操作，必须在 answer 中明确操作内容并等待用户输入肯定词确认；用户输入“确认/是/好/执行/可以/同意”才执行，“取消/否/不要/算了”则取消。无需弹窗。',
+ '用户表达“以后记账时……”“记住我偏好……”“我一般用……”“默认分类……”等持久偏好时返回 preference，note 写入完整偏好。偏好可以无限追加；若新偏好与旧偏好冲突，以最新一次为准。',
+ '查询、总结与分析优先调用本地数据。需要历史明细时返回 intent="need_data" 并给出 dataRequest，系统会用本地全部流水筛选后提供结果；不能只根据最近几条推算。查询支持按商户、分类、账户、时间、金额范围、日期、月份、编号筛选。',
+ '用户没有指定时间时使用本地当前时间；“今天/昨天/上周”必须换算为本地准确日期。金额输出纯数字，不带货币符号；中文金额单位“万/千/百”正确换算。默认币种 CNY。',
+ '一条输入可包含多笔独立操作，按顺序输出全部 actions。金额、账户方向或目标记录等关键事实缺失时，只问最重要的一个问题；可以确定的其他操作仍正常输出。高置信度且可逆的常规记账可直接执行，低置信度或高风险操作等用户确认。',
+ '严格只输出合法 JSON 对象：{"intent":"record|query|reconcile|manage|conversation|clarify|need_data","answer":"","analysis":"","needsClarification":false,"clarification":"","dataRequest":null,"actions":[{"type":"expense|income|transfer|refund|create_account|budget|daily_budget|balance_snapshot|update_transaction|delete_transaction|rename_account|delete_account|preference","amount":null,"balance":null,"currency":"CNY","account":"","toAccount":"","merchant":"","category":"","items":[],"occurredAt":"","budgetName":"","budgetLimit":null,"accountType":"credit_card|savings_card|payment|wallet|cash|other","institution":"","last4":"","availableCredit":null,"creditLimit":null,"targetId":"","changes":{},"newName":"","neutral":false,"accountAmount":null,"toAmount":null,"confidence":0.0,"note":"","transferKind":"internal|external","toPerson":"","effectiveFrom":"YYYY-MM-DD"}]}。无操作时 actions=[]。所有金额字段必须是数字或 null。',
+ '本地时间：'+new Date().toLocaleString('zh-CN',{hour12:false})+'；时区：'+Intl.DateTimeFormat().resolvedOptions().timeZone+'；手动记账偏好：'+(settings().rules||'无')+'；AI 记忆偏好：'+(localStorage.getItem('ledger.preferences')||'无')+'；本地完整财务上下文：'+JSON.stringify(ctx)
+ ].join('\\n');
 }
 function parse(t){t=clean(t);const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a<0||b<a)throw Error('AI 返回格式无法识别');return JSON.parse(t.slice(a,b+1));}
 function parseAmount(v){if(v==null||v==='')return null;if(typeof v==='number')return Number.isFinite(v)?v:null;let s=String(v).normalize('NFKC').replace(/[￥¥$人民币元,，\\s]/g,'').replace(/负/g,'-'),m=1;const u=s.match(/(万|千|百)$/);if(u){m=u[1]==='万'?10000:u[1]==='千'?1000:100;s=s.slice(0,-1);}s=s.replace(/元$/,'');const n=Number(s.replace(/[^\\d.-]/g,''));return Number.isFinite(n)&&s.replace(/[^\\d]/g,'')!==''?r2(n*m):null;}
@@ -771,11 +765,7 @@ async function openAccountModal(id){
  const recent=tx.filter(t=>t.accountId===id||t.toAccountId===id).sort((x,y)=>time(y)-time(x)).slice(0,10).map(t=>(LABEL[t.type]||t.type)+' '+fmt(t.amount,t.currency)+' '+(t.merchant||t.category||'')+' '+when(t));
  pushHist('assistant',a.name+'（'+accountTypeName(accountTypeOf(a))+'）当前余额 '+fmt(a.balance,a.currency)+(a.last4?'，尾号 '+a.last4:'')+'。近期流水：'+(recent.join('；')||'暂无')+'。可直接输入“把'+a.name+'改名为…”、“删除'+a.name+'账户”或“把'+a.name+'校准为金额”。');
 }
-function applyAnalyticsControls(){
- const eye=$('toggleAnalyticsAssets');if(eye){eye.innerHTML=hideAnalyticsAssets?EYE_OFF:EYE_ON;eye.setAttribute('aria-pressed',String(hideAnalyticsAssets));eye.setAttribute('aria-label',hideAnalyticsAssets?'显示资产数据':'隐藏资产数据');eye.title=hideAnalyticsAssets?'显示资产数据':'隐藏资产数据';}
- const accounts=$('accountAnalytics'),button=$('toggleAccountAnalytics');if(accounts)accounts.hidden=analyticsAccountsCollapsed;if(button){button.textContent=analyticsAccountsCollapsed?'展开 ↓':'收起 ↑';button.setAttribute('aria-expanded',String(!analyticsAccountsCollapsed));}
-}
-async function renderTokens(){const a=await all('tokenUsage');$('promptTokens').textContent=a.reduce((s,x)=>s+x.prompt,0).toLocaleString();$('completionTokens').textContent=a.reduce((s,x)=>s+x.completion,0).toLocaleString();$('totalTokens').textContent=a.reduce((s,x)=>s+x.total,0).toLocaleString();$('requestCount').textContent=a.length.toLocaleString();}
+function applyAnalyticsControls(){}\nasync function renderTokens(){const a=await all('tokenUsage');$('promptTokens').textContent=a.reduce((s,x)=>s+x.prompt,0).toLocaleString();$('completionTokens').textContent=a.reduce((s,x)=>s+x.completion,0).toLocaleString();$('totalTokens').textContent=a.reduce((s,x)=>s+x.total,0).toLocaleString();$('requestCount').textContent=a.length.toLocaleString();}
 async function renderAll(){await Promise.all([renderHome(),renderTransactions(),renderAnalytics(),renderAccounts(),renderTokens()]);}
 
 /* ---------- 交互 ---------- */
@@ -843,7 +833,7 @@ $('transactionList').onclick=e=>{
 };
 $('assetAccounts').onclick=e=>{const b=e.target.closest('[data-account-id]');if(b)openAccountModal(b.dataset.accountId);};$('liabilityAccounts').onclick=e=>{const b=e.target.closest('[data-account-id]');if(b)openAccountModal(b.dataset.accountId);};
 $('transactionSearch').oninput=renderTransactions;
-$('detailPeriodSwitch').onclick=e=>{const b=e.target.closest('[data-detail-range]');if(!b)return;detailRange=b.dataset.detailRange;qa('#detailPeriodSwitch button').forEach(x=>x.classList.toggle('active',x===b));renderTransactions();};
+$('detailPeriodSwitch').onclick=e=>{const b=e.target.closest('[data-detail-range]');if(!b)return;detailRange=b.dataset.detailRange;qa('#detailPeriodSwitch button').forEach(x=>x.classList.toggle('active',x===b));renderTransactions();};$('transactionDate').value=dayKey(Date.now());$('transactionDate').onchange=()=>{detailRange='date';qa('#detailPeriodSwitch button').forEach(x=>x.classList.remove('active'));renderTransactions();};
 $('transactionFilters').onclick=e=>{const b=e.target.closest('[data-filter]');if(!b)return;filter=b.dataset.filter;qa('#transactionFilters button').forEach(x=>x.classList.toggle('active',x===b));renderTransactions();};
 $('periodSwitch').onclick=e=>{const b=e.target.closest('[data-range]');if(!b)return;range=b.dataset.range;qa('#periodSwitch button').forEach(x=>x.classList.toggle('active',x===b));renderAnalytics();};
 /* Account data lives only in the Accounts tab. */
@@ -873,7 +863,7 @@ $('exportData').onclick=exportData;$('importData').onchange=e=>{const f=e.target
  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
  const n=(await all('transactions')).length+(await all('accounts')).length,lb=Number(localStorage.getItem('ledger.lastBackup')||0),lp=Number(localStorage.getItem('ledger.lastBackupPrompt')||0);
  if(n&&Date.now()-Math.max(lb,lp)>7*864e5){toast(lb?'已超过 7 天未备份，建议导出 Excel 备份。':'建议每 7 天导出一次 Excel 备份。');localStorage.setItem('ledger.lastBackupPrompt',String(Date.now()));}
- if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+ if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=6').catch(()=>{});
 })().catch(e=>message('初始化失败：'+e.message,'error'));
 })();
 </script></body></html>
