@@ -288,7 +288,7 @@ function affectsBalanceAt(a,eventAt){const v=verifiedTime(a);return !v||eventAt>
 const when=t=>new Date(time(t)).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const dayKey=ms=>{const d=new Date(ms);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
-function catIcon(c,type){const s=clean(c);if(type==='transfer')return'⇄';if(type==='balance_adjustment')return'≈';if(type==='refund')return'↩';const m=[[/餐|饭|吃|咖啡|奶茶|外卖|零食|饮|早|午|晚/,'🍜'],[/交通|打车|地铁|公交|出行|油|停车|高铁|机票/,'🚇'],[/购物|服饰|衣|数码|网购|日用/,'🛍'],[/住|房|租|水电|物业|燃气|话费|网费/,'🏠'],[/娱乐|游戏|电影|会员|旅/,'🎮'],[/医|药|健康|健身/,'💊'],[/教育|学|书|培训/,'📚'],[/工资|薪|奖金|理财|利息/,'💰'],[/红包|礼|人情/,'🧧'],[/借|还|垫/,'🤝']];for(const[r,i]of m)if(r.test(s))return i;return type==='income'?'＋':'🧾';}
+function catIcon(c,type){const s=clean(c);if(type==='transfer')return'⇄';if(type==='balance_adjustment')return'≈';if(type==='refund')return'↩';const m=[[/瑞幸|星巴克|咖啡|拿铁|奶茶|茶饮/,'☕'],[/icloud|云盘|会员|订阅|netflix|spotify|vip/,'♛'],[/加油|油站|充电|gas station/,'⛽'],[/保险|保费/,'🛡'],[/高速|通行费|停车|打车|地铁|公交|交通|高铁|机票/,'🚇'],[/房租|租房|物业|水电|电费|燃气|话费|网费/,'🏠'],[/餐|饭|吃|外卖|零食|饮|早|午|晚/,'🍜'],[/购物|服饰|衣|数码|网购|日用/,'🛍'],[/娱乐|游戏|电影|旅/,'🎮'],[/医|药|健康|健身/,'💊'],[/教育|学|书|培训/,'📚'],[/工资|薪|奖金|理财|利息/,'💰'],[/红包|礼|人情/,'🧧'],[/借|还|垫/,'🤝']];for(const[r,i]of m)if(r.test(s))return i;return type==='income'?'＋':'🧾';}
 
 /* ---------- 数据库 ---------- */
 function validBudgetDate(value){const s=clean(value).slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return'';const d=new Date(s+'T00:00:00');return Number.isFinite(d.getTime())&&dayKey(d.getTime())===s?s:'';}
@@ -791,7 +791,25 @@ async function saveSettings(){
 }
 async function testAPI(){if(!(await saveSettings()))return;const s=settings();if(!s.endpoint||!s.key){apiMessage('请填写 Endpoint 和 API Key。','error');return;}const b=$('testApi');busy(b,true);apiMessage('正在连接…');try{const data=await post(s,{model:s.model,messages:[{role:'user',content:'只返回JSON：{"connected":true}'}],temperature:0});if(!data.choices||!data.choices.length)throw Error('接口未返回模型内容');apiMessage('连接成功 · '+(data.model||s.model));}catch(e){apiMessage('连接失败 · '+e.message,'error');}finally{busy(b,false);}}
 async function uploadFiles(files){if(!files||!files.length)return;if(images.length>=5){message('一批最多上传 5 张。');return;}try{for(const f of Array.from(files).slice(0,5-images.length))images.push(await prepareImage(f));drawPics();}catch(e){message('图片读取失败：'+e.message,'error');}$('imageInput').value='';}
-function exportData(){Promise.all(STORES.map(all)).then(arr=>{const d={version:4,exportedAt:new Date().toISOString(),conversationHistory:history};STORES.forEach((s,i)=>d[s]=arr[i]);const u=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=u;a.download='ai-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();localStorage.setItem('ledger.lastBackup',String(Date.now()));setTimeout(()=>URL.revokeObjectURL(u),500);});}
+function xmlEsc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');}
+function xlsxColumn(n){let out='';for(n++;n;n=Math.floor((n-1)/26))out=String.fromCharCode(65+(n-1)%26)+out;return out;}
+function xlsxSheet(rows){const body=rows.map((row,ri)=>'<row r="'+(ri+1)+'">'+row.map((value,ci)=>{const ref=xlsxColumn(ci)+(ri+1);return typeof value==='number'&&Number.isFinite(value)?'<c r="'+ref+'"><v>'+value+'</v></c>':'<c r="'+ref+'" t="inlineStr"><is><t xml:space="preserve">'+xmlEsc(value)+'</t></is></c>';}).join('')+'</row>').join('');return'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'+body+'</sheetData></worksheet>';}
+function xlsxCrc32(bytes){let crc=-1;for(const b of bytes){crc^=b;for(let j=0;j<8;j++)crc=(crc>>>1)^((crc&1)?0xedb88320:0);}return(crc^-1)>>>0;}
+function makeXlsx(files){const enc=new TextEncoder(),local=[],central=[];let offset=0;for(const [name,content] of Object.entries(files)){const n=enc.encode(name),data=enc.encode(content),crc=xlsxCrc32(data),lh=new Uint8Array(30+n.length+data.length),lv=new DataView(lh.buffer);lv.setUint32(0,0x04034b50,true);lv.setUint16(4,20,true);lv.setUint16(8,0,true);lv.setUint32(14,crc,true);lv.setUint32(18,data.length,true);lv.setUint32(22,data.length,true);lv.setUint16(26,n.length,true);lh.set(n,30);lh.set(data,30+n.length);local.push(lh);const ch=new Uint8Array(46+n.length),cv=new DataView(ch.buffer);cv.setUint32(0,0x02014b50,true);cv.setUint16(4,20,true);cv.setUint16(6,20,true);cv.setUint32(16,crc,true);cv.setUint32(20,data.length,true);cv.setUint32(24,data.length,true);cv.setUint16(28,n.length,true);cv.setUint32(42,offset,true);ch.set(n,46);central.push(ch);offset+=lh.length;}const size=central.reduce((v,x)=>v+x.length,0),end=new Uint8Array(22),ev=new DataView(end.buffer);ev.setUint32(0,0x06054b50,true);ev.setUint16(8,files.length,true);ev.setUint16(10,files.length,true);ev.setUint32(12,size,true);ev.setUint32(16,offset,true);return new Blob([...local,...central,end],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});}
+async function exportData(){
+ const [tx,acs,recs]=await Promise.all([all('transactions'),all('accounts'),all('reconciliations')]);
+ const txRows=[['记录编号','日期时间','类型','金额','币种','付款账户','转入账户/收款人','商户','分类','备注','置信度'],...tx.slice().sort((a,b)=>time(a)-time(b)).map(t=>[t.id,new Date(time(t)).toLocaleString('zh-CN'),LABEL[t.type]||t.type,Number(t.amount||0),t.currency||'CNY',t.account||'',t.toPerson||t.toAccount||'',t.merchant||'',t.category||'',t.note||'',Number(t.confidence||0)])];
+ const movement=[['日期时间','账户','变动类型','变动金额','关联记录编号','说明'],...tx.flatMap(t=>{const rows=[];if(t.account)rows.push([new Date(time(t)).toLocaleString('zh-CN'),t.account,t.type==='income'?'收入':t.type==='refund'?'退款':t.type==='expense'?'支出':'转出',Number(t.fromDelta??(t.type==='income'||t.type==='refund'?t.amount:-t.amount)),t.id,t.merchant||t.note||'']);if(t.type==='transfer'&&t.transferKind!=='external'&&t.toAccount)rows.push([new Date(time(t)).toLocaleString('zh-CN'),t.toAccount,'转入',Number(t.toDelta??t.amount),t.id,t.note||'']);return rows;}),...recs.map(r=>[r.occurredAt||new Date(r.createdAt).toLocaleString('zh-CN'),r.accountName||'','余额校准',Number(r.difference||0),'',r.analysis||''])];
+ const accountRows=[['账户名称','账户类型','银行/机构','尾号','币种','当前余额','信用额度','可用额度','最后校准'],...acs.map(a=>[a.name,accountTypeName(accountTypeOf(a)),a.institution||'',a.last4||'',a.currency||'CNY',Number(a.balance||0),Number(a.creditLimit||0),Number(a.availableCredit||0),a.verifiedAt?new Date(a.verifiedAt).toLocaleString('zh-CN'):''])];
+ const calRows=[['账户','校准时间','校准前余额','校准后余额','差额','说明'],...recs.map(r=>[r.accountName||'',r.occurredAt||'',Number(r.previousBalance||0),Number(r.statementBalance||0),Number(r.difference||0),r.analysis||''])];
+ const sheets=[txRows,movement,accountRows,calRows],names=['消费明细','账户变动','账户总览','校准历史'],files={
+ '[Content_Types].xml':'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+sheets.map((x,i)=>'<Override PartName="/xl/worksheets/sheet'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>').join('')+'</Types>',
+ '_rels/.rels':'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>',
+ 'xl/workbook.xml':'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+names.map((n,i)=>'<sheet name="'+n+'" sheetId="'+(i+1)+'" r:id="rId'+(i+1)+'"/>').join('')+'</sheets></workbook>',
+ 'xl/_rels/workbook.xml.rels':'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+sheets.map((x,i)=>'<Relationship Id="rId'+(i+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet'+(i+1)+'.xml"/>').join('')+'</Relationships>'};
+ sheets.forEach((rows,i)=>files['xl/worksheets/sheet'+(i+1)+'.xml']=xlsxSheet(rows));
+ const blob=makeXlsx(files),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='AI-Ledger-'+dayKey(Date.now())+'.xlsx';a.click();localStorage.setItem('ledger.lastBackup',String(Date.now()));localStorage.setItem('ledger.lastBackupPrompt',String(Date.now()));setTimeout(()=>URL.revokeObjectURL(url),1500);toast('Excel 已导出：消费明细、账户变动、账户总览和校准历史。');
+}
 async function importData(f){
  let d;try{d=JSON.parse(await f.text());}catch(e){throw Error('文件不是有效的 JSON');}
  if(!d||typeof d!=='object'||Array.isArray(d))throw Error('备份文件格式不正确');
@@ -802,10 +820,10 @@ async function importData(f){
  for(const s of present){if(!Array.isArray(d[s]))throw Error('「'+s+'」数据格式不正确');if(d[s].some(x=>!x||typeof x!=='object'||x.id==null||x.id===''))throw Error('「'+s+'」中存在缺少 id 的记录');}
  for(const s of ['accounts','transactions'])if(Array.isArray(d[s])&&d[s].some(x=>s==='accounts'?!Number.isFinite(Number(x.balance??0)):!Number.isFinite(Number(x.amount??0))))throw Error('「'+s+'」中存在无效的金额');
  if(Array.isArray(d.dailyBudgets)){for(const x of d.dailyBudgets){const date=validBudgetDate(x.effectiveFrom),amount=Number(x.amount);if(!date||!Number.isFinite(amount)||amount<=0||amount>1e7)throw Error('每日预算中存在无效的生效日期或金额');x.effectiveFrom=date;}}
- for(const s of present){await clear(s);for(const x of d[s])await put(s,x);} if(Array.isArray(d.conversationHistory)){history=d.conversationHistory.slice(-40);try{localStorage.setItem('ledger.hist',JSON.stringify(history));}catch(e){}setHistCount();}
+ for(const s of present){await clear(s);for(const x of d[s])await put(s,x);} if(Array.isArray(d.conversationHistory)){history=[];await clear('conversationHistory');for(const h of d.conversationHistory){const row={id:uid(),role:h.role||'assistant',content:String(h.content||''),createdAt:Number(h.createdAt)||Date.now()};history.push(row);await put('conversationHistory',row);}setHistCount();renderConversation();}
  await renderAll();
 }
-async function clearData(){for(const s of ['accounts','transactions','reconciliations','budgets','dailyBudgets'])await clear(s);pending=null;undoSnap=null;images=[];history=[];try{sessionStorage.removeItem('ledger.hist');localStorage.removeItem('ledger.hist');}catch(e){}setHistCount();drawPics();$('naturalInput').value='';$('naturalInput').placeholder=PLACEHOLDER;$('resetConfirm').hidden=true;await renderAll();apiMessage('账户与历史记录已重置，API 设置保留。');}
+async function clearData(){for(const s of ['accounts','transactions','reconciliations','budgets','dailyBudgets','conversationHistory'])await clear(s);pending=null;undoSnap=null;images=[];history=[];try{sessionStorage.removeItem('ledger.hist');localStorage.removeItem('ledger.hist');}catch(e){}setHistCount();drawPics();$('naturalInput').value='';$('naturalInput').placeholder=PLACEHOLDER;$('resetConfirm').hidden=true;await renderAll();apiMessage('账户与历史记录已重置，API 设置保留。');}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;});
 
 qa('.tab').forEach(b=>b.onclick=()=>goto(b.dataset.page));
@@ -816,26 +834,25 @@ $('analyzeText').onclick=analyse;
 $('naturalInput').oninput=syncExamples;
 $('naturalInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();analyse();}});
 $('examples').onclick=e=>{const b=e.target.closest('[data-ex]');if(!b)return;$('naturalInput').value=b.dataset.ex;syncExamples();$('naturalInput').focus();};
-$('toggleHide').onclick=()=>{hideAmt=!hideAmt;localStorage.setItem('ledger.hide',hideAmt?'1':'0');renderAll();};
+/* amount visibility toggle removed: light budget-first dashboard */
 $('transactionList').onclick=e=>{
  const d=e.target.closest('[data-delete]');if(d){deleteTx(d.dataset.delete,d.dataset.deleteKind);return;} if(Date.now()-(window.__swipeSuppress||0)<350)return;
  const shell=e.target.closest('.swipe-shell');if(!shell)return;
  if(shell.classList.contains('open')){shell.classList.remove('open');return;}
  if(shell.dataset.kind==='transaction')openEdit(shell.dataset.rowId);
 };
-$('homeAccounts').onclick=e=>{const b=e.target.closest('[data-home-account]');if(b)openAccountModal(b.dataset.homeAccount);};
+$('assetAccounts').onclick=e=>{const b=e.target.closest('[data-account-id]');if(b)openAccountModal(b.dataset.accountId);};$('liabilityAccounts').onclick=e=>{const b=e.target.closest('[data-account-id]');if(b)openAccountModal(b.dataset.accountId);};
 $('transactionSearch').oninput=renderTransactions;
 $('detailPeriodSwitch').onclick=e=>{const b=e.target.closest('[data-detail-range]');if(!b)return;detailRange=b.dataset.detailRange;qa('#detailPeriodSwitch button').forEach(x=>x.classList.toggle('active',x===b));renderTransactions();};
 $('transactionFilters').onclick=e=>{const b=e.target.closest('[data-filter]');if(!b)return;filter=b.dataset.filter;qa('#transactionFilters button').forEach(x=>x.classList.toggle('active',x===b));renderTransactions();};
 $('periodSwitch').onclick=e=>{const b=e.target.closest('[data-range]');if(!b)return;range=b.dataset.range;qa('#periodSwitch button').forEach(x=>x.classList.toggle('active',x===b));renderAnalytics();};
-$('toggleAnalyticsAssets').onclick=()=>{hideAnalyticsAssets=!hideAnalyticsAssets;try{localStorage.setItem('ledger.analyticsAssetsHidden',hideAnalyticsAssets?'1':'0');}catch(e){}renderAnalytics();};
-$('toggleAccountAnalytics').onclick=()=>{analyticsAccountsCollapsed=!analyticsAccountsCollapsed;try{localStorage.setItem('ledger.analyticsAccountsCollapsed',analyticsAccountsCollapsed?'1':'0');}catch(e){}applyAnalyticsControls();};
+/* Account data lives only in the Accounts tab. */
 $('trendChart').onclick=e=>{const r=e.target.closest('[data-m]');if(!r)return;trendSel=Number(r.dataset.m);renderAnalytics();};
 $('categoryLegend').onclick=e=>{const b=e.target.closest('[data-cat]');if(!b)return;selCat=selCat===b.dataset.cat?null:b.dataset.cat;renderAnalytics();};
-$('saveSettings').onclick=saveSettings;$('testApi').onclick=testAPI;$('runFinanceAnalysis').onclick=runFinanceAnalysis;$('trendSwitch').onclick=e=>{const b=e.target.closest('[data-trend]');if(!b)return;trendMode=b.dataset.trend;trendSel=null;qa('#trendSwitch button').forEach(x=>x.classList.toggle('active',x===b));renderAnalytics();};$('histAllowed').onchange=e=>{localStorage.setItem('ledger.histAllowed',e.target.checked?'1':'0');toast(e.target.checked?'AI 将结合本地对话历史分析':'AI 将不再调用对话历史');};$('clearHist').onclick=()=>{history=[];try{localStorage.removeItem('ledger.hist');sessionStorage.removeItem('ledger.hist');}catch(e){}setHistCount();toast('对话历史已清除');};
+$('saveSettings').onclick=saveSettings;$('testApi').onclick=testAPI;$('runFinanceAnalysis').onclick=runFinanceAnalysis;$('trendSwitch').onclick=e=>{const b=e.target.closest('[data-trend]');if(!b)return;trendMode=b.dataset.trend;trendSel=null;qa('#trendSwitch button').forEach(x=>x.classList.toggle('active',x===b));renderAnalytics();};$('clearHist').onclick=async()=>{history=[];await clear('conversationHistory');try{localStorage.removeItem('ledger.hist');sessionStorage.removeItem('ledger.hist');}catch(e){}setHistCount();renderConversation();toast('对话历史已清除');};
 $('saveRules').onclick=()=>{localStorage.setItem('ledger.rules',clean($('rulesInput').value));localStorage.setItem('ledger.autosave',$('autoSave').checked?'1':'0');toast('记账偏好已保存');};
 $('autoSave').onchange=()=>localStorage.setItem('ledger.autosave',$('autoSave').checked?'1':'0');
-$('accountAnalytics').onclick=e=>{const b=e.target.closest('[data-account-id]');if(b)openAccountModal(b.dataset.accountId);};
+/* Account cards handled in the dedicated Accounts tab. */
 $('sheet').onclick=async e=>{
  if(e.target===$('sheet')){closeSheet();return;}
  const b=e.target.closest('[data-act]');if(!b)return;const act=b.dataset.act;
@@ -846,16 +863,16 @@ $('sheet').onclick=async e=>{
 };
 $('toastUndo').onclick=async()=>{if(!undoSnap)return;const s=undoSnap;undoSnap=null;await restore(s);await renderAll();$('toastUndo').hidden=true;toast('已撤销');};
 $('resetRecords').onclick=()=>$('resetConfirm').hidden=false;$('cancelReset').onclick=()=>$('resetConfirm').hidden=true;$('confirmReset').onclick=clearData;
-$('fontScaleSlider').oninput=e=>applyFontScale(e.target.value);$('themeSelect').onclick=e=>{const b=e.target.closest('[data-theme]');if(b)applyTheme(b.dataset.theme);};
+$('fontScaleSlider').oninput=e=>applyFontScale(e.target.value);applyTheme('light');
 $('exportData').onclick=exportData;$('importData').onchange=e=>{const f=e.target.files&&e.target.files[0];if(f)importData(f).then(()=>apiMessage('导入完成。')).catch(err=>apiMessage('导入失败：'+err.message,'error'));e.target.value='';};
 
 (async()=>{
- const s=settings();$('apiEndpoint').value=s.endpoint;$('apiKey').value=s.key;$('apiModel').value=s.model;$('rulesInput').value=s.rules;$('autoSave').checked=s.auto;$('histAllowed').checked=histAllowed();setHistCount();
- applyTheme(localStorage.getItem('ledger.theme')||'system');applyFontScale(localStorage.getItem('ledger.fontScale')||1);
- await openDB();await renderAll();syncExamples();
+ const s=settings();$('apiEndpoint').value=s.endpoint;$('apiKey').value=s.key;$('apiModel').value=s.model;$('rulesInput').value=s.rules;$('autoSave').checked=s.auto;setHistCount();
+ applyTheme('light');applyFontScale(localStorage.getItem('ledger.fontScale')||1);
+ await openDB();await loadHistory();await renderAll();syncExamples();
  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
- const n=(await all('transactions')).length+(await all('accounts')).length,lb=Number(localStorage.getItem('ledger.lastBackup')||0);
- if(n&&Date.now()-lb>14*864e5)toast(lb?'已超过 14 天未备份，建议在设置中导出备份。':'还没有备份过数据，建议在设置中导出备份。');
+ const n=(await all('transactions')).length+(await all('accounts')).length,lb=Number(localStorage.getItem('ledger.lastBackup')||0),lp=Number(localStorage.getItem('ledger.lastBackupPrompt')||0);
+ if(n&&Date.now()-Math.max(lb,lp)>7*864e5){toast(lb?'已超过 7 天未备份，建议导出 Excel 备份。':'建议每 7 天导出一次 Excel 备份。');localStorage.setItem('ledger.lastBackupPrompt',String(Date.now()));}
  if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 })().catch(e=>message('初始化失败：'+e.message,'error'));
 })();
