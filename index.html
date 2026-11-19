@@ -747,7 +747,7 @@ function buildVisionContent(userText,base64List,ocrText,imageDetail){
 async function callAI(text,pics,extra,opt){
  const s=settings();if(!s.endpoint||!s.key)throw Error('请先在设置中配置 API。');
  const imageItems=(pics||[]).map(p=>typeof p==='string'?{file:null,dataUrl:p,previewUrl:p}:p).filter(p=>p&&(p.dataUrl||p.previewUrl));
- const ctx=await context(imageItems.length>0);
+ const ctx=await context(true);
  const base64List=imageItems.map(p=>p.previewUrl||p.dataUrl).filter(Boolean);
  const endpointHost=(()=>{try{return new URL(s.endpoint).hostname.toLowerCase();}catch(e){return'';}})(),isDeepSeek=endpointHost==='deepseek.com'||endpointHost.endsWith('.deepseek.com');
  const imageDetail=imageItems.length&&isDeepSeek?'low':null;
@@ -756,7 +756,7 @@ async function callAI(text,pics,extra,opt){
  const readContent=d=>{const ch=d&&d.choices&&d.choices[0],value=content(d);if(ch&&ch.finish_reason==='length')throw Error('AI 输出达到长度上限，无法得到完整结果。请缩短本次描述或清理较早的对话历史后重试。');if(!clean(value))throw Error('AI 返回了空内容。请检查模型设置、JSON 输出状态或重试。');return value;};
  const request=async ocrText=>{
   const userContent=imageItems.length?buildVisionContent(text,base64List,ocrText,imageDetail):(text||'请根据上下文理解用户的财务指令。');
-  const msgs=[{role:'system',content:prompt(ctx)},...historyForAI(imageItems.length>0),{role:'user',content:userContent},...(extra||[])];
+  const msgs=[{role:'system',content:prompt(ctx)},...historyForAI(true),{role:'user',content:userContent},...(extra||[])];
   const body=()=>({model,messages:msgs,temperature:.15,max_tokens:imageItems.length?4096:8192,response_format:{type:'json_object'}});
   let data=await post(s,body(),imageItems.length?60000:90000),c='',r;
   try{c=readContent(data);r=parse(c);}catch(e){
