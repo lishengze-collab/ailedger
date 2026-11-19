@@ -339,7 +339,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 
 /* 固定首页工作区：只允许对话记录与输入框内部滚动 */
 #page-home.active{height:calc(100dvh - env(safe-area-inset-top,0px) - var(--safe) - 82px)!important;min-height:0!important;overflow:hidden!important;overscroll-behavior:none!important;padding-bottom:0!important;}
-#app:has(#page-home.active){padding-bottom:calc(72px + var(--safe))!important;}
+/* Removed obsolete bottom-taskbar reservation from the first tab. */
 #page-home .home-overview{flex:0 0 auto;}
 #page-home .capture{flex:1 1 0!important;height:auto!important;min-height:0!important;overflow:hidden!important;}
 #page-home .capture-input{display:flex;flex:1 1 0!important;flex-direction:column;min-height:0!important;overflow:hidden!important;}
