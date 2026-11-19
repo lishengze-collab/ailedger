@@ -262,7 +262,7 @@ const DB='ai-ledger-v1',VERSION=5,STORES=['accounts','transactions','budgets','t
 const PLACEHOLDER='描述一笔收支，或上传银行卡 / 支付截图……';
 const MONEY=['expense','income','transfer','refund'];
 const TYPES=[...MONEY,'create_account','budget','daily_budget','balance_snapshot','update_transaction','delete_transaction','rename_account','delete_account','preference'];
-const SAFE=new Set(['expense','income','transfer','refund','create_account','budget','daily_budget']);
+const SAFE=new Set(['expense','income','transfer','refund','create_account','budget','daily_budget','preference']);
 const TYPE_COLOR={credit_card:'#e0733f',savings_card:'#3f7de0',debit_card:'#3f7de0',payment:'#2fa86a',wallet:'#8a5ae0',cash:'#c9a227',other:'#8a929c'};
 let db=null,pending=null,images=[],range='month',detailRange='day',filter='all',deferredInstall=null,undoSnap=null,selCat=null,trendSel=null,trendMode='month',toastTimer=null,editId=null,busyAI=false;
 const EYE_ON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
@@ -589,7 +589,7 @@ async function commit(actions,auto){
  if(!ok)undoSnap=null;
  pushHist('assistant',(ok?'已'+(auto?'自动':'')+'执行 '+ok+' 项：'+good.filter(a=>!failed.some(x=>x.action===a)).map(brief).join('；'):'本次没有成功执行操作。')+(notes.length?'。'+notes.join('；'):'')+(failed.length?'。未完成：'+failed.map(x=>brief(x.action)+'（'+x.error+'）').join('；'):''));
  await renderAll();
- const left=bad.concat(failed.map(x=>x.action));if(left.length){pending={actions:left};pushHist('assistant','剩余 '+left.length+' 项需要补充或确认：'+left.map(a=>issues(a).join('、')).join('；'));}else{pending=null;$('naturalInput').value='';images=[];drawPics();$('imageInput').value='';syncExamples();message('');}
+ const left=bad.concat(failed.map(x=>x.action));if(left.length){pending={actions:left,awaitingConfirmation:false};pushHist('assistant','剩余 '+left.length+' 项需要补充或调整：'+left.map(a=>issues(a).join('、')).join('；')+'。请直接告诉我账户或具体修改内容。');}else{pending=null;$('naturalInput').value='';images=[];drawPics();$('imageInput').value='';syncExamples();message('');}
  toast((auto?'已自动记录 ':'已记录 ')+ok+' 项'+(notes.length?'。'+notes.join(' '):''),ok>0);
  return ok>0;
 }
@@ -610,7 +610,7 @@ function cardHtml(a,i,txs,acs){
  const low=a.confidence<.75?'<span class="conf">置信度较低，请核对</span>':'';
  return'<div class="acard"><div class="acard-head"><span class="tag t-'+esc(a.type)+'">'+esc((i+1)+' · '+(LABEL[a.type]||a.type))+'</span>'+low+'</div>'+body+(p.length?'<div class="warn">待补充：'+esc(p.join('、'))+'</div>':'')+'</div>';
 }
-async function openConfirm(r,sub){pending={actions:r.actions||[]};pushHist('assistant',(r.answer||r.analysis||'识别到待执行操作：')+' '+pending.actions.map(brief).join('；')+'。回复“确认”执行，回复“取消”放弃。'+(sub?' '+sub:''));message('等待文字确认：确认 / 取消');}
+async function openConfirm(r,sub){pending={actions:r.actions||[],awaitingConfirmation:true};pushHist('assistant',(r.answer||r.analysis||'识别到待执行操作：')+' '+pending.actions.map(brief).join('；')+'。回复“确认”执行，回复“取消”放弃。'+(sub?' '+sub:''));message('等待文字确认：确认 / 取消');}
 function collectEdits(){qa('#sheetBody [data-i]').forEach(inp=>{const a=pending&&pending.actions[inp.dataset.i];if(!a)return;const f=inp.dataset.f,v=clean(inp.value);if(f==='amount')a.amount=parseAmount(v);else a[f]=v;});}
 function showAnswer(r){const text=(r.answer||r.analysis||r.clarification||'已理解。').trim();if(text)pushHist('assistant',text);message('');}
 
@@ -626,22 +626,23 @@ async function prepareImage(f){
  const scale=Math.min(1,1800/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.84);
 }
 async function analyse(){
- if(busyAI)return;const text=clean($('naturalInput').value),pics=images.slice();
- if(!text&&!pics.length){message('直接输入自然语言指令即可；图片仅为可选辅助。');return;}
- if(pending){
+ if(busyAI)return;const text=clean($('naturalInput').value),pics=images.slice();if(!text&&!pics.length){message('直接输入自然语言指令即可；图片仅为可选辅助。');return;}
+ if(pending&&pending.awaitingConfirmation){
   if(/^(确认|是|好|好的|执行|可以|对|没问题|同意|保存|记录)(吧|即可)?[。！! ]*$/i.test(text)){pushHist('user',text);const actions=pending.actions||[];pending=null;await commit(actions,false);return;}
   if(/^(取消|否|不|不要|不执行|算了|撤销|放弃)[。！! ]*$/i.test(text)){pushHist('user',text);pending=null;pushHist('assistant','已取消待执行操作，没有更改数据。');$('naturalInput').value='';message('已取消。');return;}
-  message('上一项操作仍待确认，请回复“确认”执行或“取消”放弃。','error');return;
  }
- const b=$('analyzeText');busyAI=true;busy(b,true);message('AI 正在结合完整对话历史、账户与历史明细分析……');pushHist('user',text+(pics.length?'［附 '+pics.length+' 张图片］':''));
- try{const r=await converse(text,pics);await route(r);}catch(e){pushHist('assistant','处理失败：'+e.message);message(e.message,'error');}
+ let inputText=text;
+ if(pending){inputText='继续处理上一项操作。之前待处理动作：'+JSON.stringify(pending.actions||[])+'。用户现在补充或修改为：'+text;pending=null;}
+ const b=$('analyzeText');busyAI=true;busy(b,true);message('AI 正在结合完整对话历史、账户、历史流水和偏好分析……');
+ try{const r=await converse(inputText,pics);pushHist('user',text+(pics.length?'［附 '+pics.length+' 张图片］':''));await route(r);}
+ catch(e){pushHist('user',text);pushHist('assistant','处理失败：'+e.message);message(e.message,'error');}
  finally{busyAI=false;busy(b,false);}
 }
 async function route(r){
  const actions=r.actions||[],bad=actions.filter(a=>issues(a).length),auto=settings().auto&&!r.needsClarification&&!bad.length&&actions.length&&actions.every(a=>SAFE.has(a.type)&&a.confidence>=.75);
  $('naturalInput').placeholder=PLACEHOLDER;
- if(!actions.length){showAnswer(r);return;}
- if(bad.length||r.needsClarification||r.intent==='clarify'){pending={actions};const q=r.clarification||bad.map(a=>issues(a).join('、')).join('；')||r.answer||'请补充缺少的信息。';pushHist('assistant','还需要补充：'+q+'。直接在输入框回答即可，不需要图片。');return;}
+ if(!actions.length){showAnswer(r);$('naturalInput').value='';syncExamples();return;}
+ if(bad.length||r.needsClarification||r.intent==='clarify'){pending={actions,awaitingConfirmation:false};const q=r.clarification||bad.map(a=>issues(a).join('、')).join('；')||r.answer||'请补充缺少的信息。';pushHist('assistant','还需要补充：'+q+'。直接在输入框回答即可，不需要图片。');return;}
  if(auto){await commit(actions,true);return;}
  await openConfirm(r,'请回复“确认”执行，或“取消”放弃。');
 }
@@ -672,9 +673,9 @@ async function saveEdit(){
 
 /* ---------- 渲染 ---------- */
 function txHtml(t){
- const label=t.type==='income'?'收入':t.type==='transfer'?(t.transferKind==='external'?'转给他人':'内部转账'):t.type==='refund'?'退款':t.type==='balance_adjustment'?'校准':'支出',sign=t.type==='income'||t.type==='refund'?'+':(t.type==='expense'||(t.type==='transfer'&&t.transferKind==='external'))?'-':'',title=t.merchant||t.category||(t.items&&t.items[0])||label;
- const color=t.type==='income'||t.type==='refund'?'income-text':(t.type==='expense'||(t.type==='transfer'&&t.transferKind==='external'))?'expense-text':'',kind=t.sourceReconciliation?'reconciliation':'transaction';
- return '<div class="swipe-shell" data-row-id="'+esc(t.id)+'" data-kind="'+kind+'"><button class="swipe-delete" data-delete="'+esc(t.id)+'" data-delete-kind="'+kind+'">删除</button><div class="swipe-content"><div class="item"><div class="symbol">'+catIcon(t.category||t.merchant,t.type)+'</div><div class="item-main"><b>'+esc(title)+'</b><small>'+esc([t.account||(t.type==='expense'||t.type==='income'?'未关联账户':''),t.type==='transfer'?('→ '+(t.toPerson||t.toAccount||'')):t.category,t.neutral?'不计收支':'',new Date(time(t)).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})].filter(Boolean).join(' · '))+'</small></div><div class="item-right"><b class="'+color+'">'+sign+money(t.amount,t.currency)+'</b><small>'+label+'</small></div></div></div></div>';
+ const label=t.type==='income'?'收入':t.type==='transfer'?(t.transferKind==='external'?'转给他人':'内部转账'):t.type==='refund'?'退款':'支出',sign=t.type==='income'||t.type==='refund'?'+':(t.type==='expense'||(t.type==='transfer'&&t.transferKind==='external'))?'-':'',title=t.merchant||t.category||(t.items&&t.items[0])||label;
+ const color=t.type==='income'||t.type==='refund'?'income-text':(t.type==='expense'||(t.type==='transfer'&&t.transferKind==='external'))?'expense-text':'';
+ return '<div class="swipe-shell" data-row-id="'+esc(t.id)+'" data-kind="transaction"><button class="swipe-delete" data-delete="'+esc(t.id)+'" data-delete-kind="transaction">删除</button><div class="swipe-content"><div class="item"><div class="symbol">'+catIcon(t.category||t.merchant,t.type)+'</div><div class="item-main"><b>'+esc(title)+'</b><small title="编号 '+esc(t.id)+'">'+esc([t.account||(t.type==='expense'||t.type==='income'?'未关联账户':''),t.type==='transfer'?('→ '+(t.toPerson||t.toAccount||'')):t.category,'编号 '+t.id.slice(0,8),new Date(time(t)).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})].filter(Boolean).join(' · '))+'</small></div><div class="item-right"><b class="'+color+'">'+sign+money(t.amount,t.currency)+'</b><small>'+label+'</small></div></div></div></div>';
 }
 function isDetailRange(t){
  const d=new Date(time(t)),n=new Date(),ts=time(t);
@@ -710,7 +711,7 @@ async function renderTransactions(){
  if(date&&!date.value)date.value=dayKey(Date.now());
  const detail=tx.filter(isDetailRange),income=incOf(detail),expense=expOf(detail);
  $('detailIncome').textContent=money(income);$('detailExpense').textContent=money(expense);$('detailNet').textContent=money(r2(income-expense));
- const rows=tx.slice().sort((a,b)=>time(b)-time(a)).filter(t=>(filter==='all'||filter===t.type||(filter==='income'&&t.type==='refund')||(filter==='transfer_external'&&t.type==='transfer'&&t.transferKind==='external'))&&(!q||[t.id,t.merchant,t.account,t.toPerson,t.toAccount,t.category,t.note].join(' ').toLowerCase().includes(q)));
+ const rows=tx.slice().sort((a,b)=>time(b)-time(a)).filter(t=>(detailRange!=='date'||isDetailRange(t))&&(filter==='all'||filter===t.type||(filter==='income'&&t.type==='refund')||(filter==='transfer_external'&&t.type==='transfer'&&t.transferKind==='external'))&&(!q||[t.id,t.merchant,t.account,t.toPerson,t.toAccount,t.category,t.note].join(' ').toLowerCase().includes(q)));
  $('transactionCount').textContent=rows.length+' 条';
  if(!rows.length){$('transactionList').innerHTML='<div class="empty">没有匹配记录</div>';return;}
  const groups=[];rows.forEach(t=>{const k=dayKey(time(t)),g=groups[groups.length-1];if(g&&g.k===k)g.l.push(t);else groups.push({k,l:[t]});});
