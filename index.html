@@ -631,8 +631,8 @@ trends:{last7Days:sum(tx.filter(t=>time(t)>=now.getTime()-6*864e5)),last4Weeks:s
 externalTransfersThisMonth:r2(monthTx.filter(t=>t.type==='transfer'&&t.transferKind==='external').reduce((s2,t)=>s2+amt(t),0))
 };
 }
-function historyForAI(){
- const maxMessages=36,maxChars=24000,maxPerMessage=2800,src=history.slice(-maxMessages),out=[];let used=0;
+function historyForAI(compact=false){
+ const maxMessages=compact?24:36,maxChars=compact?16000:24000,maxPerMessage=compact?2000:2800,src=history.slice(-maxMessages),out=[];let used=0;
  for(let i=src.length-1;i>=0;i--){const h=src[i];let content=String(h.content||'');if(content.length>maxPerMessage)content=content.slice(-maxPerMessage)+'…（较早内容已截断）';if(used+content.length>maxChars){if(!out.length&&maxChars-used>200)content=content.slice(-(maxChars-used));else break;}out.unshift({role:h.role==='user'?'user':'assistant',content});used+=content.length;if(used>=maxChars)break;}
  return out;
 }
@@ -711,7 +711,7 @@ async function callAI(text,pics,extra,opt){
  const readContent=d=>{const ch=d&&d.choices&&d.choices[0],value=content(d);if(ch&&ch.finish_reason==='length')throw Error('AI 输出达到长度上限，无法得到完整结果。请缩短本次描述或清理较早的对话历史后重试。');if(!clean(value))throw Error('AI 返回了空内容。请检查模型设置、JSON 输出状态或重试。');return value;};
  const request=async ocrText=>{
   const userContent=imageItems.length?buildVisionContent(text,base64List,ocrText):(text||'请根据上下文理解用户的财务指令。');
-  const msgs=[{role:'system',content:prompt(ctx)},...historyForAI(),{role:'user',content:userContent},...(extra||[])];
+  const msgs=[{role:'system',content:prompt(ctx)},...historyForAI(imageItems.length>0),{role:'user',content:userContent},...(extra||[])];
   const body=()=>({model,messages:msgs,temperature:.15,max_tokens:8192,response_format:{type:'json_object'}});
   let data=await post(s,body()),c='',r;
   try{c=readContent(data);r=parse(c);}catch(e){
@@ -725,7 +725,7 @@ async function callAI(text,pics,extra,opt){
  message('正在由 deepseek-flash 直接识别原图…');
  try{const result=await request('');message('');return result;}
  catch(primaryError){
-  const files=imageItems.map(p=>p.file).filter(Boolean);
+  const files=imageItems.map(p=>p.ocrFile||p.file).filter(Boolean);
   if(!files.length)throw primaryError;
   message('FLASH 识别未完成，正在使用 OCR 补充后重试…');
   const results=await deepseekOCRMany(files),ok=results.filter(r=>r.ok&&r.text);
@@ -928,11 +928,14 @@ function drawPics(){$('attachments').innerHTML=images.map((x,i)=>'<div class="at
 async function prepareImage(f){
  if(!f.type.startsWith('image/'))throw Error('只支持图片文件');
  if(f.size>100*1024*1024)throw Error('单张图片不能超过 100 MiB');
- const src=await new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=()=>no(r.error);r.readAsDataURL(f);});
- const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=src;});
- const scale=Math.min(1,1800/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
- const optimized=c.toDataURL('image/jpeg',.82);
- return{file:f,dataUrl:optimized,previewUrl:optimized};
+ const src=URL.createObjectURL(f);
+ try{
+  const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=()=>no(new Error('图片无法读取'));i.src=src;});
+  const scale=Math.min(1,1800/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  const optimized=c.toDataURL('image/jpeg',.82),blob=await new Promise(resolve=>c.toBlob(resolve,'image/jpeg',.82));
+  const baseName=String(f.name||'upload').replace(/\\.[^.]*$/,'')||'upload',ocrFile=blob?new File([blob],baseName+'.jpg',{type:'image/jpeg'}):f;
+  return{file:f,ocrFile,dataUrl:optimized,previewUrl:optimized};
+ }finally{URL.revokeObjectURL(src);}
 }
 async function analyse(){
  if(busyAI)return;const text=clean($('naturalInput').value),pics=images.slice();if(!text&&!pics.length){message('直接输入自然语言指令即可；图片仅为可选辅助。');return;}
