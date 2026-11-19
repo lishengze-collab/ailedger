@@ -258,10 +258,10 @@ textarea.input{height:96px;padding:10px 11px;line-height:1.5;resize:vertical}
 (function(){
 'use strict';
 const $=id=>document.getElementById(id),qa=s=>Array.from(document.querySelectorAll(s));
-const DB='ai-ledger-v1',VERSION=4,STORES=['accounts','transactions','budgets','tokenUsage','settings','reconciliations','dailyBudgets'],SNAP=['accounts','transactions','budgets','reconciliations','dailyBudgets'];
+const DB='ai-ledger-v1',VERSION=5,STORES=['accounts','transactions','budgets','tokenUsage','settings','reconciliations','dailyBudgets','conversationHistory'],SNAP=['accounts','transactions','budgets','reconciliations','dailyBudgets'];
 const PLACEHOLDER='描述一笔收支，或上传银行卡 / 支付截图……';
 const MONEY=['expense','income','transfer','refund'];
-const TYPES=[...MONEY,'create_account','budget','daily_budget','balance_snapshot','update_transaction','delete_transaction','rename_account'];
+const TYPES=[...MONEY,'create_account','budget','daily_budget','balance_snapshot','update_transaction','delete_transaction','rename_account','delete_account','preference'];
 const SAFE=new Set(['expense','income','transfer','refund','create_account','budget','daily_budget']);
 const TYPE_COLOR={credit_card:'#e0733f',savings_card:'#3f7de0',debit_card:'#3f7de0',payment:'#2fa86a',wallet:'#8a5ae0',cash:'#c9a227',other:'#8a929c'};
 let db=null,pending=null,images=[],range='month',detailRange='day',filter='all',deferredInstall=null,undoSnap=null,selCat=null,trendSel=null,trendMode='month',toastTimer=null,editId=null,busyAI=false;
@@ -271,7 +271,7 @@ let hideAmt=false;try{hideAmt=localStorage.getItem('ledger.hide')==='1';}catch(e
 let hideAnalyticsAssets=false,analyticsAccountsCollapsed=true;
 try{hideAnalyticsAssets=localStorage.getItem('ledger.analyticsAssetsHidden')==='1';analyticsAccountsCollapsed=localStorage.getItem('ledger.analyticsAccountsCollapsed')!=='0';}catch(e){}
 let history=[];try{const savedHistory=JSON.parse(localStorage.getItem('ledger.hist')||sessionStorage.getItem('ledger.hist')||'[]');if(Array.isArray(savedHistory))history=savedHistory;}catch(e){}
-function histAllowed(){return localStorage.getItem('ledger.histAllowed')!=='0';}
+function histAllowed(){return true;}
 function setHistCount(){const e=$('histCount');if(e)e.textContent=history.length+' 条';}
 const uid=()=>crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);
 const clean=v=>String(v==null?'':v).trim();
@@ -336,7 +336,8 @@ function toast(text,undo){const t=$('toast');$('toastText').textContent=text;$('
 function busy(b,on){if(on){b.dataset.prev=b.innerHTML;b.disabled=true;b.innerHTML='<span class="spinner"></span>';}else{b.disabled=false;if(b.dataset.prev){b.innerHTML=b.dataset.prev;delete b.dataset.prev;}}}
 function showSheet(o){$('sheetTitle').textContent=o.title||'';$('sheetSub').textContent=o.sub||'';$('sheetBody').innerHTML=o.body||'';$('sheetFoot').innerHTML=o.foot||'';$('sheet').hidden=false;$('sheetBody').scrollTop=0;}
 function closeSheet(){$('sheet').hidden=true;}
-function pushHist(role,content){history.push({role,content:String(content).slice(0,1500)});history=history.slice(-40);try{localStorage.setItem('ledger.hist',JSON.stringify(history));}catch(e){try{sessionStorage.setItem('ledger.hist',JSON.stringify(history));}catch(_){}}setHistCount();}
+function pushHist(role,content){const row={id:uid(),role,content:String(content),createdAt:Date.now()};history.push(row);if(db&&historyReady)put('conversationHistory',row).catch(()=>{});else try{localStorage.setItem('ledger.hist',JSON.stringify(history));}catch(e){}setHistCount();renderConversation();}
+async function loadHistory(){const rows=await all('conversationHistory');if(rows.length)history=rows.sort((a,b)=>Number(a.createdAt||0)-Number(b.createdAt||0));else if(history.length){const old=history.slice();history=[];for(const h of old){const row={id:uid(),role:h.role||'assistant',content:String(h.content||''),createdAt:Date.now()};history.push(row);await put('conversationHistory',row);}}historyReady=true;setHistCount();renderConversation();}
 
 /* ---------- 账户 ---------- */
 function accountTypeName(type){const names={credit_card:'信用卡',savings_card:'储蓄卡',debit_card:'储蓄卡',payment:'支付账户',wallet:'电子钱包',cash:'现金',other:'其他账户'};return names[type]||'其他账户';}
@@ -349,43 +350,13 @@ function guessAccountType(name,explicit){
  if(/现金|钱包/.test(n))return'cash';
  return'other';
 }
-function accountKey(v){return clean(v).normalize('NFKC').toLowerCase().replace(/[\s*#·•._\-（）()]/g,'');}
-async function account(name,meta){
- const n=accountKey(name);if(!n)return null;
- const list=await all('accounts'),exact=list.find(a=>accountKey(a.name)===n);
- if(exact)return exact;
- meta=meta||{};
- const embedded=clean(name).match(/(?:\*{2,}\s*|尾号\s*|末四位\s*|卡号\s*)(\d{4})\s*$/);
- const last4=clean(meta.last4||(embedded&&embedded[1])).replace(/\D/g,'').slice(-4),institution=accountKey(meta.institution);
- if(last4){const matches=list.filter(a=>clean(a.last4).replace(/\D/g,'').slice(-4)===last4&&(!institution||accountKey(a.institution)===institution));
-  if(matches.length){
-  // 同一机构、同一末四位，信用卡和储蓄卡是两个账户：类型明确时只认同类型，绝不混成一个
-  const want=guessAccountType(name,meta.accountType);
-  if(meta.accountType||/信用卡|储蓄卡|借记卡|贷记卡/.test(String(name))){
-   const typed=matches.filter(a=>(a.accountType||guessAccountType(a.name))===want);
-   if(typed.length===1)return typed[0];
-   if(typed.length>1)return typed[0];
- return null; // 类型对不上，说明是同一行的另一张卡，不要把储蓄卡余额写进信用卡（或反过来）
-}
-  if(matches.length===1)return matches[0];
-  }}
- return null;
-}
-async function ensureAccount(name,meta){
- const n=clean(name);if(!n)return null;meta=meta||{};
- let a=await account(n,meta);
- if(!a){a={id:uid(),name:n,balance:0,accountType:guessAccountType(n,meta.accountType),institution:clean(meta.institution),last4:clean(meta.last4),currency:clean(meta.currency)||'CNY',createdAt:Date.now(),balanceInitialized:false};}
- else{
-// 已有账户的类型不再被后来的同名/同尾号卡片改写；类型不同时 account() 已返回 null，会另建账户
-if(!a.accountType||a.accountType==='other'){const t=guessAccountType(n,meta.accountType||a.accountType);if(t!=='other')a.accountType=t;}
-  if(meta.institution)a.institution=clean(meta.institution);
-  if(meta.last4)a.last4=clean(meta.last4);
-  if(meta.currency&&!a.balanceInitialized&&!a.verifiedAt)a.currency=clean(meta.currency);
-  if(meta.creditLimit!=null)a.creditLimit=Number(meta.creditLimit);
-  if(meta.availableCredit!=null)a.availableCredit=Number(meta.availableCredit);
- }
- await put('accounts',a);return a;
-}
+function accountKey(v){return clean(v).normalize('NFKC').toLowerCase().replace(/[\\s*#·•._\\-（）()]/g,'');}
+const BANK_ALIASES={ '工商银行':['工商银行','工行','icbc'], '农业银行':['农业银行','农行','abc'], '招商银行':['招商银行','招行','cmb'], '光大银行':['光大银行','光大','ceb'], '兴业银行':['兴业银行','兴业','cib'], '网商银行':['网商银行','网商','mybank'], '邮储银行':['邮储银行','邮政储蓄','邮储','psbc'], '建设银行':['建设银行','建行','ccb'], '中国银行':['中国银行','中行','boc'], '交通银行':['交通银行','交行','bcm'], '浦发银行':['浦发银行','浦发','spdb'], '民生银行':['民生银行','民生','cmbc'], '平安银行':['平安银行','平安','pingan'] };
+function canonicalBank(v){const k=accountKey(v);for(const [name,aliases] of Object.entries(BANK_ALIASES))if(aliases.some(x=>k.includes(accountKey(x))))return name;return k;}
+function accountTypeOf(a){return a.accountType||guessAccountType(a.name);}
+async function accountMatches(name,meta){meta=meta||{};const list=await all('accounts'),nk=accountKey(name),rawType=clean(meta.accountType),want=guessAccountType(name,rawType),explicit=!!(rawType&&rawType!=='other')||/信用卡|贷记卡|储蓄卡|借记卡/.test(String(name)),last4=clean(meta.last4||(clean(name).match(/(?:\\*{2,}\\s*|尾号\\s*|末四位\\s*|卡号\\s*)(\\d{4})\\s*$/)||[])[1]).replace(/\\D/g,'').slice(-4),bank=canonicalBank(meta.institution||name);let candidates=list.filter(a=>accountKey(a.name)===nk);if(!candidates.length)candidates=list.filter(a=>canonicalBank(a.institution||a.name)===bank);if(last4)candidates=candidates.filter(a=>clean(a.last4).replace(/\\D/g,'').slice(-4)===last4);if(explicit)candidates=candidates.filter(a=>accountTypeOf(a)===want);return candidates;}
+async function account(name,meta){if(!accountKey(name))return null;const c=await accountMatches(name,meta);return c.length===1?c[0]:null;}
+async function ensureAccount(name,meta){const n=clean(name);if(!n)return null;meta=meta||{};const c=await accountMatches(n,meta);let a=null;if(c.length===1)a=c[0];else if(c.length>1)throw Error('账户「'+n+'」对应多个账户，请注明信用卡/储蓄卡或用 @ 选择。');if(!a){const type=guessAccountType(n,meta.accountType),bank=canonicalBank(meta.institution||n),same=(await all('accounts')).filter(x=>canonicalBank(x.institution||x.name)===bank&&accountTypeOf(x)===type&&type!=='other');if(same.length===1)a=same[0];else if(same.length>1)throw Error('该银行存在多个同类型账户，无法安全合并。');}if(!a)a={id:uid(),name:n,balance:0,accountType:guessAccountType(n,meta.accountType),institution:clean(meta.institution)||canonicalBank(n),last4:clean(meta.last4),currency:clean(meta.currency)||'CNY',createdAt:Date.now(),balanceInitialized:false};else{if(meta.institution)a.institution=clean(meta.institution);if(meta.last4)a.last4=clean(meta.last4);if(meta.currency&&!a.balanceInitialized&&!a.verifiedAt)a.currency=clean(meta.currency);}if(meta.creditLimit!=null)a.creditLimit=Number(meta.creditLimit);if(meta.availableCredit!=null)a.availableCredit=Number(meta.availableCredit);await put('accounts',a);return a;}
 function localISO(){const d=new Date(),offset=-d.getTimezoneOffset(),sign=offset>=0?'+':'-',hh=String(Math.floor(Math.abs(offset)/60)).padStart(2,'0'),mm=String(Math.abs(offset)%60).padStart(2,'0');return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,19)+sign+hh+':'+mm;}
 function normalizeDate(v){
  const s=clean(v);if(!s)return localISO();
@@ -456,34 +427,9 @@ function prompt(ctx){
  ].join('\n');
 }
 function parse(t){t=clean(t);const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a<0||b<a)throw Error('AI 返回格式无法识别');return JSON.parse(t.slice(a,b+1));}
-function parseAmount(v){if(v==null||v==='')return null;if(typeof v==='number')return Number.isFinite(v)?v:null;let s=String(v).replace(/[￥¥$,，\s]/g,'');let m=1;if(/万/.test(s)){m=10000;s=s.replace(/万/g,'');}else if(/千/.test(s)){m=1000;s=s.replace(/千/g,'');}const n=Number(s.replace(/[^\d.-]/g,''));return Number.isFinite(n)&&s.replace(/[^\d]/g,'')!==''?n*m:null;}
+function parseAmount(v){if(v==null||v==='')return null;if(typeof v==='number')return Number.isFinite(v)?v:null;let s=String(v).normalize('NFKC').replace(/[￥¥$人民币元,，\\s]/g,'').replace(/负/g,'-'),m=1;const u=s.match(/(万|千|百)$/);if(u){m=u[1]==='万'?10000:u[1]==='千'?1000:100;s=s.slice(0,-1);}s=s.replace(/元$/,'');const n=Number(s.replace(/[^\\d.-]/g,''));return Number.isFinite(n)&&s.replace(/[^\\d]/g,'')!==''?r2(n*m):null;}
 function normChanges(c){if(!c||typeof c!=='object')return{};const o={},am=parseAmount(c.amount);if(am!=null)o.amount=am;['account','toAccount','merchant','category','note'].forEach(k=>{if(clean(c[k]))o[k]=clean(c[k]);});if(clean(c.transferKind))o.transferKind=clean(c.transferKind);if(clean(c.toPerson))o.toPerson=clean(c.toPerson);if(clean(c.occurredAt||c.date))o.occurredAt=normalizeDate(c.occurredAt||c.date);const aa=parseAmount(c.accountAmount);if(aa!=null)o.accountAmount=aa;const ta=parseAmount(c.toAmount);if(ta!=null)o.toAmount=ta;return o;}
-function normalize(r){
- const src=Array.isArray(r.actions)?r.actions:(r.type?[r]:[]);
- const meta=r.accountInfo||r.detectedAccount||r.account||{};
- const actions=src.filter(a=>a&&typeof a==='object').map(a=>{
-  const institution=clean(a.institution||a.bankName||a.bank||meta.institution||meta.bankName||'');
-  const last4=clean(a.last4||a.accountLast4||a.cardLast4||meta.last4||'').replace(/\D/g,'').slice(-4);
-  const account=clean(a.account||a.accountName||a.bankAccount||a.cardName||meta.name||meta.accountName||'')||(institution&&last4?institution+' ****'+last4:institution);
-  const conf=(a.confidence===''||a.confidence==null||!Number.isFinite(Number(a.confidence)))?.85:Number(a.confidence);
-  return {...a,type:clean(a.type),amount:parseAmount(a.amount),balance:parseAmount(a.balance),
-   budgetLimit:parseAmount(a.budgetLimit),availableCredit:parseAmount(a.availableCredit),creditLimit:parseAmount(a.creditLimit),
-   account,toAccount:clean(a.toAccount||a.toAccountName),merchant:clean(a.merchant||a.shopName),category:clean(a.category),budgetName:clean(a.budgetName),institution,last4,transferKind:a.transferKind==='external'||clean(a.toPerson||a.recipient)?'external':'internal',toPerson:clean(a.toPerson||a.recipient||(a.transferKind==='external'?a.toAccount:'')),effectiveFrom:clean(a.effectiveFrom)||dayKey(Date.now()),
-   accountType:guessAccountType(account,a.accountType||a.cardType||meta.accountType),balanceKind:clean(a.balanceKind),
-   items:Array.isArray(a.items)?a.items:(clean(a.items)?[clean(a.items)]:[]),occurredAt:normalizeDate(a.occurredAt||a.date||r.occurredAt),currency:(clean(a.currency||meta.currency)||'CNY').toUpperCase(),
-   targetId:clean(a.targetId),changes:normChanges(a.changes),newName:clean(a.newName),neutral:a.neutral===true||a.neutral==='true',accountAmount:parseAmount(a.accountAmount),toAmount:parseAmount(a.toAmount),confidence:conf,note:clean(a.note)};
- });
- if(!actions.length&&meta&&typeof meta==='object'){
-  const institution=clean(meta.institution||meta.bankName||meta.bank||''),last4=clean(meta.last4||meta.accountLast4||'').replace(/\D/g,'').slice(-4);
-  const name=clean(meta.name||meta.accountName)||(institution&&last4?institution+' ****'+last4:institution);
-  const balance=parseAmount(meta.balance),type=guessAccountType(name,meta.accountType||meta.cardType);
-  if(name)actions.push({type:'create_account',account:name,accountType:type,institution,last4,currency:meta.currency||'CNY',balance:null,amount:null,occurredAt:normalizeDate(meta.date||r.occurredAt),items:[],changes:{},confidence:Number(meta.confidence||.8),note:'从账户信息中识别并创建'});
-  if(name&&Number.isFinite(balance))actions.push({type:'balance_snapshot',account:name,accountType:type,institution,last4,balance,currency:meta.currency||'CNY',occurredAt:normalizeDate(meta.date||r.occurredAt),items:[],changes:{},confidence:Number(meta.confidence||.8),note:'从上传资料识别的账户余额'});
- }
- actions.forEach(a=>{if(a.type==='create_account'&&actions.some(s=>s.type==='balance_snapshot'&&clean(s.account).toLowerCase()===clean(a.account).toLowerCase()))a.balance=null;if(a.type==='daily_budget'&&a.amount==null&&a.budgetLimit!=null)a.amount=a.budgetLimit;if(a.type==='transfer'&&a.transferKind==='external'&&!a.toPerson)a.toPerson=a.toAccount;});
- return{intent:clean(r.intent)||(actions.length?'record':'conversation'),answer:clean(r.answer),analysis:clean(r.analysis),needsClarification:!!r.needsClarification,clarification:clean(r.clarification),dataRequest:r.dataRequest&&typeof r.dataRequest==='object'?r.dataRequest:null,actions};
-}
-
+function normalize(r,ctx){const src=Array.isArray(r.actions)?r.actions:(r.type?[r]:[]),meta=r.accountInfo||r.detectedAccount||r.account||{};const actions=src.filter(a=>a&&typeof a==='object').map(a=>{const institution=clean(a.institution||a.bankName||a.bank||meta.institution||meta.bankName||''),last4=clean(a.last4||a.accountLast4||a.cardLast4||meta.last4||'').replace(/\\D/g,'').slice(-4),accountName=clean(a.account||a.accountName||a.bankAccount||a.cardName||meta.name||meta.accountName||'')||(institution&&last4?institution+' ****'+last4:institution),type=clean(a.type),rawBalance=a.balance??a.currentBalance??a.current_balance??a.accountBalance??(type==='balance_snapshot'?a.amount:null);let resolvedAccount=accountName;if(!resolvedAccount&&type==='balance_snapshot'&&ctx&&ctx.accounts&&ctx.accounts.length===1)resolvedAccount=ctx.accounts[0].name;const conf=(a.confidence===''||a.confidence==null||!Number.isFinite(Number(a.confidence)))?.85:Number(a.confidence);return{...a,type,amount:parseAmount(a.amount),balance:parseAmount(rawBalance),budgetLimit:parseAmount(a.budgetLimit),availableCredit:parseAmount(a.availableCredit),creditLimit:parseAmount(a.creditLimit),account:resolvedAccount,toAccount:clean(a.toAccount||a.toAccountName),merchant:clean(a.merchant||a.shopName),category:clean(a.category),budgetName:clean(a.budgetName),institution,last4,transferKind:a.transferKind==='external'||clean(a.toPerson||a.recipient)?'external':'internal',toPerson:clean(a.toPerson||a.recipient||(a.transferKind==='external'?a.toAccount:'')),effectiveFrom:clean(a.effectiveFrom)||dayKey(Date.now()),accountType:guessAccountType(resolvedAccount,a.accountType||a.cardType||meta.accountType),balanceKind:clean(a.balanceKind),items:Array.isArray(a.items)?a.items:(clean(a.items)?[clean(a.items)]:[]),occurredAt:normalizeDate(a.occurredAt||a.date||r.occurredAt),currency:(clean(a.currency||meta.currency)||'CNY').toUpperCase(),targetId:clean(a.targetId),changes:normChanges(a.changes),newName:clean(a.newName),neutral:a.neutral===true||a.neutral==='true',accountAmount:parseAmount(a.accountAmount),toAmount:parseAmount(a.toAmount),confidence:conf,note:clean(a.note||a.preference||a.value)};});if(!actions.length&&meta&&typeof meta==='object'){const institution=clean(meta.institution||meta.bankName||meta.bank||''),last4=clean(meta.last4||meta.accountLast4||'').replace(/\\D/g,'').slice(-4),name=clean(meta.name||meta.accountName)||(institution&&last4?institution+' ****'+last4:institution),balance=parseAmount(meta.balance??meta.currentBalance),type=guessAccountType(name,meta.accountType||meta.cardType);if(name)actions.push({type:'create_account',account:name,accountType:type,institution,last4,currency:meta.currency||'CNY',balance:null,amount:null,occurredAt:normalizeDate(meta.date||r.occurredAt),items:[],changes:{},confidence:Number(meta.confidence||.8),note:'从账户信息中识别并创建'});if(name&&balance!=null)actions.push({type:'balance_snapshot',account:name,accountType:type,institution,last4,balance,currency:meta.currency||'CNY',occurredAt:normalizeDate(meta.date||r.occurredAt),items:[],changes:{},confidence:Number(meta.confidence||.8),note:'从资料识别的账户余额'});}actions.forEach(a=>{if(a.type==='create_account'&&actions.some(x=>x.type==='balance_snapshot'&&accountKey(x.account)===accountKey(a.account)))a.balance=null;if(a.type==='daily_budget'&&a.amount==null&&a.budgetLimit!=null)a.amount=a.budgetLimit;if(a.type==='transfer'&&a.transferKind==='external'&&!a.toPerson)a.toPerson=a.toAccount;});return{intent:clean(r.intent)||(actions.length?'record':'conversation'),answer:clean(r.answer),analysis:clean(r.analysis),needsClarification:!!r.needsClarification,clarification:clean(r.clarification),dataRequest:r.dataRequest&&typeof r.dataRequest==='object'?r.dataRequest:null,actions};}
 /* ---------- 调用 AI（含重试、本地查询回合） ---------- */
 async function post(s,body){
  const go=async()=>{const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),90000);try{const res=await fetch(s.endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.key},body:JSON.stringify(body),signal:ctl.signal});return{res,raw:await res.text()};}catch(e){throw Error(e.name==='AbortError'?'请求超时，请重试':'网络请求失败：'+e.message);}finally{clearTimeout(tm);}};
@@ -496,12 +442,12 @@ async function callAI(text,pics,extra,opt){
  const s=settings();if(!s.endpoint||!s.key)throw Error('请先在设置中配置 API。');
  const ctx=await context(),parts=[{type:'text',text:text||'请自动识别图片内容并判断用户意图。'}];
  pics.forEach(src=>parts.push({type:'image_url',image_url:{url:src,detail:'high'}}));
- const msgs=[{role:'system',content:prompt(ctx)},...((opt&&opt.noHist)||!histAllowed()?[]:history),{role:'user',content:parts},...(extra||[])];
+ const msgs=[{role:'system',content:prompt(ctx)},...history.map(h=>({role:h.role,content:h.content})),{role:'user',content:parts},...(extra||[])];
  const body=()=>({model:s.model,messages:msgs,temperature:.15,response_format:{type:'json_object'}});
  const content=d=>d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content;
  let data=await post(s,body()),c=content(data);if(!c)throw Error('API 未返回内容');
  let r;try{r=parse(c);}catch(e){msgs.push({role:'assistant',content:c},{role:'user',content:'上次输出不是合法 JSON。请严格只返回符合约定格式的 JSON 对象，不要任何其他文字。'});data=await post(s,body());c=content(data);if(!c)throw Error('API 未返回内容');r=parse(c);}
- return normalize(r);
+ return normalize(r,ctx);
 }
 async function converse(text,pics,opt){
  const extra=[];
