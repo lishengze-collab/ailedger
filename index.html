@@ -385,6 +385,12 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 
 /* Keep the orb above the entry controls while leaving the home page full height */
 #app:has(#page-home.active) .fab-nav{bottom:calc(104px + var(--safe));}
+/* No transient snackbar: progress stays inline and actions/results stay in chat bubbles. */
+#page-home .message{background:transparent;border:0;box-shadow:none;padding:2px 4px;color:var(--muted);font-size:12px;}
+#page-home .message.error{color:var(--expense);}
+#page-home .chat-bubble.user{background:#dcecff!important;color:#153d67!important;border:1px solid #c6ddf8!important;align-self:flex-end;}
+#page-home .chat-bubble.assistant{background:#f0f2f5!important;color:#252b33!important;border:1px solid #e0e4e9!important;align-self:flex-start;}
+
 </style>
 </head>
 <body><div id="app">
@@ -498,7 +504,7 @@ const MONEY=['expense','income','transfer','refund'];
 const TYPES=[...MONEY,'create_account','budget','daily_budget','balance_snapshot','update_transaction','delete_transaction','rename_account','delete_account','preference'];
 const SAFE=new Set(['expense','income','transfer','refund','create_account','budget','daily_budget','preference']);
 const TYPE_COLOR={credit_card:'#e0733f',savings_card:'#3f7de0',debit_card:'#3f7de0',payment:'#2fa86a',wallet:'#8a5ae0',cash:'#c9a227',other:'#8a929c'};
-let db=null,pending=null,pendingHistoryRequest=null,images=[],range='month',detailRange='day',filter='all',deferredInstall=null,undoSnap=null,selCat=null,trendSel=null,trendMode='month',editId=null,busyAI=false,lastApiDurationMs=0,lastOcrDurationMs=0,lastImagePreparationMs=0;
+let db=null,pending=null,pendingHistoryRequest=null,images=[],range='month',detailRange='day',filter='all',deferredInstall=null,undoSnap=null,selCat=null,trendSel=null,trendMode='month',editId=null,busyAI=false,lastApiDurationMs=0,lastOcrDurationMs=0,lastImagePreparationMs=0,lastApiBreakdown=[];
 const EYE_ON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
 const EYE_OFF='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/></svg>';
 let hideAmt=false;try{hideAmt=localStorage.getItem('ledger.hideAmounts')==='1';}catch(e){}
@@ -575,7 +581,7 @@ function shareOf(a,acs){const sp=balanceSplit(acs),b=Number(a.balance||0);if(b>=
 /* ---------- 提示 ---------- */
 function message(s,type){const e=$('message');e.textContent=s||'';e.className='message'+(s?' show':'')+(type?' '+type:'');}
 function apiMessage(s,type){const e=$('apiTestMessage');e.textContent=s||'';e.className='message'+(s?' show':'')+(type?' '+type:'');}
-function toast(text,undo){if(!text)return;pushHist('assistant',String(text)+(undo?' 如需恢复，请在输入框回复“撤销”。':''));}
+function chatNotice(text,undo){if(!text)return;pushHist('assistant',String(text)+(undo?' 如需恢复，请在输入框回复“撤销”。':''));}
 function busy(b,on){if(on){b.dataset.prev=b.innerHTML;b.disabled=true;b.innerHTML='<span class="spinner"></span>';}else{b.disabled=false;if(b.dataset.prev){b.innerHTML=b.dataset.prev;delete b.dataset.prev;}}}
 function showSheet(o){$('sheetTitle').textContent=o.title||'';$('sheetSub').textContent=o.sub||'';$('sheetBody').innerHTML=o.body||'';$('sheetFoot').innerHTML=o.foot||'';$('sheet').hidden=false;$('sheetBody').scrollTop=0;}
 function closeSheet(){$('sheet').hidden=true;}
@@ -704,13 +710,21 @@ function parseAmount(v){if(v==null||v==='')return null;if(typeof v==='number')re
 function normChanges(c){if(!c||typeof c!=='object')return{};const o={},am=parseAmount(c.amount);if(am!=null)o.amount=am;['account','toAccount','merchant','category','note'].forEach(k=>{if(clean(c[k]))o[k]=clean(c[k]);});if(clean(c.transferKind))o.transferKind=clean(c.transferKind);if(clean(c.toPerson))o.toPerson=clean(c.toPerson);if(clean(c.occurredAt||c.date))o.occurredAt=normalizeDate(c.occurredAt||c.date);const aa=parseAmount(c.accountAmount);if(aa!=null)o.accountAmount=aa;const ta=parseAmount(c.toAmount);if(ta!=null)o.toAmount=ta;return o;}
 function normalize(r,ctx){const src=Array.isArray(r.actions)?r.actions:(r.type?[r]:[]),meta=r.accountInfo||r.detectedAccount||r.account||{};const actions=src.filter(a=>a&&typeof a==='object').map(a=>{const institution=clean(a.institution||a.bankName||a.bank||meta.institution||meta.bankName||''),last4=clean(a.last4||a.accountLast4||a.cardLast4||meta.last4||'').replace(/\D/g,'').slice(-4),accountName=clean(a.account||a.accountName||a.bankAccount||a.cardName||meta.name||meta.accountName||'')||(institution&&last4?institution+' ****'+last4:institution),type=clean(a.type),rawBalance=a.balance??a.currentBalance??a.current_balance??a.accountBalance??(type==='balance_snapshot'?a.amount:null);let resolvedAccount=accountName;if(!resolvedAccount&&type==='balance_snapshot'&&ctx&&ctx.accounts&&ctx.accounts.length===1)resolvedAccount=ctx.accounts[0].name;const conf=(a.confidence===''||a.confidence==null||!Number.isFinite(Number(a.confidence)))?.85:Number(a.confidence);return{...a,type,amount:parseAmount(a.amount),balance:parseAmount(rawBalance),budgetLimit:parseAmount(a.budgetLimit),availableCredit:parseAmount(a.availableCredit),creditLimit:parseAmount(a.creditLimit),account:resolvedAccount,toAccount:clean(a.toAccount||a.toAccountName),merchant:clean(a.merchant||a.shopName),category:clean(a.category),budgetName:clean(a.budgetName),institution,last4,transferKind:a.transferKind==='external'||clean(a.toPerson||a.recipient)?'external':'internal',toPerson:clean(a.toPerson||a.recipient||(a.transferKind==='external'?a.toAccount:'')),effectiveFrom:clean(a.effectiveFrom)||dayKey(Date.now()),accountType:guessAccountType(resolvedAccount,a.accountType||a.cardType||meta.accountType),balanceKind:clean(a.balanceKind),items:Array.isArray(a.items)?a.items:(clean(a.items)?[clean(a.items)]:[]),occurredAt:normalizeDate(a.occurredAt||a.date||r.occurredAt),currency:(clean(a.currency||meta.currency)||'CNY').toUpperCase(),targetId:clean(a.targetId),changes:normChanges(a.changes),newName:clean(a.newName),neutral:a.neutral===true||a.neutral==='true',accountAmount:parseAmount(a.accountAmount),toAmount:parseAmount(a.toAmount),confidence:conf,note:clean(a.note||a.preference||a.value)};});if(!actions.length&&meta&&typeof meta==='object'){const institution=clean(meta.institution||meta.bankName||meta.bank||''),last4=clean(meta.last4||meta.accountLast4||'').replace(/\D/g,'').slice(-4),name=clean(meta.name||meta.accountName)||(institution&&last4?institution+' ****'+last4:institution),balance=parseAmount(meta.balance??meta.currentBalance),type=guessAccountType(name,meta.accountType||meta.cardType);if(name)actions.push({type:'create_account',account:name,accountType:type,institution,last4,currency:meta.currency||'CNY',balance:null,amount:null,occurredAt:normalizeDate(meta.date||r.occurredAt),items:[],changes:{},confidence:Number(meta.confidence||.8),note:'从账户信息中识别并创建'});if(name&&balance!=null)actions.push({type:'balance_snapshot',account:name,accountType:type,institution,last4,balance,currency:meta.currency||'CNY',occurredAt:normalizeDate(meta.date||r.occurredAt),items:[],changes:{},confidence:Number(meta.confidence||.8),note:'从资料识别的账户余额'});}actions.forEach(a=>{if(a.type==='create_account'&&actions.some(x=>x.type==='balance_snapshot'&&accountKey(x.account)===accountKey(a.account)))a.balance=null;if(a.type==='daily_budget'&&a.amount==null&&a.budgetLimit!=null)a.amount=a.budgetLimit;if(a.type==='transfer'&&a.transferKind==='external'&&!a.toPerson)a.toPerson=a.toAccount;});return{intent:clean(r.intent)||(actions.length?'record':'conversation'),answer:clean(r.answer||r.reply),analysis:clean(r.analysis),needsClarification:!!r.needsClarification,requiresConfirmation:!!r.needsConfirm,clarification:clean(r.clarification),dataRequest:r.dataRequest&&typeof r.dataRequest==='object'?r.dataRequest:null,actions};}
 /* ---------- 调用 AI（含重试、本地查询回合） ---------- */
-async function post(s,body,timeout=90000){
- const go=async()=>{const started=Date.now(),ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),timeout);try{const res=await fetch(s.endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.key},body:JSON.stringify(body),signal:ctl.signal});return{res,raw:await res.text()};}catch(e){throw Error(e.name==='AbortError'?'请求超时，请重试':'网络请求失败：'+e.message);}finally{clearTimeout(tm);lastApiDurationMs+=Date.now()-started;}};
+async function post(s,body,timeout=60000){
+ const go=async()=>{
+  const started=Date.now(),ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),timeout);
+  try{
+   const res=await fetch(s.endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.key},body:JSON.stringify(body),signal:ctl.signal});
+   return{res,raw:await res.text()};
+  }catch(e){throw Error(e.name==='AbortError'?'请求超过 '+Math.round(timeout/1000)+' 秒，请检查模型服务响应':'网络请求失败：'+e.message);}
+  finally{clearTimeout(tm);const elapsed=Date.now()-started;lastApiDurationMs+=elapsed;lastApiBreakdown.push(elapsed);}
+ };
  let {res,raw}=await go();
  if(!res.ok&&res.status===400&&body.response_format&&/response_format|json/i.test(raw)){delete body.response_format;({res,raw}=await go());}
  if(!res.ok)throw Error('API '+res.status+' · '+raw.slice(0,220));
  const data=JSON.parse(raw);recordUsage(data.usage||{}).catch(()=>{});return data;
 }
+
 /* ==================== DeepSeek OCR + FLASH 双通道识别 ==================== */
 const OCR_ENDPOINT='https://api.deepseek.com/v1/tools/ocr';
 const FLASH_MODEL='deepseek-flash';
@@ -721,7 +735,7 @@ async function deepseekOCR(file){
  const fd=new FormData();
  fd.append('file',file,file.name||'image-upload');
  fd.append('purpose','text_recognition');
- const started=Date.now(),ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),180000);
+ const started=Date.now(),ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),60000);
  try{
   const res=await fetch(OCR_ENDPOINT,{method:'POST',headers:{'Authorization':'Bearer '+s.key},body:fd,signal:ctl.signal});
   const raw=await res.text();
@@ -730,7 +744,7 @@ async function deepseekOCR(file){
   if(data.error)throw new Error(data.error.message||'OCR 服务返回错误');
   const pages=Array.isArray(data.pages)?data.pages:[];
   return{text:pages.map(p=>p&&p.text||'').filter(Boolean).join('\n'),pages:pages.length,incomplete:pages.some(p=>p&&p.finish_reason==='length')};
- }catch(e){if(e.name==='AbortError')throw new Error('OCR 请求超过 180 秒，请缩小图片后重试');throw e;}
+ }catch(e){if(e.name==='AbortError')throw new Error('OCR 等待超过 60 秒，已停止本次等待；请检查服务状态或稍后重试');throw e;}
  finally{clearTimeout(timer);lastOcrDurationMs+=Date.now()-started;}
 }
 async function deepseekOCRMany(files){
@@ -751,34 +765,38 @@ async function callAI(text,pics,extra,opt){
  const base64List=imageItems.map(p=>p.previewUrl||p.dataUrl).filter(Boolean);
  const endpointHost=(()=>{try{return new URL(s.endpoint).hostname.toLowerCase();}catch(e){return'';}})(),isDeepSeek=endpointHost==='deepseek.com'||endpointHost.endsWith('.deepseek.com');
  const imageDetail=imageItems.length&&isDeepSeek?'low':null;
- const model=imageItems.length&&isDeepSeek?FLASH_MODEL:(s.model||FLASH_MODEL);
  const content=d=>d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content;
  const readContent=d=>{const ch=d&&d.choices&&d.choices[0],value=content(d);if(ch&&ch.finish_reason==='length')throw Error('AI 输出达到长度上限，无法得到完整结果。请缩短本次描述或清理较早的对话历史后重试。');if(!clean(value))throw Error('AI 返回了空内容。请检查模型设置、JSON 输出状态或重试。');return value;};
- const request=async ocrText=>{
-  const userContent=imageItems.length?buildVisionContent(text,base64List,ocrText,imageDetail):(text||'请根据上下文理解用户的财务指令。');
+ const request=async(ocrText,includeImages=imageItems.length>0)=>{
+  const useImages=!!(includeImages&&imageItems.length);
+  const userContent=useImages
+   ?buildVisionContent(text,base64List,'',imageDetail)
+   :(ocrText?buildVisionContent(text,[],ocrText)[0].text:(text||'请根据上下文理解用户的财务指令。'));
   const msgs=[{role:'system',content:prompt(ctx)},...historyForAI(true),{role:'user',content:userContent},...(extra||[])];
-  const body=()=>({model,messages:msgs,temperature:.15,max_tokens:imageItems.length?4096:8192,response_format:{type:'json_object'}});
-  let data=await post(s,body(),imageItems.length?60000:90000),c='',r;
+  const model=useImages&&isDeepSeek?FLASH_MODEL:(s.model||FLASH_MODEL);
+  const body=()=>({model,messages:msgs,temperature:.15,max_tokens:useImages?3072:4096,response_format:{type:'json_object'}});
+  let data=await post(s,body(),useImages?35000:45000),c='',r;
   try{c=readContent(data);r=parse(c);}catch(e){
-   if(/达到长度上限/.test(e.message)||imageItems.length)throw e;
+   if(/达到长度上限/.test(e.message)||useImages)throw e;
    msgs.push({role:'assistant',content:content(data)||''},{role:'user',content:'上次回复为空或不是合法 JSON。请重新分析，并且只输出一个完整、非空、可解析的 JSON 对象；不要输出 Markdown 或解释文字。'});
-   data=await post(s,body());c=readContent(data);r=parse(c);
+   data=await post(s,body(),45000);c=readContent(data);r=parse(c);
   }
   return normalize(r,ctx);
  };
- if(!imageItems.length){const result=await request('');message('');return result;}
- message('正在使用 DeepSeek Flash 快速识图…');
- try{const result=await request('');message('');return result;}
+ if(!imageItems.length){const result=await request('',false);message('');return result;}
+ message('正在使用 DeepSeek Flash 识图…');
+ try{const result=await request('',true);message('');return result;}
  catch(primaryError){
   const files=imageItems.map(p=>p.ocrFile||p.file).filter(Boolean);
-  if(!files.length)throw primaryError;
-  if(!isDeepSeek)throw primaryError;
-  message('FLASH 识别未完成，正在使用压缩图 OCR 补充后重试…');
+  if(!files.length||!isDeepSeek)throw primaryError;
+  pushHist('assistant','图片视觉模型未能完成识别，切换至 OCR 文字识别。原因：'+primaryError.message);
+  message('视觉识别未完成，正在使用 OCR 兜底…');
   const results=await deepseekOCRMany(files),ok=results.filter(r=>r.ok&&r.text);
-  let ocrText=ok.map(r=>r.text).join('\n\n--- 图片分隔 ---\n\n');
-  if(results.some(r=>r.incomplete))ocrText+='\n\n【提示：部分 OCR 页面达到输出长度上限，请以原图为准。】';
+  let ocrText=ok.map(r=>r.text).join('\\n\\n--- 图片分隔 ---\\n\\n');
+  if(results.some(r=>r.incomplete))ocrText+='\\n\\n【提示：部分 OCR 页面达到输出长度上限，请以原图为准。】';
   if(!ocrText)throw primaryError;
-  const result=await request(ocrText);message('');return result;
+  // OCR 已读取原图；后续只发文字，不再上传原始图片。
+  const result=await request(ocrText,false);message('');return result;
  }
 }
 function historyRequestGate(dataRequest,userText){
@@ -799,18 +817,18 @@ async function converse(text,pics,opt,approvedRequest){
  const extra=[];
  if(approvedRequest){
   const olderRequest=approvedRequest.olderRequest||approvedRequest.dataRequest||approvedRequest;
-  const olderResult=approvedRequest.allowOlder===false?null:await runQuery(olderRequest),recentResult=approvedRequest.recentResult||null;
+  const olderResult=approvedRequest.allowOlder===false?null:await runQuery(olderRequest,true),recentResult=approvedRequest.recentResult||null;
   extra.push({role:'assistant',content:JSON.stringify({intent:'need_data',dataRequest:approvedRequest.originalRequest||olderRequest})},{role:'user',content:(approvedRequest.allowOlder===false?'用户取消了读取3天以前的历史记录，只允许使用最近3天数据。':'用户已明确授权读取3天以前的历史记录。')+'以下是本次可用的本地查询结果：'+JSON.stringify({recent3Days:recentResult,olderHistory:olderResult})});
  }
  for(let round=0;round<3;round++){
-  const r=await callAI(text,pics,extra,opt);
+  const r=await callAI(text,round===0?pics:[],extra,opt);
   if(r.intent==='need_data'&&r.dataRequest&&round<2){
    const gate=historyRequestGate(r.dataRequest,text);
    if(gate.needsApproval){
     const recentResult=gate.recentRequest?await runQuery(gate.recentRequest):null;
     return{...r,requiresHistoryApproval:true,historyRequest:gate.olderRequest,historyRecentRequest:gate.recentRequest,historyRecentResult:recentResult,historyRange:gate.range,originalQuery:text,originalRequest:gate.request};
    }
-   const res=await runQuery(gate.request);
+   const res=await runQuery(gate.request,false);
    extra.push({role:'assistant',content:JSON.stringify({intent:'need_data',dataRequest:gate.request})},{role:'user',content:'本地近3天查询结果（可信数据，请据此作答，intent 用 query）：'+JSON.stringify(res)});
    continue;
   }
@@ -821,10 +839,17 @@ async function converse(text,pics,opt,approvedRequest){
 async function recordUsage(u){await put('tokenUsage',{id:uid(),time:Date.now(),prompt:Number(u.prompt_tokens||0),completion:Number(u.completion_tokens||0),total:Number(u.total_tokens||0)});renderTokens();}
 
 /* ---------- 本地查询 ---------- */
-async function runQuery(q){
- const tx=await all('transactions');
- const dts=(s,end)=>{s=clean(s);if(!s)return null;const d=new Date(/^\d{4}-\d{2}-\d{2}$/.test(s)?s+(end?'T23:59:59.999':'T00:00:00'):s);const n=d.getTime();return Number.isFinite(n)?n:null;};
- const f=dts(q.from),e=dts(q.to,true),inc=(h,n)=>!n||String(h||'').toLowerCase().includes(String(n).toLowerCase());
+async function runQuery(q,allowOlder=false){
+ const dts=(s,end)=>{s=clean(s);if(!s)return null;const d=new Date(/^\\d{4}-\\d{2}-\\d{2}$/.test(s)?s+(end?'T23:59:59.999':'T00:00:00'):s);const n=d.getTime();return Number.isFinite(n)?n:null;};
+ const f=dts(q.from,false),e=dts(q.to,true),cutoff=Date.now()-3*864e5;
+ let tx;
+ if(allowOlder)tx=await all('transactions');
+ else{
+  if((f!=null&&f<cutoff)||(e!=null&&e<cutoff))throw Error('该查询需要读取3天以前的历史记录，请先在聊天框确认授权。');
+  const lower=Math.max(f==null?cutoff:f,cutoff),upper=Math.min(e==null?Date.now():e,Date.now());
+  tx=lower<=upper?await recentTransactions(lower):[];
+ }
+ const inc=(h,n)=>!n||String(h||'').toLowerCase().includes(String(n).toLowerCase());
  const type=clean(q.type)||'all',min=parseAmount(q.minAmount),max=parseAmount(q.maxAmount);
  const rows=tx.filter(t=>{
   if(type!=='all'&&t.type!==type)return false;
@@ -950,7 +975,7 @@ async function commit(actions,auto){
  for(const a of good){try{const note=await applyAction(a);ok++;if(note)notes.push(note);}catch(e){failed.push({action:a,error:e.message});}}
  if(!ok)undoSnap=null;
  const completed=good.filter(a=>!failed.some(x=>x.action===a));
- pushHist('assistant',(ok?'✅ 记录成功：已'+(auto?'自动':'')+'完成 '+ok+' 项。'+completed.map(brief).join('；'):'本次没有成功保存记录。')+(notes.length?'。'+notes.join('；'):'')+(failed.length?'。未完成：'+failed.map(x=>brief(x.action)+'（'+x.error+'）').join('；'):'')+(ok?' 回复“撤销”可恢复本次操作。':''));
+ pushHist('assistant',(ok?'✅ 已成功保存到本地：'+(auto?'自动':'')+'完成 '+ok+' 项。'+completed.map(brief).join('；'):'本次没有成功保存记录。')+(notes.length?'。'+notes.join('；'):'')+(failed.length?'。未完成：'+failed.map(x=>brief(x.action)+'（'+x.error+'）').join('；'):'')+(ok?' 回复“撤销”可恢复本次操作。':''));
  await renderAll();
  const left=bad.concat(failed.map(x=>x.action));if(left.length){pending={actions:left,awaitingConfirmation:false};pushHist('assistant','剩余 '+left.length+' 项需要补充或调整：'+left.map(a=>issues(a).join('、')).join('；')+'。请直接告诉我账户或具体修改内容。');}else{pending=null;$('naturalInput').value='';images=[];drawPics();$('imageInput').value='';syncExamples();message('');}syncRecordButton();
  return ok>0;
@@ -972,7 +997,17 @@ function cardHtml(a,i,txs,acs){
  const low=a.confidence<.75?'<span class="conf">置信度较低，请核对</span>':'';
  return'<div class="acard"><div class="acard-head"><span class="tag t-'+esc(a.type)+'">'+esc((i+1)+' · '+(LABEL[a.type]||a.type))+'</span>'+low+'</div>'+body+(p.length?'<div class="warn">待补充：'+esc(p.join('、'))+'</div>':'')+'</div>';
 }
-function syncRecordButton(){const b=$('analyzeText');if(!b)return;const empty=!clean($('naturalInput').value);b.textContent=pendingHistoryRequest&&empty?'确认读取':pending&&pending.awaitingConfirmation&&empty?'确认记录':'发送';b.dataset.mode=pendingHistoryRequest&&empty?'history-confirm':pending&&pending.awaitingConfirmation&&empty?'record-confirm':'send';}
+function syncRecordButton(){
+ const b=$('analyzeText');if(!b)return;
+ const value=clean($('naturalInput').value),empty=!value;
+ const affirmative=/^(确认|是|好|好的|执行|可以|对|没问题|同意|授权|继续|允许|读取)(吧|即可|读取|历史记录)?[。！! ]*$/i.test(value);
+ let label='发送',mode='send';
+ if(pendingHistoryRequest){if(empty||affirmative){label='确认读取';mode='history-confirm';}else{label='回复确认/取消';mode='history-wait';}}
+ else if(pending&&pending.awaitingConfirmation){if(empty||affirmative){label='确认记录';mode='record-confirm';}else{label='发送修改';mode='record-edit';}}
+ else if(pending){label=empty?'补充信息':'发送补充';mode='supplement';}
+ b.textContent=label;b.dataset.mode=mode;b.setAttribute('aria-label',label);
+}
+
 async function openConfirm(r,sub){pending={actions:r.actions||[],awaitingConfirmation:true};syncRecordButton();pushHist('assistant',(r.answer||r.reply||r.analysis||'识别到待执行操作：')+' '+pending.actions.map(brief).join('；')+'。回复“确认”执行，回复“取消”放弃；也可以直接点击发送按钮确认。'+(sub?' '+sub:''));message('等待确认。');}
 function collectEdits(){qa('#sheetBody [data-i]').forEach(inp=>{const a=pending&&pending.actions[inp.dataset.i];if(!a)return;const f=inp.dataset.f,v=clean(inp.value);if(f==='amount')a.amount=parseAmount(v);else a[f]=v;});}
 function showAnswer(r){const text=(r.answer||r.analysis||r.clarification||'已理解。').trim();if(text)pushHist('assistant',text);message('');}
@@ -1014,17 +1049,17 @@ async function analyse(){
  const text=clean($('naturalInput').value),pics=images.slice(),yes=/^(确认|是|好|好的|执行|可以|对|没问题|同意|授权|继续|允许|读取)(吧|即可|读取|历史记录)?[。！! ]*$/i.test(text),no=/^(取消|否|不|不要|不执行|算了|放弃)[。！! ]*$/i.test(text);
  if(pendingHistoryRequest){
   if(yes||(!text&&!pics.length)){
-   const approved=pendingHistoryRequest;pendingHistoryRequest=null;pushHist('user',text||'确认读取历史记录');
-   const b=$('analyzeText');busyAI=true;busy(b,true);message('已授权，正在查询较早的历史流水…');
-   try{const r=await converse(approved.query,approved.pics||[],{},approved);await route(r);}
+   const approved=pendingHistoryRequest;pendingHistoryRequest=null;pushHist('user',text||'确认读取历史记录');pushHist('assistant','已收到授权，正在读取3天以前的历史流水…');
+   const b=$('analyzeText');busyAI=true;busy(b,true);message('正在读取已授权的历史流水…');
+   try{const r=await converse(approved.query,[],{},approved);await route(r);}
    catch(e){pushHist('assistant','历史查询失败：'+e.message);message(e.message,'error');}
    finally{busyAI=false;busy(b,false);syncRecordButton();}
    return;
   }
   if(no){
-   const rejected=pendingHistoryRequest;pendingHistoryRequest=null;pushHist('user',text);$('naturalInput').value='';syncRecordButton();
-   const b=$('analyzeText');busyAI=true;busy(b,true);message('已取消读取较早记录，正在整理近3天结果…');
-   try{const r=await converse(rejected.query,rejected.pics||[],{}, {...rejected,allowOlder:false});await route(r);}
+   const rejected=pendingHistoryRequest;pendingHistoryRequest=null;pushHist('user',text);pushHist('assistant','已按你的选择，只使用最近3天的数据，不读取更早的历史记录。');$('naturalInput').value='';syncRecordButton();
+   const b=$('analyzeText');busyAI=true;busy(b,true);message('正在整理最近3天结果…');
+   try{const r=await converse(rejected.query,[],{}, {...rejected,allowOlder:false});await route(r);}
    catch(e){pushHist('assistant','整理近3天结果失败：'+e.message);message(e.message,'error');}
    finally{busyAI=false;busy(b,false);syncRecordButton();}
    return;
@@ -1044,20 +1079,26 @@ async function analyse(){
  if(!text&&!pics.length){message('直接输入自然语言指令即可；图片仅为可选辅助。');return;}
  let inputText=text;
  if(pending){inputText='继续处理上一项操作。之前待处理动作：'+JSON.stringify(pending.actions||[])+'。用户现在补充或修改为：'+text;pending=null;syncRecordButton();}
- const b=$('analyzeText'),started=Date.now(),preparedMs=lastImagePreparationMs;lastApiDurationMs=0;lastOcrDurationMs=0;busyAI=true;busy(b,true);message(pics.length?'AI 正在快速识别压缩图片…':'AI 正在处理消息…');
+ const b=$('analyzeText'),started=Date.now(),preparedMs=lastImagePreparationMs;lastApiDurationMs=0;lastOcrDurationMs=0;lastApiBreakdown=[];busyAI=true;busy(b,true);message(pics.length?'AI 正在识别压缩图片…':'AI 正在处理消息…');
  pushHist('user',text+(pics.length?'［附 '+pics.length+' 张图片］':''));
  try{
   const r=await converse(inputText,pics);
-  if(pics.length)pushHist('assistant','图片识别耗时 '+((Date.now()-started)/1000).toFixed(1)+' 秒；API 等待 '+(lastApiDurationMs/1000).toFixed(1)+' 秒；图片预处理 '+(preparedMs/1000).toFixed(1)+' 秒'+(lastOcrDurationMs?'；OCR 兜底 '+(lastOcrDurationMs/1000).toFixed(1)+' 秒':'')+'。');
   await route(r);
  }
  catch(e){pushHist('assistant','处理失败：'+e.message);message(e.message,'error');}
- finally{busyAI=false;busy(b,false);syncRecordButton();}
+ finally{
+  if(pics.length){
+   const calls=lastApiBreakdown.map((ms,i)=>'第'+(i+1)+'次 '+(ms/1000).toFixed(1)+'秒').join('、')||'无';
+   const kb=Math.round(pics.reduce((sum,p)=>sum+Number(p.compressedBytes||0),0)/1024);
+   pushHist('assistant','识图诊断：总耗时 '+((Date.now()-started)/1000).toFixed(1)+' 秒；模型接口累计等待 '+(lastApiDurationMs/1000).toFixed(1)+' 秒（'+lastApiBreakdown.length+' 次：'+calls+'）；图片预处理 '+(preparedMs/1000).toFixed(1)+' 秒；压缩图片约 '+kb+' KB'+(lastOcrDurationMs?'；OCR '+(lastOcrDurationMs/1000).toFixed(1)+' 秒':'')+'。');
+  }
+  busyAI=false;busy(b,false);syncRecordButton();
+ }
 }
 async function route(r){
  if(r.requiresHistoryApproval){
-  pendingHistoryRequest={query:r.originalQuery||'',dataRequest:r.historyRequest||r.dataRequest||{},olderRequest:r.historyRequest||r.dataRequest||{},recentRequest:r.historyRecentRequest||null,recentResult:r.historyRecentResult||null,originalRequest:r.originalRequest||r.dataRequest||{},pics:images.slice(),range:r.historyRange||''};
-  pushHist('assistant','已先查询近3天数据'+(pendingHistoryRequest.recentResult?'，命中 '+pendingHistoryRequest.recentResult.matched+' 条':'')+'。要完成这项查询，还需要读取更早的历史流水（'+pendingHistoryRequest.range+'）。是否授权补充读取？请回复“确认”继续，或回复“取消”只保留近3天结果。');
+  pendingHistoryRequest={query:r.originalQuery||'',dataRequest:r.historyRequest||r.dataRequest||{},olderRequest:r.historyRequest||r.dataRequest||{},recentRequest:r.historyRecentRequest||null,recentResult:r.historyRecentResult||null,originalRequest:r.originalRequest||r.dataRequest||{},range:r.historyRange||''};
+  pushHist('assistant','近3天查询已完成'+(pendingHistoryRequest.recentResult?'，匹配 '+pendingHistoryRequest.recentResult.matched+' 条':'')+'。完整回答还需要读取3天以前的记录，范围：'+pendingHistoryRequest.range+'。是否授权？请回复“确认读取”或“取消”，未经确认不会读取旧记录。');
   $('naturalInput').value='';syncExamples();syncRecordButton();message('等待你确认是否读取更早的历史记录。');return;
  }
  const actions=r.actions||[],bad=actions.filter(a=>issues(a).length),auto=settings().auto&&!r.needsClarification&&!r.requiresConfirmation&&!bad.length&&actions.length&&actions.every(a=>SAFE.has(a.type)&&a.confidence>=.75);
@@ -1077,8 +1118,8 @@ async function deleteTx(id,kind){
    if(ac&&Number(ac.balance)===Number(r.statementBalance)){ac.balance=Number(r.previousBalance||0);ac.balanceInitialized=!!r.previousVerifiedAt;ac.verifiedAt=r.previousVerifiedAt||null;await put('accounts',ac);}
    await del('reconciliations',id);
   }else await deleteTxCore(id);
-  await renderAll();toast('已删除',true);
- }catch(e){undoSnap=null;toast('删除失败：'+e.message);}
+  await renderAll();chatNotice('已删除',true);
+ }catch(e){undoSnap=null;chatNotice('删除失败：'+e.message);}
 }
 async function openEdit(id){
  const t=(await all('transactions')).find(x=>x.id===id);if(!t)return;
@@ -1087,9 +1128,9 @@ async function openEdit(id){
 }
 async function saveEdit(){
  const ch={};let invalidAmount=false;qa('#sheetBody [data-edit]').forEach(i=>{const f=i.dataset.edit,v=clean(i.value);if(f==='amount'){const n=parseAmount(v);if(n==null||n<=0||n>1e9)invalidAmount=true;else ch.amount=n;}else if(f==='time'){if(v)ch.occurredAt=normalizeDate(v);}else ch[f]=v;});
- if(invalidAmount){toast('金额必须是大于 0 且不超过 10 亿的有效数字。');return;}
+ if(invalidAmount){chatNotice('金额必须是大于 0 且不超过 10 亿的有效数字。');return;}
  undoSnap=await snapshot();
- try{await updateTx(editId,ch);closeSheet();await renderAll();toast('已保存修改',true);}catch(e){undoSnap=null;toast('保存失败：'+e.message);}
+ try{await updateTx(editId,ch);closeSheet();await renderAll();chatNotice('已保存修改',true);}catch(e){undoSnap=null;chatNotice('保存失败：'+e.message);}
 }
 
 /* ---------- 渲染 ---------- */
@@ -1173,8 +1214,8 @@ async function deleteAccountById(id){
  try{
   for(const t of await all('transactions')){let dirty=false;if(t.accountId===id){t.accountId='';dirty=true;}if(t.toAccountId===id){t.toAccountId='';dirty=true;}if(dirty)await put('transactions',t);}
   for(const r of await all('reconciliations'))if(r.accountId===id){r.accountId='';await put('reconciliations',r);}
-  await del('accounts',id);await renderAll();toast('账户已删除；历史流水保留，可撤销',true);
- }catch(e){undoSnap=null;toast('删除账户失败：'+e.message);}
+  await del('accounts',id);await renderAll();chatNotice('账户已删除；历史流水保留，可撤销',true);
+ }catch(e){undoSnap=null;chatNotice('删除账户失败：'+e.message);}
 }
 async function renderAnalytics(){
  const tx=await all('transactions'),b=bounds(range),filtered=tx.filter(t=>between(t,b.s,b.e)),prior=tx.filter(t=>between(t,b.ps,b.pe)),expenses=filtered.filter(t=>t.type==='expense'||t.type==='refund'||(t.type==='transfer'&&t.transferKind==='external')),expense=expOf(filtered);
@@ -1270,7 +1311,7 @@ async function saveSettings(){
  localStorage.setItem('ledger.endpoint',endpoint);localStorage.setItem('ledger.key',clean($('apiKey').value));localStorage.setItem('ledger.model',clean($('apiModel').value));apiMessage('设置已保存。');return true;
 }
 async function testAPI(){if(!(await saveSettings()))return;const s=settings();if(!s.endpoint||!s.key){apiMessage('请填写 Endpoint 和 API Key。','error');return;}const b=$('testApi');busy(b,true);apiMessage('正在连接…');try{const data=await post(s,{model:s.model,messages:[{role:'user',content:'只返回JSON：{"connected":true}'}],temperature:0});if(!data.choices||!data.choices.length)throw Error('接口未返回模型内容');apiMessage('连接成功 · '+(data.model||s.model));}catch(e){apiMessage('连接失败 · '+e.message,'error');}finally{busy(b,false);}}
-async function uploadFiles(files){if(!files||!files.length)return;const remaining=5-images.length;if(remaining<=0){message('一批最多上传 5 张。');return;}const selected=Array.from(files).slice(0,remaining);lastImagePreparationMs=0;message('正在并行压缩 '+selected.length+' 张图片…');const results=await Promise.all(selected.map(async file=>{try{return{image:await prepareImage(file)};}catch(error){return{file,error};}}));let added=0;results.forEach(r=>{if(r.image){images.push(r.image);added++;lastImagePreparationMs+=r.image.prepareMs||0;}else message((r.file&&r.file.name||'图片')+'：'+r.error.message,'error');});drawPics();if(added){const size=images.slice(-added).reduce((sum,x)=>sum+(x.compressedBytes||0),0);message('已添加 '+added+' 张图片；压缩后共 '+(size/1024).toFixed(0)+' KB。');}$('imageInput').value='';}
+async function uploadFiles(files){if(!files||!files.length)return;const remaining=5-images.length;if(remaining<=0){message('一批最多上传 5 张。');return;}const selected=Array.from(files).slice(0,remaining),prepStart=Date.now();message('正在并行压缩 '+selected.length+' 张图片…');const results=await Promise.all(selected.map(async file=>{try{return{image:await prepareImage(file)};}catch(error){return{file,error};}}));lastImagePreparationMs=Date.now()-prepStart;let added=0;results.forEach(r=>{if(r.image){images.push(r.image);added++;}else message((r.file&&r.file.name||'图片')+'：'+r.error.message,'error');});drawPics();if(added){const size=images.slice(-added).reduce((sum,x)=>sum+(x.compressedBytes||0),0);message('已添加 '+added+' 张图片；压缩后共 '+(size/1024).toFixed(0)+' KB。');}$('imageInput').value='';}
 function xmlEsc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');}
 function xlsxColumn(n){let out='';for(n++;n;n=Math.floor((n-1)/26))out=String.fromCharCode(65+(n-1)%26)+out;return out;}
 function xlsxSheet(rows){const body=rows.map((row,ri)=>'<row r="'+(ri+1)+'">'+row.map((value,ci)=>{const ref=xlsxColumn(ci)+(ri+1);return typeof value==='number'&&Number.isFinite(value)?'<c r="'+ref+'"><v>'+value+'</v></c>':'<c r="'+ref+'" t="inlineStr"><is><t xml:space="preserve">'+xmlEsc(value)+'</t></is></c>';}).join('')+'</row>').join('');return'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'+body+'</sheetData></worksheet>';}
@@ -1284,7 +1325,7 @@ async function exportJson(){
  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
  a.href=url;a.download='AI-Ledger-backup-'+dayKey(Date.now())+'.json';document.body.appendChild(a);a.click();a.remove();
  localStorage.setItem('ledger.lastBackup',String(Date.now()));localStorage.setItem('ledger.lastBackupPrompt',String(Date.now()));
- setTimeout(()=>URL.revokeObjectURL(url),2000);toast('JSON 完整备份已导出。');
+ setTimeout(()=>URL.revokeObjectURL(url),2000);chatNotice('JSON 完整备份已导出。');
 }
 async function exportData(){
  const [tx,acs,recs]=await Promise.all([all('transactions'),all('accounts'),all('reconciliations')]);
@@ -1298,7 +1339,7 @@ async function exportData(){
  'xl/workbook.xml':'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+names.map((n,i)=>'<sheet name="'+n+'" sheetId="'+(i+1)+'" r:id="rId'+(i+1)+'"/>').join('')+'</sheets></workbook>',
  'xl/_rels/workbook.xml.rels':'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+sheets.map((x,i)=>'<Relationship Id="rId'+(i+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet'+(i+1)+'.xml"/>').join('')+'</Relationships>'};
  sheets.forEach((rows,i)=>files['xl/worksheets/sheet'+(i+1)+'.xml']=xlsxSheet(rows));
- const blob=makeXlsx(files),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='AI-Ledger-'+dayKey(Date.now())+'.xlsx';a.click();localStorage.setItem('ledger.lastBackup',String(Date.now()));localStorage.setItem('ledger.lastBackupPrompt',String(Date.now()));setTimeout(()=>URL.revokeObjectURL(url),1500);toast('Excel 报表已导出。');
+ const blob=makeXlsx(files),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='AI-Ledger-'+dayKey(Date.now())+'.xlsx';a.click();localStorage.setItem('ledger.lastBackup',String(Date.now()));localStorage.setItem('ledger.lastBackupPrompt',String(Date.now()));setTimeout(()=>URL.revokeObjectURL(url),1500);chatNotice('Excel 报表已导出。');
 }
 async function importData(f){
  let d;try{d=JSON.parse(await f.text());}catch(e){throw Error('文件不是有效的 JSON');}
@@ -1353,8 +1394,8 @@ $('periodSwitch').onclick=e=>{const b=e.target.closest('[data-range]');if(!b)ret
 /* Account data lives only in the Accounts tab. */
 $('trendChart').onclick=e=>{const r=e.target.closest('[data-m]');if(!r)return;trendSel=Number(r.dataset.m);renderAnalytics();};
 $('categoryLegend').onclick=e=>{const b=e.target.closest('[data-cat]');if(!b)return;selCat=selCat===b.dataset.cat?null:b.dataset.cat;renderAnalytics();};
-$('toggleAnalyticsAssets').onclick=()=>{hideAmt=!hideAmt;try{localStorage.setItem('ledger.hideAmounts',hideAmt?'1':'0');}catch(e){}applyAnalyticsControls();renderAll();};$('saveSettings').onclick=saveSettings;$('testApi').onclick=testAPI;$('runFinanceAnalysis').onclick=runFinanceAnalysis;$('trendSwitch').onclick=e=>{const b=e.target.closest('[data-trend]');if(!b)return;trendMode=b.dataset.trend;trendSel=null;qa('#trendSwitch button').forEach(x=>x.classList.toggle('active',x===b));renderAnalytics();};$('clearHist').onclick=async()=>{history=[];await clear('conversationHistory');try{localStorage.removeItem('ledger.hist');sessionStorage.removeItem('ledger.hist');}catch(e){}setHistCount();renderConversation();toast('对话历史已清除');};
-$('saveRules').onclick=()=>{localStorage.setItem('ledger.rules',clean($('rulesInput').value));localStorage.setItem('ledger.autosave',$('autoSave').checked?'1':'0');toast('记账偏好已保存');};
+$('toggleAnalyticsAssets').onclick=()=>{hideAmt=!hideAmt;try{localStorage.setItem('ledger.hideAmounts',hideAmt?'1':'0');}catch(e){}applyAnalyticsControls();renderAll();};$('saveSettings').onclick=saveSettings;$('testApi').onclick=testAPI;$('runFinanceAnalysis').onclick=runFinanceAnalysis;$('trendSwitch').onclick=e=>{const b=e.target.closest('[data-trend]');if(!b)return;trendMode=b.dataset.trend;trendSel=null;qa('#trendSwitch button').forEach(x=>x.classList.toggle('active',x===b));renderAnalytics();};$('clearHist').onclick=async()=>{history=[];await clear('conversationHistory');try{localStorage.removeItem('ledger.hist');sessionStorage.removeItem('ledger.hist');}catch(e){}setHistCount();renderConversation();chatNotice('对话历史已清除');};
+$('saveRules').onclick=()=>{localStorage.setItem('ledger.rules',clean($('rulesInput').value));localStorage.setItem('ledger.autosave',$('autoSave').checked?'1':'0');chatNotice('记账偏好已保存');};
 $('autoSave').onchange=()=>localStorage.setItem('ledger.autosave',$('autoSave').checked?'1':'0');
 /* Account cards handled in the dedicated Accounts tab. */
 $('sheet').onclick=async e=>{
@@ -1376,8 +1417,8 @@ $('exportJson').onclick=exportJson;$('exportData').onclick=exportData;$('importD
  await openDB();await loadHistory();await mergeStoredDuplicates();await renderAll();syncExamples();
  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
  const n=(await all('transactions')).length+(await all('accounts')).length,lb=Number(localStorage.getItem('ledger.lastBackup')||0),lp=Number(localStorage.getItem('ledger.lastBackupPrompt')||0);
- if(n&&Date.now()-Math.max(lb,lp)>7*864e5){toast(lb?'已超过 7 天未备份，建议导出 Excel 备份。':'建议每 7 天导出一次 Excel 备份。');localStorage.setItem('ledger.lastBackupPrompt',String(Date.now()));}
- if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=12').catch(()=>{});
+ if(n&&Date.now()-Math.max(lb,lp)>7*864e5){chatNotice(lb?'已超过 7 天未备份，建议导出 Excel 备份。':'建议每 7 天导出一次 Excel 备份。');localStorage.setItem('ledger.lastBackupPrompt',String(Date.now()));}
+ if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=13').catch(()=>{});
 })().catch(e=>message('初始化失败：'+e.message,'error'));
 })();
 </script></body></html>
