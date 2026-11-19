@@ -339,6 +339,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 
 /* 固定首页工作区：只允许对话记录与输入框内部滚动 */
 #page-home.active{height:calc(100dvh - env(safe-area-inset-top,0px) - var(--safe) - 82px)!important;min-height:0!important;overflow:hidden!important;overscroll-behavior:none!important;padding-bottom:0!important;}
+#app:has(#page-home.active){padding-bottom:calc(72px + var(--safe))!important;}
 #page-home .home-overview{flex:0 0 auto;}
 #page-home .capture{flex:1 1 0!important;height:auto!important;min-height:0!important;overflow:hidden!important;}
 #page-home .capture-input{display:flex;flex:1 1 0!important;flex-direction:column;min-height:0!important;overflow:hidden!important;}
@@ -1150,7 +1151,7 @@ async function saveSettings(){
  localStorage.setItem('ledger.endpoint',endpoint);localStorage.setItem('ledger.key',clean($('apiKey').value));localStorage.setItem('ledger.model',clean($('apiModel').value));apiMessage('设置已保存。');return true;
 }
 async function testAPI(){if(!(await saveSettings()))return;const s=settings();if(!s.endpoint||!s.key){apiMessage('请填写 Endpoint 和 API Key。','error');return;}const b=$('testApi');busy(b,true);apiMessage('正在连接…');try{const data=await post(s,{model:s.model,messages:[{role:'user',content:'只返回JSON：{"connected":true}'}],temperature:0});if(!data.choices||!data.choices.length)throw Error('接口未返回模型内容');apiMessage('连接成功 · '+(data.model||s.model));}catch(e){apiMessage('连接失败 · '+e.message,'error');}finally{busy(b,false);}}
-async function uploadFiles(files){if(!files||!files.length)return;const remaining=5-images.length;if(remaining<=0){message('一批最多上传 5 张。');return;}let added=0;for(const file of Array.from(files).slice(0,remaining)){try{images.push(await prepareImage(file));added++;}catch(e){message(file.name+'：'+e.message,'error');}}drawPics();if(added)message('已添加 '+added+' 张图片；发送时优先由 deepseek-flash 直接识别，必要时再调用 OCR 补充。');$('imageInput').value='';}
+async function uploadFiles(files){if(!files||!files.length)return;const remaining=5-images.length;if(remaining<=0){message('一批最多上传 5 张。');return;}let added=0;for(const file of Array.from(files).slice(0,remaining)){try{images.push(await prepareImage(file));added++;}catch(e){message(file.name+'：'+e.message,'error');}}drawPics();if(added)message('已添加 '+added+' 张图片；已自动压缩图片后发送给 deepseek-flash，识别失败时再调用 OCR 补充。');$('imageInput').value='';}
 function xmlEsc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');}
 function xlsxColumn(n){let out='';for(n++;n;n=Math.floor((n-1)/26))out=String.fromCharCode(65+(n-1)%26)+out;return out;}
 function xlsxSheet(rows){const body=rows.map((row,ri)=>'<row r="'+(ri+1)+'">'+row.map((value,ci)=>{const ref=xlsxColumn(ci)+(ri+1);return typeof value==='number'&&Number.isFinite(value)?'<c r="'+ref+'"><v>'+value+'</v></c>':'<c r="'+ref+'" t="inlineStr"><is><t xml:space="preserve">'+xmlEsc(value)+'</t></is></c>';}).join('')+'</row>').join('');return'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'+body+'</sheetData></worksheet>';}
