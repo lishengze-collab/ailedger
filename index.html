@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#f4f4f6">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AI"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="apple-touch-icon" href="./icon-192.png"><link rel="icon" type="image/png" href="./icon-192.png"><link rel="manifest" href="./manifest.webmanifest"><title>AI</title>
+<link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png"><link rel="icon" type="image/png" href="./icon-192.png"><link rel="manifest" href="./manifest.webmanifest"><title>AI</title>
 <style>
 :root{color-scheme:light;--bg:#f4f4f6;--card:#fff;--surface:#f8f8fa;--soft:#ededf0;--text:#18181a;--muted:#898990;--line:#e5e5e9;--accent:#111113;--on:#fff;--shadow:0 8px 26px rgba(0,0,0,.045);--safe:env(safe-area-inset-bottom,0px);--income:#249b68;--expense:#df4d52;--warn:#e08a1e;--font-scale:1}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;--bg:#080809;--card:#171719;--surface:#202023;--soft:#29292d;--text:#f4f4f5;--muted:#99999f;--line:#303034;--accent:#f4f4f5;--on:#111113;--shadow:0 12px 30px rgba(0,0,0,.25)}}
@@ -187,6 +187,32 @@ textarea.input{height:96px;padding:10px 11px;line-height:1.5;resize:vertical}
 .capture-actions .confirm-record{height:52px;padding:0 13px;flex:none}
 @media(max-width:390px){.upload-action{padding:0 11px}.upload-clear{padding:0 11px}.capture-actions{gap:6px}.capture-actions .confirm-record{padding:0 10px}}
 
+
+/* 首页操作区修复：操作栏在内容滚动时始终可见 */
+#page-home.active{min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#page-home .capture{flex:1 0 auto;min-height:300px;overflow:visible}
+#page-home .capture-input{flex:1 1 auto;min-height:130px}
+#page-home .capture-bottom{position:sticky;bottom:0;z-index:12;flex:0 0 auto;display:flex;background:var(--card);border-top:1px solid var(--line);border-radius:0 0 22px 22px;padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px));box-shadow:0 -5px 16px rgba(20,30,45,.07)}
+#page-home .capture-actions{display:grid!important;grid-template-columns:minmax(0,1.15fr) minmax(58px,.75fr) minmax(86px,1fr);align-items:stretch;gap:8px;width:100%;min-height:52px;visibility:visible!important;opacity:1!important;flex:0 0 auto}
+#page-home .capture-actions .upload-action,#page-home .capture-actions .upload-clear,#page-home .capture-actions .send{display:flex!important;align-items:center;justify-content:center;min-width:0;height:52px;visibility:visible!important;opacity:1!important;flex:none}
+#page-home .capture-actions .upload-action{padding:0 10px;background:var(--surface);border:1px solid var(--line);color:var(--text);border-radius:15px;font-size:14px}
+#page-home .capture-actions .upload-action span{white-space:nowrap}
+#page-home .capture-actions .upload-action svg{flex:none;width:20px;height:20px}
+#page-home .capture-actions .upload-clear{padding:0 10px;background:var(--surface);border:1px solid var(--line);color:var(--muted);border-radius:15px;font-size:14px}
+#page-home .capture-actions .send{width:100%;padding:0 10px;background:var(--accent);color:var(--on);border-radius:15px;font-size:16px;font-weight:750}
+#page-home #confirmRecord[hidden]{display:none!important}
+#page-home #imageInput{display:none!important}
+.dock-wrap,.dock,.tab{visibility:visible;opacity:1}
+.dock-wrap{background:var(--card)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.dock{background:transparent!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+/* 明细滚动：减少每条流水的图层开销，保持浏览器原生纵向滚动 */
+#page-transactions.active{animation:none;min-height:0}
+.detail-scroll{min-height:0;flex:1 1 0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;scroll-behavior:auto}
+.swipe-shell{contain:layout style;touch-action:pan-y}
+.swipe-content{will-change:auto;transform:none;backface-visibility:visible}
+.swipe-content.dragging,.swipe-shell.open .swipe-content{will-change:transform}
+@media(max-width:380px){#page-home .capture-actions{grid-template-columns:minmax(0,1.1fr) minmax(52px,.7fr) minmax(78px,1fr);gap:6px}#page-home .capture-actions .upload-action{gap:5px;font-size:13px;padding:0 7px}#page-home .capture-actions .send{font-size:15px}}
+
 </style>
 </head>
 <body><div id="app">
@@ -202,7 +228,7 @@ textarea.input{height:96px;padding:10px 11px;line-height:1.5;resize:vertical}
    <div class="attachments" id="attachments"></div>
    <div class="message" id="message"></div>
    <div class="capture-actions">
-    <button class="upload-action" id="pickImages"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/></svg><span>图片</span></button>
+    <button class="upload-action" id="pickImages"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/></svg><span>上传图片</span></button>
     <button class="upload-clear" id="clearComposer" aria-label="清空输入">清空</button>
     <button class="send" id="analyzeText">发送</button><button class="btn primary confirm-record" id="confirmRecord" type="button" hidden>确认记录</button>
    </div>
@@ -928,7 +954,44 @@ async function renderTokens(){const a=await all('tokenUsage');$('promptTokens').
 async function renderAll(){await Promise.all([renderHome(),renderTransactions(),renderAnalytics(),renderAccounts(),renderTokens()]);}
 
 /* ---------- 交互 ---------- */
-function attachSwipe(el){let active=null,startX=0,startY=0,base=0,cur=0,dragging=false,locked=null,raf=0;const content=s=>s.querySelector('.swipe-content');el.addEventListener('pointerdown',e=>{const shell=e.target.closest('.swipe-shell');if(!shell||e.target.closest('[data-delete]'))return;active=shell;startX=e.clientX;startY=e.clientY;base=shell.classList.contains('open')?-88:0;cur=base;dragging=false;locked=null;},{passive:true});el.addEventListener('pointermove',e=>{if(!active)return;const dx=e.clientX-startX,dy=e.clientY-startY;if(!locked){if(Math.abs(dx)<6&&Math.abs(dy)<6)return;locked=Math.abs(dx)>Math.abs(dy)?'x':'y';if(locked==='y'){active=null;return;}dragging=true;qa('.swipe-shell.open').forEach(s2=>{if(s2!==active)s2.classList.remove('open');});const c=content(active);if(c)c.classList.add('dragging');}if(locked==='x'){cur=Math.max(-88,Math.min(0,base+dx));if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{const c=active&&content(active);if(c)c.style.transform='translateX('+cur+'px)';});e.preventDefault();}},{passive:false});const end=()=>{if(!active)return;const shell=active,c=content(shell);if(raf)cancelAnimationFrame(raf);if(c){c.classList.remove('dragging');c.style.transform='';}if(dragging){if(cur<-44)shell.classList.add('open');else shell.classList.remove('open');window.__swipeSuppress=Date.now();}active=null;dragging=false;locked=null;};el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);}
+function attachSwipe(el){
+ if(!el)return;
+ let active=null,startX=0,startY=0,base=0,cur=0,dragging=false,locked=null,raf=0;
+ const content=s=>s.querySelector('.swipe-content');
+ const end=()=>{
+  if(!active)return;
+  const shell=active,c=content(shell);
+  if(raf){cancelAnimationFrame(raf);raf=0;}
+  if(c){c.classList.remove('dragging');c.style.transform='';}
+  if(dragging){if(cur<-44)shell.classList.add('open');else shell.classList.remove('open');window.__swipeSuppress=Date.now();}
+  active=null;dragging=false;locked=null;
+ };
+ el.addEventListener('pointerdown',e=>{
+  if(e.button!==undefined&&e.button!==0)return;
+  const shell=e.target.closest('.swipe-shell');if(!shell||e.target.closest('[data-delete]'))return;
+  active=shell;startX=e.clientX;startY=e.clientY;base=shell.classList.contains('open')?-88:0;cur=base;dragging=false;locked=null;
+ },{passive:true});
+ el.addEventListener('pointermove',e=>{
+  if(!active)return;
+  const dx=e.clientX-startX,dy=e.clientY-startY;
+  if(!locked){
+   if(Math.abs(dx)<7&&Math.abs(dy)<7)return;
+   locked=Math.abs(dx)>Math.abs(dy)?'x':'y';
+   if(locked==='y'){active=null;return;}
+   dragging=true;
+   el.querySelectorAll('.swipe-shell.open').forEach(s2=>{if(s2!==active)s2.classList.remove('open');});
+   const c=content(active);if(c)c.classList.add('dragging');
+  }
+  if(locked==='x'){
+   cur=Math.max(-88,Math.min(0,base+dx));
+   if(raf)cancelAnimationFrame(raf);
+   raf=requestAnimationFrame(()=>{const c=active&&content(active);if(c)c.style.transform='translateX('+cur+'px)';});
+  }
+ },{passive:true});
+ el.addEventListener('pointerup',end,{passive:true});
+ el.addEventListener('pointercancel',end,{passive:true});
+ el.addEventListener('lostpointercapture',end,{passive:true});
+}
 attachSwipe($('transactionList'));
 function goto(p){qa('.page').forEach(x=>x.classList.toggle('active',x.id==='page-'+p));qa('.tab').forEach(x=>x.classList.toggle('active',x.dataset.page===p));if(p==='transactions')renderTransactions();if(p==='analytics')renderAnalytics();if(p==='accounts')renderAccounts();}
 function applyTheme(t){document.documentElement.setAttribute('data-theme','light');localStorage.setItem('ledger.theme','light');}
@@ -1022,7 +1085,7 @@ $('exportData').onclick=exportData;$('importData').onchange=e=>{const f=e.target
  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
  const n=(await all('transactions')).length+(await all('accounts')).length,lb=Number(localStorage.getItem('ledger.lastBackup')||0),lp=Number(localStorage.getItem('ledger.lastBackupPrompt')||0);
  if(n&&Date.now()-Math.max(lb,lp)>7*864e5){toast(lb?'已超过 7 天未备份，建议导出 Excel 备份。':'建议每 7 天导出一次 Excel 备份。');localStorage.setItem('ledger.lastBackupPrompt',String(Date.now()));}
- if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=9').catch(()=>{});
+ if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=10').catch(()=>{});
 })().catch(e=>message('初始化失败：'+e.message,'error'));
 })();
 </script></body></html>
