@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#f4f4f6" media="(prefers-color-scheme:light)"><meta name="theme-color" content="#080809" media="(prefers-color-scheme:dark)">
+<meta name="theme-color" content="#f4f4f6">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AI"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="./icon-192.png"><link rel="icon" type="image/png" href="./icon-192.png"><link rel="manifest" href="./manifest.webmanifest"><title>AI</title>
 <style>
@@ -142,27 +142,26 @@ textarea.input{height:96px;padding:10px 11px;line-height:1.5;resize:vertical}
 .toast{position:fixed;z-index:80;left:50%;bottom:calc(92px + var(--safe));transform:translateX(-50%);width:min(560px,calc(100% - 28px));display:flex;align-items:center;gap:12px;justify-content:space-between;padding:12px 14px;background:var(--accent);color:var(--on);border-radius:16px;font-size:14px;line-height:1.5;box-shadow:0 10px 30px rgba(0,0,0,.25);animation:fade .2s ease}.toast[hidden]{display:none}
 .toast button{flex:none;border:0;background:rgba(127,127,127,.28);color:inherit;border-radius:99px;padding:8px 14px;font-weight:700;font-size:14px}.toast button[hidden]{display:none}
 .dock-wrap{position:fixed;z-index:20;bottom:calc(9px + var(--safe));left:0;right:0;display:flex;justify-content:center;pointer-events:none}
-.dock{pointer-events:auto;width:min(420px,calc(100% - 28px));display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:7px;border-radius:23px;background:color-mix(in srgb,var(--card) 88%,transparent);border:1px solid var(--line);box-shadow:0 8px 26px rgba(0,0,0,.13),inset 0 1px 0 rgba(255,255,255,.35);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%)}
+.dock{pointer-events:auto;width:min(420px,calc(100% - 28px));display:grid;grid-template-columns:repeat(5,1fr);gap:3px;padding:6px;border-radius:23px;background:color-mix(in srgb,var(--card) 88%,transparent);border:1px solid var(--line);box-shadow:0 8px 26px rgba(0,0,0,.13),inset 0 1px 0 rgba(255,255,255,.35);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%)}
 .tab{height:54px;border:0;border-radius:16px;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12px;font-weight:650}.tab svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.tab.active{background:var(--accent);color:var(--on)}
 @media(max-height:690px){.capture{min-height:220px}.upload-action,.upload-clear,.send{height:46px}}
 @media(min-width:720px){#app{padding-left:22px;padding-right:22px}#page-home.active{max-width:760px;margin:0 auto}}
+/* Light, conversation-first interface */
+:root{color-scheme:light;--bg:#f4f5f7;--card:#fff;--surface:#fafbfc;--soft:#eef0f3;--text:#18191c;--muted:#777d86;--line:#e3e6eb;--accent:#252b33;--on:#fff}
+@media(prefers-color-scheme:dark){:root{color-scheme:light;--bg:#f4f5f7;--card:#fff;--surface:#fafbfc;--soft:#eef0f3;--text:#18191c;--muted:#777d86;--line:#e3e6eb;--accent:#252b33;--on:#fff}}
+:root[data-theme=dark]{color-scheme:light;--bg:#f4f5f7;--card:#fff;--surface:#fafbfc;--soft:#eef0f3;--text:#18191c;--muted:#777d86;--line:#e3e6eb;--accent:#252b33;--on:#fff}
+.home-overview{padding:13px 14px;border-radius:23px}.budget-ring-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.budget-ring{text-align:center;min-width:0}.budget-ring-visual{--p:0%;width:clamp(78px,24vw,112px);height:clamp(78px,24vw,112px);margin:0 auto 7px;border-radius:50%;background:conic-gradient(var(--ring-color,var(--income)) 0 var(--p),#e9edf0 var(--p) 100%);display:grid;place-items:center;padding:8px;position:relative}.budget-ring-visual:before{content:"";position:absolute;inset:7px;border-radius:50%;background:var(--card)}.budget-ring-center{z-index:1;display:flex;flex-direction:column;align-items:center;gap:2px}.budget-ring-center b{font-size:clamp(13px,3.8vw,17px)}.budget-ring-center small,.budget-ring-meta{font-size:10px;color:var(--muted)}.budget-ring-label{font-size:12px;font-weight:700}.budget-ring.over .budget-ring-visual{--ring-color:var(--expense)}.home-spend-summary{display:flex;justify-content:space-between;border-top:1px solid var(--line);padding-top:9px;margin-top:8px}.home-spend-summary span{font-size:12px;color:var(--muted)}.home-spend-summary b{display:block;font-size:17px;margin-top:3px}.home-spend-summary .remaining{text-align:right}
+.capture{min-height:330px}.capture-input{flex:0 0 auto;min-height:125px;display:flex;flex-direction:column;gap:7px}.capture-input textarea{height:98px;min-height:98px;flex:none}.conversation-log{max-height:min(36dvh,280px);overflow:auto;display:flex;flex-direction:column;gap:7px;padding:2px}.chat-bubble{max-width:94%;padding:9px 11px;border-radius:14px;font-size:13px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}.chat-bubble.user{align-self:flex-end;background:#e9eef8;color:#233d62}.chat-bubble.assistant{align-self:flex-start;background:#f0f1f3;color:#272b31}.account-suggestions{display:flex;gap:6px;overflow:auto}.account-suggestions[hidden]{display:none}.account-suggestions button{flex:none;border:1px solid var(--line);border-radius:99px;background:var(--surface);padding:6px 10px;font-size:12px}.today-budget-hint{font-size:11px;color:var(--muted)}
+.toast{background:#fff;color:#252b33;border:1px solid #e0e4e9;box-shadow:0 10px 30px rgba(30,40,55,.14);bottom:calc(112px + var(--safe))}.toast button{background:#edf1f5;color:#252b33}.dock-wrap{bottom:calc(8px + var(--safe))}.dock{width:min(480px,calc(100% - 22px));background:rgba(255,255,255,.95);border:1px solid #dfe3e9}.tab{height:52px;font-size:11px}.tab.active{background:#e9edf2;color:#202832}#app{padding-bottom:calc(106px + var(--safe))}
+.spend-calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}.calendar-weekday{text-align:center;color:var(--muted);font-size:10px;padding:3px 0}.calendar-day{min-width:0;min-height:52px;border:1px solid var(--line);border-radius:10px;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:3px 1px}.calendar-day.empty{border-color:transparent;background:transparent}.calendar-day strong{font-size:11px}.calendar-day small{font-size:9px;color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.calendar-day.over{background:#fff0f0;border-color:#f0b6ba;color:#b72f39}.calendar-day.today{outline:1.5px solid #8798ac}.merchant-chart{display:grid;gap:10px}.merchant-row{display:grid;grid-template-columns:minmax(64px,105px) minmax(0,1fr) auto;gap:8px;align-items:center;font-size:12px}.merchant-row span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}.merchant-bar{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}.merchant-bar i{display:block;height:100%;background:#df686d;border-radius:99px}.account-bank-mark{width:40px;height:40px;display:grid;place-items:center;border-radius:13px;background:var(--bank-bg,#edf0f3);color:var(--bank-fg,#35404c);font-size:17px;font-weight:800;flex:none}
 </style>
 </head>
 <body><div id="app">
 <main>
 <section class="page active" id="page-home">
- <div class="home-overview">
-  <div class="overview-head"><span>净资产</span><span class="ov-right"><span id="overviewDate"></span><button class="eye" id="toggleHide" aria-label="隐藏或显示金额"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></span></div>
-  <div class="overview-total" id="heroAssets">¥0.00</div>
-  <div class="overview-sub" id="heroSub"></div>
-  <div class="overview-flow">
-   <div><small>本月收入</small><b class="income-text" id="heroIncome">¥0.00</b></div>
-   <div><small>本月支出</small><b class="expense-text" id="heroExpense">¥0.00</b></div>
-  </div>
-  <div class="account-strip" id="homeAccounts"><div class="empty">还没有账户</div></div>
- </div>
+ <div class="home-overview"><div class="budget-ring-grid" id="homeBudgetRings"><div class="empty">正在计算预算…</div></div><div class="home-spend-summary" id="homeSpendSummary"></div></div>
  <div class="capture">
-  <div class="capture-input"><textarea id="naturalInput" placeholder="描述一笔收支，或上传银行卡 / 支付截图……"></textarea></div>
+  <div class="capture-input"><div id="conversationLog" class="conversation-log" aria-live="polite"></div><div id="accountSuggestions" class="account-suggestions" hidden></div><textarea id="naturalInput" placeholder="输入记账、修改、账户管理或金额校准指令；@ 可快捷选择账户，无需上传图片。"></textarea><div id="todayBudgetHint" class="today-budget-hint"></div></div>
   <div class="capture-bottom">
    <div class="examples" id="examples">
     <button data-ex="午饭 28 微信">午饭 28 微信</button><button data-ex="昨天打车 35">昨天打车 35</button><button data-ex="工资到账 12000 招行">工资到账 12000</button><button data-ex="本月餐饮花了多少">本月餐饮花了多少</button><button data-ex="把上一笔改成微信支付">改上一笔</button><button data-ex="每天预算 100">每天预算 100</button><button data-ex="转给妈妈 500 微信">转给妈妈 500</button>
@@ -180,6 +179,7 @@ textarea.input{height:96px;padding:10px 11px;line-height:1.5;resize:vertical}
 </section>
 <section class="page" id="page-transactions">
  <div class="section-head"><h2>明细</h2><span id="transactionCount" style="font-size:13px;color:var(--muted)"></span></div>
+ <input id="transactionDate" class="search" type="date" aria-label="选择日期查看消费明细">
  <div class="detail-summary">
   <div class="ranges" id="detailPeriodSwitch"><button data-detail-range="day" class="active">日</button><button data-detail-range="week">周</button><button data-detail-range="month">月</button></div>
   <div class="detail-totals">
@@ -189,22 +189,27 @@ textarea.input{height:96px;padding:10px 11px;line-height:1.5;resize:vertical}
   </div>
  </div>
  <input id="transactionSearch" class="search" type="search" placeholder="搜索商户、账户、分类或备注">
- <div class="chips" id="transactionFilters"><button class="active" data-filter="all">全部</button><button data-filter="expense">支出</button><button data-filter="income">收入</button><button data-filter="transfer">转账</button><button data-filter="transfer_external">转给他人</button><button data-filter="balance_adjustment">校准</button></div>
+ <div class="chips" id="transactionFilters"><button class="active" data-filter="all">全部</button><button data-filter="expense">支出</button><button data-filter="income">收入</button><button data-filter="transfer">转账</button><button data-filter="transfer_external">转给他人</button></div>
  <div id="transactionList"><div class="empty">暂无记录</div></div>
 </section>
 <section class="page" id="page-analytics">
  <div class="section-head"><h2>分析</h2><div class="analytics-tools"><span id="analyticsPeriod"></span><button class="eye" id="toggleAnalyticsAssets" type="button" aria-label="隐藏资产数据" aria-pressed="false" title="隐藏资产数据"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
  <div class="ranges" id="periodSwitch"><button data-range="week">7日</button><button class="active" data-range="month">本月</button><button data-range="year">本年</button></div>
  <div class="stats">
-  <div class="stat stat-asset"><span>净资产</span><b id="totalAssets">¥0.00</b><em></em></div><div class="stat"><span>净流入</span><b id="netFlow">¥0.00</b><em></em></div>
-  <div class="stat"><span>收入</span><b class="income-text" id="periodIncome">¥0.00</b><em id="incDlt"></em></div><div class="stat"><span>支出</span><b class="expense-text" id="periodExpense">¥0.00</b><em id="expDlt"></em></div>
-  <div class="stat stat-asset"><span>资产</span><b id="assetsOnly">¥0.00</b><em></em></div><div class="stat"><span>负债（信用卡等）</span><b class="expense-text" id="liabOnly">¥0.00</b><em></em></div>
+  <div class="stat"><span>本期支出</span><b class="expense-text" id="periodExpense">¥0.00</b><em id="expDlt"></em></div><div class="stat"><span>平均每日支出</span><b id="avgDailyExpense">¥0.00</b><em>按自然日计算</em></div><div class="stat"><span>支出笔数</span><b id="expenseCount">0</b><em>含转给他人的支出</em></div>
  </div>
  <div class="chart"><div class="trend-head"><h3>消费趋势</h3><div class="trend-switch" id="trendSwitch" role="group" aria-label="趋势周期"><button type="button" data-trend="day">近7日</button><button type="button" data-trend="week">近4周</button><button type="button" data-trend="month" class="active">近12月</button></div></div><svg id="trendChart" viewBox="0 0 600 190" preserveAspectRatio="none"></svg><div class="labels" id="trendLabels"></div><div class="trend-info" id="trendInfo"></div></div>
+ <div class="chart"><h3>消费日历 · 超过日预算高亮</h3><div id="spendCalendar" class="spend-calendar"></div></div>
+ <div class="chart"><h3>消费占比 · 商户</h3><div id="merchantChart" class="merchant-chart"><div class="empty">暂无商户数据</div></div></div>
  <div class="chart"><h3>支出结构（点按分类）</h3><div class="category"><div class="donut" id="donut"><div class="donut-center"><span id="donutLabel">总支出</span><b id="donutTotal">¥0</b></div></div><div class="legend" id="categoryLegend"><div class="empty">暂无数据</div></div></div></div>
- <div class="chart"><div class="account-fold-head"><h3>账户</h3><button class="collapse-btn" id="toggleAccountAnalytics" type="button" aria-expanded="false">展开 ↓</button></div><div id="accountAnalytics" hidden><div class="empty">暂无账户</div></div></div>
  <div class="chart"><div class="section-head" style="margin:0 0 10px"><h3>AI 财务分析</h3><button id="runFinanceAnalysis">生成分析</button></div><div class="finance-analysis" id="financeAnalysis">结合收入、支出、账户流水和预算，生成你的财务分析。</div></div>
  <div class="chart"><div class="budget-chart-head"><h3>预算花费</h3><span>实际支出 / 预算额度</span></div><div class="note" style="margin-top:4px">直接在记账输入框用自然语言调整，例如“每天预算 120”“从下周一开始每天预算 100”或“餐饮每天预算 60”。</div><div class="daily-derived" id="dailyDerived" aria-live="polite"></div><div class="section-head" style="margin:14px 0 6px"><h3 style="font-size:14px">分类预算</h3></div><div id="budgetList"><div class="empty">暂无分类预算，可对 AI 说“餐饮每天预算 60”</div></div></div>
+</section>
+<section class="page" id="page-accounts">
+ <div class="section-head"><h2>账户</h2><span id="accountSummary" style="font-size:13px;color:var(--muted)"></span></div>
+ <div class="chart"><h3>资产账户</h3><div id="assetAccounts"><div class="empty">暂无资产账户</div></div></div>
+ <div class="chart"><h3>负债账户</h3><div id="liabilityAccounts"><div class="empty">暂无负债账户</div></div></div>
+ <div class="chart"><h3>账户校准历史</h3><div id="accountCalibrations"><div class="empty">暂无校准记录</div></div></div>
 </section>
 <section class="page" id="page-settings">
  <div class="section-head"><h2>设置</h2></div>
@@ -223,14 +228,12 @@ textarea.input{height:96px;padding:10px 11px;line-height:1.5;resize:vertical}
   <div class="btnrow"><button class="btn primary flex" id="saveRules">保存偏好</button></div>
  </div>
  <div class="setting"><h3>对话历史与 AI 分析</h3>
-  <div class="setting-row"><span>允许 AI 调用本地对话历史分析<br><small style="color:var(--muted);font-size:12px">历史只保存在本机浏览器；关闭后 AI 每次只看当前这句话，不再结合之前的对话</small></span><label class="switch"><input type="checkbox" id="histAllowed" checked><span></span></label></div>
+  <div class="setting-row"><span>本地历史分析<br><small style="color:var(--muted);font-size:12px">自动保存全部对话；AI 每次结合历史偏好与本地明细判断</small></span><b>始终开启</b></div>
   <div class="setting-row"><span>已保存对话</span><b id="histCount">0 条</b></div>
   <div class="btnrow"><button class="btn flex" id="clearHist">清除对话历史</button></div>
   <div class="note">清除只删对话记录，不影响账户、交易、预算和校准历史。</div>
  </div>
- <div class="setting"><h3>外观</h3><div class="themes" id="themeSelect"><button data-theme="system" class="active">跟随系统</button><button data-theme="light">浅色</button><button data-theme="dark">深色</button></div>
-  <div class="font-control"><div class="setting-row"><span>界面字体</span><b id="fontScaleLabel">100%</b></div><input id="fontScaleSlider" type="range" min="0.9" max="1.2" step="0.05" value="1"></div>
- </div>
+ <div class="setting"><h3>外观</h3><div class="setting-row"><span>浅色界面</span><b>已固定</b></div><div class="font-control"><div class="setting-row"><span>界面字体</span><b id="fontScaleLabel">100%</b></div><input id="fontScaleSlider" type="range" min="0.9" max="1.2" step="0.05" value="1"></div></div>
  <div class="setting"><h3>Token 使用</h3><div class="token-grid"><div class="token"><small>输入</small><b id="promptTokens">0</b></div><div class="token"><small>输出</small><b id="completionTokens">0</b></div><div class="token"><small>合计</small><b id="totalTokens">0</b></div><div class="token"><small>请求</small><b id="requestCount">0</b></div></div></div>
  <div class="setting"><h3>数据管理</h3>
   <div class="setting-row"><span>导出备份</span><button class="btn" id="exportData">导出</button></div>
@@ -247,6 +250,7 @@ textarea.input{height:96px;padding:10px 11px;line-height:1.5;resize:vertical}
 <button class="tab active" data-page="home"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>记账</button>
 <button class="tab" data-page="transactions"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>明细</button>
 <button class="tab" data-page="analytics"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h17M8 15l4-5 3 2 5-7"/></svg>分析</button>
+<button class="tab" data-page="accounts"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg>账户</button>
 <button class="tab" data-page="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 13.5a7.4 7.4 0 0 0 0-3l2-1.2-2-3.4-2.3.8a7.6 7.6 0 0 0-2.6-1.5L13.8 3h-3.9l-.4 2.2a7.6 7.6 0 0 0-2.6 1.5l-2.3-.8-2 3.4 2 1.2a7.4 7.4 0 0 0 0 3l-2 1.2 2 3.4 2.3-.8a7.6 7.6 0 0 0 2.6 1.5l.4 2.2h3.9l.4-2.2a7.6 7.6 0 0 0 2.6-1.5l2.3.8 2-3.4z"/></svg>设置</button>
 </div></nav>
 </div>
