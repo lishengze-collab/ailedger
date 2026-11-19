@@ -477,8 +477,13 @@ async function callAI(text,pics,extra,opt){
  const body=()=>({model,messages:msgs,temperature:.15,max_tokens:8192,response_format:{type:'json_object'}});
  const content=d=>d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content;
  const readContent=d=>{const ch=d&&d.choices&&d.choices[0],value=content(d);if(ch&&ch.finish_reason==='length')throw Error('AI 输出达到长度上限，无法得到完整结果。请缩短本次描述或清理较早的对话历史后重试。');if(!clean(value))throw Error('AI 返回了空内容。请检查模型设置、JSON 输出状态或重试。');return value;};
- let data=await post(s,body()),c=readContent(data),r;
- try{r=parse(c);}catch(e){msgs.push({role:'assistant',content:c},{role:'user',content:'上次输出不是合法 JSON。请严格只返回符合约定格式的 JSON 对象，不要任何其他文字。'});data=await post(s,body());c=readContent(data);try{r=parse(c);}catch(e2){throw Error('AI 连续两次未返回可解析的 JSON。请缩短描述或检查模型是否支持 JSON Output。');}}
+ let data=await post(s,body()),c='',r;
+ try{c=readContent(data);r=parse(c);}catch(e){
+  if(/达到长度上限/.test(e.message))throw e;
+  msgs.push({role:'assistant',content:content(data)||''},{role:'user',content:'上次回复为空或不是合法 JSON。请重新分析，并且只输出一个完整、非空、可解析的 JSON 对象；不要输出 Markdown 或解释文字。'});
+  data=await post(s,body());
+  try{c=readContent(data);r=parse(c);}catch(e2){if(/达到长度上限/.test(e2.message))throw e2;throw Error('AI 连续两次未返回可解析的 JSON。请缩短描述、检查模型设置或稍后重试。');}
+ }
  return normalize(r,ctx);
 }
 async function converse(text,pics,opt){
