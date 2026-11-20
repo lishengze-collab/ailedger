@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AI"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png"><link rel="icon" type="image/png" href="./icon-192.png"><link rel="manifest" href="./manifest.webmanifest"><title>AI</title>
 <style>
-:root{color-scheme:light dark;--bg:#f4f4f4;--card:#fff;--surface:#f6f6f6;--soft:#ececec;--text:#0a0a0a;--muted:#757575;--line:#e2e2e2;--accent:#0a0a0a;--accent2:#2a2a2a;--on:#fff;--income:#0a0a0a;--expense:#d92d2d;--warn:#7a7a7a;--shadow:0 8px 24px rgba(0,0,0,.06);--safe:env(safe-area-inset-bottom,0px);--font-scale:1;--home-vh:100dvh;--home-vv-top:0px;--bu-bg:#0a0a0a;--bu-fg:#fff;--bu-line:#0a0a0a;--ba-bg:#f1f1f1;--ba-fg:#0a0a0a;--ba-line:#e4e4e4;--track:#e6e6e6;--focus:rgba(0,0,0,.14)}
+:root{--sink:8dvh;--gx:12px;color-scheme:light dark;--bg:#f4f4f4;--card:#fff;--surface:#f6f6f6;--soft:#ececec;--text:#0a0a0a;--muted:#757575;--line:#e2e2e2;--accent:#0a0a0a;--accent2:#2a2a2a;--on:#fff;--income:#0a0a0a;--expense:#d92d2d;--warn:#7a7a7a;--shadow:0 8px 24px rgba(0,0,0,.06);--safe:env(safe-area-inset-bottom,0px);--font-scale:1;--home-vh:100dvh;--home-vv-top:0px;--bu-bg:#0a0a0a;--bu-fg:#fff;--bu-line:#0a0a0a;--ba-bg:#f1f1f1;--ba-fg:#0a0a0a;--ba-line:#e4e4e4;--track:#e6e6e6;--focus:rgba(0,0,0,.14)}
 @media(prefers-color-scheme:dark){:root{--bg:#000;--card:#111;--surface:#1a1a1a;--soft:#242424;--text:#f5f5f5;--muted:#9a9a9a;--line:#2a2a2a;--accent:#f5f5f5;--accent2:#fff;--on:#000;--income:#f5f5f5;--expense:#ff6b6b;--warn:#9a9a9a;--shadow:0 8px 24px rgba(0,0,0,.5);--bu-bg:#f5f5f5;--bu-fg:#000;--bu-line:#f5f5f5;--ba-bg:#1c1c1c;--ba-fg:#f0f0f0;--ba-line:#2a2a2a;--track:#2a2a2a;--focus:rgba(255,255,255,.2)}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
@@ -15,7 +15,7 @@ button,input,textarea{font:inherit;color:inherit}
 button{cursor:pointer;transition:background-color .15s,border-color .15s,color .15s,transform .08s,opacity .15s}
 button:active{transform:scale(.97)}
 button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--focus);outline-offset:1px}
-#app{max-width:760px;margin:auto;padding:calc(env(safe-area-inset-top,0px) + 8px) 16px calc(var(--safe) + 24px)}
+#app{max-width:770px;margin:auto;padding:calc(env(safe-area-inset-top,0px) + 8px) var(--gx) calc(var(--safe) + 24px)}
 .income-text{color:var(--income)!important}.expense-text{color:var(--expense)!important}
 .page{display:none;animation:fade .2s ease}.page.active{display:block}
 @keyframes fade{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}
@@ -35,17 +35,17 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 
 /* ===== 首页（聊天） ===== */
 html.home-locked,body.home-locked{height:100%;overflow:hidden!important;overscroll-behavior:none}
-body.home-locked{position:fixed;top:0;bottom:0;left:0;right:0;width:100%;height:auto;min-height:0}
+body.home-locked{position:fixed;top:0;bottom:calc(-1*var(--sink));left:0;right:0;width:100%;height:auto;min-height:0}
 body.home-locked.kb{top:var(--home-vv-top);bottom:auto;height:var(--home-vh)}
-body.home-locked #app{height:100%;min-height:0;display:flex;flex-direction:column;padding-bottom:calc(var(--safe)*.4 + 6px);overflow:hidden}
+body.home-locked #app{height:100%;min-height:0;display:flex;flex-direction:column;padding-bottom:0;overflow:hidden}
 body.home-locked.kb #app{padding-bottom:8px}
 body.home-locked main{flex:1 1 0;min-height:0;display:flex}
 #page-home.active{display:flex;flex-direction:column;flex:1;min-width:0;width:100%;min-height:0;animation:none}
-.overview{flex:none;padding:8px 12px 7px;background:var(--surface);border-bottom:1px solid var(--line)}
+.overview{flex:none;padding:10px 12px 4px;background:transparent}
 .ring-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .ring{text-align:center;min-width:0}
 .ring-visual{--p:0%;--rc:var(--muted);width:clamp(54px,16.2vw,70px);aspect-ratio:1;margin:0 auto 4px;border-radius:50%;background:conic-gradient(var(--rc) 0 var(--p),var(--track) var(--p) 100%);display:grid;place-items:center;position:relative}
-.ring-visual:before{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--surface)}
+.ring-visual:before{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--card)}
 .ring.warn .ring-visual{--rc:color-mix(in srgb,var(--text) 65%,var(--bg))}
 .ring.over .ring-visual{--rc:var(--expense)}.ring.over .ring-center b,.ring.over .ring-spent{color:var(--expense)}
 .ring-center{z-index:1;display:flex;flex-direction:column;align-items:center;line-height:1.15}
@@ -77,7 +77,7 @@ body.home-locked main{flex:1 1 0;min-height:0;display:flex}
 .attachment{position:relative;width:54px;height:54px;flex:none;border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .attachment img{width:100%;height:100%;object-fit:cover}
 .attachment button{position:absolute;top:2px;right:2px;background:#111c;color:#fff;border:0;border-radius:50%;width:20px;height:20px;font-size:13px;line-height:1;padding:0}
-.composer{display:flex;align-items:flex-end;gap:8px;padding:6px 10px 10px;border-top:1px solid var(--line)}
+.composer{display:flex;align-items:flex-end;gap:8px;padding:6px 10px 10px;border-top:0}
 .icon-btn{width:42px;height:42px;flex:none;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;color:var(--muted)}
 .icon-btn svg,.send-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .ta-wrap{position:relative;flex:1;min-width:0}
@@ -101,7 +101,7 @@ textarea::placeholder,input::placeholder{color:var(--muted)}
 #imageInput,#importData{display:none!important}
 
 /* ===== 明细 ===== */
-.sticky-head{position:sticky;top:0;z-index:5;background:var(--bg);padding-bottom:6px;margin:0 -16px;padding-left:16px;padding-right:16px}
+.sticky-head{position:sticky;top:0;z-index:5;background:var(--bg);padding-bottom:6px;margin:0 calc(-1*var(--gx));padding-left:var(--gx);padding-right:var(--gx)}
 .seg{display:flex;gap:4px;padding:3px;background:var(--soft);border-radius:12px}
 .seg button{flex:1;height:32px;border:0;border-radius:9px;background:transparent;color:var(--muted);font-size:14px;font-weight:600}
 .seg button.active{background:var(--card);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.1)}
@@ -315,7 +315,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   <div class="setting-row"><span>已保存对话</span><b id="histCount">0 条</b></div>
   <div class="btnrow" style="margin-top:0"><button class="btn flex" id="clearHist">清除对话历史</button></div>
  </div>
- <div class="setting"><h3>外观</h3><div class="setting-row"><span>界面字体</span><b id="fontScaleLabel">100%</b></div><input id="fontScaleSlider" type="range" min="0.9" max="1.2" step="0.05" value="1"></div>
+ <div class="setting"><h3>外观</h3><div class="setting-row"><span>输入区底部下沉</span><b id="sinkLabel">8%</b></div><input id="sinkSlider" type="range" min="0" max="15" step="1" value="8"><div class="note" style="margin-top:4px">若输入框被挡住，把它调小；0% 为不下沉。</div><div class="setting-row"><span>界面字体</span><b id="fontScaleLabel">100%</b></div><input id="fontScaleSlider" type="range" min="0.9" max="1.2" step="0.05" value="1"></div>
  <div class="setting"><h3>Token 使用</h3><div class="token-grid"><div class="token"><small>输入</small><b id="promptTokens">0</b></div><div class="token"><small>输出</small><b id="completionTokens">0</b></div><div class="token"><small>合计</small><b id="totalTokens">0</b></div><div class="token"><small>请求</small><b id="requestCount">0</b></div></div></div>
  <div class="setting"><h3>数据管理</h3>
   <div class="note" style="margin-top:0">数据只保存在本机浏览器。建议定期导出备份。</div>
@@ -806,6 +806,7 @@ async function renderSettings(){
  const s=settings();$('apiEndpoint').value=s.endpoint;$('apiKey').value=s.key;$('apiModel').value=s.model;$('rulesInput').value=s.rules;$('autoSave').checked=s.auto;$('histDays').value=s.histDays;$('txScope').value=s.txScope;setHistCount();renderPrefs();
  const u=await all('tokenUsage'),p=u.reduce((a,x)=>a+Number(x.promptTokens||0),0),c=u.reduce((a,x)=>a+Number(x.completionTokens||0),0);
  $('promptTokens').textContent=p;$('completionTokens').textContent=c;$('totalTokens').textContent=p+c;$('requestCount').textContent=u.length;
+ {const sk=localStorage.getItem('ledger.sink'),v=sk==null?8:Math.max(0,Math.min(15,parseInt(sk,10)||0));$('sinkSlider').value=v;$('sinkLabel').textContent=v+'%';}
  const fs=parseFloat(localStorage.getItem('ledger.fontScale')||'1');$('fontScaleSlider').value=fs;$('fontScaleLabel').textContent=Math.round(fs*100)+'%';}
 async function refreshAll(){await Promise.all([renderHome(),renderTransactions(),renderAccounts(),renderAnalytics()]);}
 
@@ -837,9 +838,16 @@ async function importData(file){let o;try{o=JSON.parse(await file.text());}catch
 function showPage(name){
  qa('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+name));qa('.fab-item').forEach(b=>b.classList.toggle('active',b.dataset.page===name));{const fb=$('fabBall'),it=qa('.fab-item').find(b=>b.dataset.page===name);if(fb&&it)fb.textContent=it.dataset.short;const fm=$('fabMenu');if(fm)fm.hidden=true;}
  const home=name==='home';document.body.classList.toggle('home-locked',home);document.documentElement.classList.toggle('home-locked',home);window.scrollTo(0,0);
- if(home){renderHome();const l=$('conversationLog');if(l)l.scrollTop=l.scrollHeight;}
+ if(home){setTimeout(fitSink,0);renderHome();const l=$('conversationLog');if(l)l.scrollTop=l.scrollHeight;}
  else if(name==='transactions')renderTransactions();else if(name==='analytics')renderAnalytics();else if(name==='accounts')renderAccounts();else if(name==='settings')renderSettings();}
 function shiftDetail(dir){const b=detailBase;if(detailRange==='day')detailBase=new Date(b.getFullYear(),b.getMonth(),b.getDate()+dir);else if(detailRange==='week')detailBase=new Date(b.getFullYear(),b.getMonth(),b.getDate()+7*dir);else detailBase=new Date(b.getFullYear(),b.getMonth()+dir,1);renderTransactions();}
+function sinkWanted(){const sk=localStorage.getItem('ledger.sink');return sk==null?8:Math.max(0,Math.min(15,parseInt(sk,10)||0));}
+function fitSink(){/* 下沉只用在页面确实放得下的范围内，绝不把输入框挤出屏幕 */
+ const root=document.documentElement,want=sinkWanted();root.style.setProperty('--sink',want+'dvh');
+ if(document.body.classList.contains('kb')||!document.body.classList.contains('home-locked'))return;
+ const c=document.querySelector('.chat');if(!c)return;const over=c.getBoundingClientRect().bottom-window.innerHeight+4;
+ if(over>0)root.style.setProperty('--sink',Math.max(0,want*window.innerHeight/100-over)+'px');}
+window.addEventListener('resize',()=>setTimeout(fitSink,60));window.addEventListener('pageshow',()=>setTimeout(fitSink,60));
 function initFab(){
  const ball=$('fabBall'),menu=$('fabMenu'),S=48,M=8;
  let pos={rx:1,ry:.62};try{const p=JSON.parse(localStorage.getItem('ledger.fabPos')||'null');if(p&&isFinite(p.rx)&&isFinite(p.ry))pos=p;}catch(e){}
@@ -900,6 +908,7 @@ function bindEvents(){
  $('saveRules').onclick=()=>{localStorage.setItem('ledger.rules',$('rulesInput').value);toast('已保存偏好');};
  $('autoSave').onchange=()=>localStorage.setItem('ledger.autosave',$('autoSave').checked?'1':'0');
  $('clearHist').onclick=async()=>{if(!confirm('清除全部对话历史？'))return;history=[];await clear('conversationHistory');try{localStorage.removeItem('ledger.hist');}catch(e){}setHistCount();renderConversation();toast('已清除');};
+ $('sinkSlider').oninput=()=>{const v=Math.max(0,Math.min(15,parseInt($('sinkSlider').value,10)||0));$('sinkLabel').textContent=v+'%';try{localStorage.setItem('ledger.sink',String(v));}catch(e){}fitSink();};
  $('fontScaleSlider').oninput=()=>{const v=parseFloat($('fontScaleSlider').value)||1;document.documentElement.style.setProperty('--font-scale',v);$('fontScaleLabel').textContent=Math.round(v*100)+'%';localStorage.setItem('ledger.fontScale',String(v));};
  $('exportData').onclick=()=>exportData().catch(e=>toast(e.message,'error'));
  $('importBtn').onclick=()=>$('importData').click();
@@ -912,7 +921,7 @@ function bindEvents(){
   catch(e){m.className='msg error';m.textContent='失败：'+e.message;}};
 }
 async function init(){
- try{await openDB();await loadHistory();const fs=parseFloat(localStorage.getItem('ledger.fontScale')||'1');document.documentElement.style.setProperty('--font-scale',fs);bindEvents();await refreshAll();}
+ try{await openDB();await loadHistory();const fs=parseFloat(localStorage.getItem('ledger.fontScale')||'1');document.documentElement.style.setProperty('--font-scale',fs);bindEvents();await refreshAll();fitSink();}
  catch(e){const l=$('conversationLog');if(l)l.innerHTML='<div class="chat-bubble assistant">⚠️ 初始化失败：'+esc(e.message)+'</div>';}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
