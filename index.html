@@ -97,7 +97,7 @@ select.input{padding-right:8px}
 textarea::placeholder,input::placeholder{color:var(--muted)}
 .send-btn{width:42px;height:42px;flex:none;border-radius:50%;border:0;background:var(--accent);color:var(--on);display:grid;place-items:center}
 .send-btn:disabled{opacity:.6}
-#imageInput,#importData{display:none!important}
+#imageInput,#camInput,#importData{display:none!important}
 
 /* ===== 明细 ===== */
 .sticky-head{position:sticky;top:0;z-index:5;background:var(--bg);padding-bottom:6px;margin:0 calc(-1*var(--gx));padding-left:var(--gx);padding-right:var(--gx)}
@@ -131,6 +131,10 @@ textarea::placeholder,input::placeholder{color:var(--muted)}
 .stat span{font-size:12px;color:var(--muted);display:block}.stat b{font-size:clamp(16px,4.8vw,20px);display:block;margin-top:5px}
 .chart{background:var(--card);border:1px solid var(--line);border-radius:19px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
 .chart h3{font-size:15px;margin:0 0 12px}
+h3.fold{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;-webkit-user-select:none}h3.fold:after{content:"";margin-left:auto;width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .2s;flex:none;margin-bottom:3px}
+.closed>h3.fold:after{transform:rotate(-45deg);margin-bottom:0}.closed>h3.fold{margin-bottom:0!important}.closed>.cbody{display:none}
+h3 small{font-weight:500;color:var(--muted);font-size:12px}
+.cal-group{border-top:1px solid var(--line)}.cal-group:first-child{border-top:0}.cal-group>summary{list-style:none;display:flex;justify-content:space-between;align-items:center;padding:11px 2px;font-size:14px;font-weight:650;cursor:pointer}.cal-group>summary::-webkit-details-marker{display:none}.cal-group>summary small{color:var(--muted);font-weight:500}.cal-group .acct-card{margin-bottom:8px}
 .category{display:flex;align-items:center;gap:16px}
 .donut{width:120px;height:120px;border-radius:50%;position:relative;flex:none;background:var(--soft)}
 .donut:after{content:"";position:absolute;inset:17px;background:var(--card);border-radius:50%}
@@ -156,6 +160,7 @@ textarea::placeholder,input::placeholder{color:var(--muted)}
 .account-total>div{min-width:0;padding:11px 9px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
 .account-total small{display:block;color:var(--muted);font-size:11px}.account-total b{display:block;margin-top:4px;font-size:clamp(13px,3.6vw,17px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .acct-card{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--line);border-radius:15px;margin-bottom:8px;display:flex;align-items:center;gap:10px;padding:11px 12px;cursor:pointer}
+.credit-line{margin-top:3px;font-size:12.5px;color:var(--muted)}
 .bank-mark.logo{padding:0;background:#333;overflow:hidden}.bank-mark.logo svg{width:100%;height:100%;display:block}
 .bank-mark{width:40px;height:40px;display:grid;place-items:center;border-radius:13px;background:var(--soft);font-size:14px;font-weight:800;flex:none}
 .acct-main{flex:1;min-width:0}.acct-top{display:flex;justify-content:space-between;gap:10px}.acct-top b{font-size:15px}
@@ -184,6 +189,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 /* ===== 弹层 / 导航 / Toast ===== */
 .modal-backdrop{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.4);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;padding:12px}
 .modal-backdrop[hidden]{display:none}
+.dlg-bk{z-index:96;align-items:center}.modal-sheet.dlg{max-width:340px;border-radius:22px;padding:20px 18px 16px;text-align:center}.dlg b{font-size:17px}.dlg p{margin:10px 2px 14px;color:var(--muted);font-size:14px;line-height:1.6;white-space:pre-wrap}.dlg .sheet-foot{padding-top:0}
 .modal-sheet{width:min(620px,100%);max-height:86dvh;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:10px 17px calc(14px + var(--safe));box-shadow:0 12px 50px rgba(0,0,0,.25);animation:rise .22s ease}
 @keyframes rise{from{transform:translateY(30px);opacity:.4}to{transform:none;opacity:1}}
 .modal-handle{width:36px;height:4px;background:var(--muted);opacity:.4;border-radius:9px;margin:0 auto 12px}
@@ -191,7 +197,42 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .icon{width:38px;height:38px;border:1px solid var(--line);border-radius:50%;background:var(--surface);font-size:20px;display:grid;place-items:center}
 .sheet-body{overflow:auto;padding:12px 0 4px;flex:1;min-height:0}.sheet-foot{display:flex;gap:8px;padding-top:10px}
 .sheet-foot:empty{display:none}.sheet-actions{display:grid;gap:8px}
-.fab-ball{position:fixed;z-index:70;left:0;top:0;width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:var(--text);color:var(--bg);font-size:17px;font-weight:800;display:grid;place-items:center;box-shadow:0 8px 22px rgba(0,0,0,.3);touch-action:none;user-select:none;-webkit-user-select:none;transition:left .22s ease,top .22s ease}
+/* ===== Whatsup 绿聊皮肤 ===== */
+.wa-bar{display:none}
+html[data-skin=wa]{--bg:#efeae2;--card:#fff;--surface:#f0f2f5;--soft:#e9edef;--text:#111b21;--muted:#667781;--line:#e1e5e8;--accent:#00a884;--accent2:#008069;--on:#fff;--income:#008069;--expense:#d92d2d;--bu-bg:#d9fdd3;--bu-fg:#111b21;--bu-line:#d9fdd3;--ba-bg:#fff;--ba-fg:#111b21;--ba-line:#fff;--track:#e1e5e8;--focus:rgba(0,168,132,.3);--wa-head:#008069;--wa-tick:#53bdeb}
+@media(prefers-color-scheme:dark){html[data-skin=wa]{--bg:#0b141a;--card:#111b21;--surface:#202c33;--soft:#2a3942;--text:#e9edef;--muted:#8696a0;--line:#222d34;--accent:#00a884;--on:#fff;--income:#00a884;--expense:#ff7b7b;--bu-bg:#005c4b;--bu-fg:#e9edef;--bu-line:#005c4b;--ba-bg:#202c33;--ba-fg:#e9edef;--ba-line:#202c33;--track:#2a3942;--wa-head:#202c33}}
+html[data-skin=wa] .wa-bar{display:flex;align-items:center;gap:11px;flex:none;padding:calc(env(safe-area-inset-top,0px)*0 + 9px) 14px;background:var(--wa-head);color:#fff}
+html[data-skin=wa] .wa-bar i{width:36px;height:36px;border-radius:50%;background:#dfe5e7;color:#111;display:grid;place-items:center;font-style:normal;font-size:19px;flex:none}
+html[data-skin=wa] .wa-bar b{display:block;font-size:16px;font-weight:600;line-height:1.2}html[data-skin=wa] .wa-bar small{display:block;font-size:12px;opacity:.8;line-height:1.2}
+html[data-skin=wa] .wa-bar button{margin-left:auto}
+html[data-skin=wa] .pure-head{background:var(--card);padding:6px 14px;border-bottom:1px solid var(--line)}
+html[data-skin=wa] .wa-bar .wa-clear{background:transparent;border:0;color:#fff;font-size:13px;opacity:.85}
+html[data-skin=wa] .overview{background:var(--card);border-bottom:1px solid var(--line);padding-top:8px}
+html[data-skin=wa] .conversation-log{background-color:var(--bg);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cg fill='none' stroke='%23808080' stroke-opacity='.09' stroke-width='1.6' stroke-linecap='round'%3E%3Ccircle cx='20' cy='22' r='7'/%3E%3Cpath d='M70 16l9 9m0-9l-9 9'/%3E%3Cpath d='M18 78q8-12 16 0t16 0'/%3E%3Crect x='80' y='70' width='16' height='12' rx='3'/%3E%3Cpath d='M58 52l5 9 5-9'/%3E%3Ccircle cx='100' cy='36' r='3'/%3E%3C/g%3E%3C/svg%3E");padding:12px 12px 8px;gap:4px}
+html[data-skin=wa] .chat-bubble{position:relative;border:0;border-radius:8px;padding:6px 9px 4px;box-shadow:0 1px .5px rgba(11,20,26,.13);max-width:84%;margin-bottom:3px}
+html[data-skin=wa] .chat-bubble p+p{margin-top:5px}
+html[data-skin=wa] .chat-bubble.user{border-top-right-radius:0;margin-right:7px}
+html[data-skin=wa] .chat-bubble.assistant{border-top-left-radius:0;margin-left:7px}
+html[data-skin=wa] .chat-bubble.user:before,html[data-skin=wa] .chat-bubble.assistant:before{content:"";position:absolute;top:0;width:0;height:0;border-top:8px solid var(--bu-bg)}
+html[data-skin=wa] .chat-bubble.user:before{right:-7px;border-right:8px solid transparent}
+html[data-skin=wa] .chat-bubble.assistant:before{left:-7px;border-left:8px solid transparent;border-top-color:var(--ba-bg)}
+html[data-skin=wa] .chat-bubble.att-only,html[data-skin=wa] .chat-bubble.img-only{padding:4px}
+.chat-bubble .tm{display:none}
+html[data-skin=wa] .chat-bubble .tm{display:block;text-align:right;font-size:11px;line-height:1.2;color:var(--muted);margin-top:2px}
+html[data-skin=wa] .chat-bubble .tm i{font-style:normal;color:var(--wa-tick);margin-left:3px;letter-spacing:-2px}
+html[data-skin=wa] .composer{background:transparent;padding:6px 8px 8px}
+html[data-skin=wa] .composer textarea{background:var(--card);border-color:transparent;border-radius:22px}
+html[data-skin=wa] .icon-btn{background:transparent;border-color:transparent}
+html[data-skin=wa] .send-btn{background:var(--accent)}
+html[data-skin=wa] .fab-ball{background:var(--accent);color:#fff}
+html[data-skin=wa] .fab-item.active{background:var(--accent);color:#fff}
+html[data-skin=wa] .seg button.active{color:var(--accent2)}
+html[data-skin=wa] .chat-bubble .lbl,html[data-skin=wa] .chat-bubble .quote{border-color:var(--accent)}
+html[data-skin=wa] .pill-bar{background:var(--card)}
+html[data-skin=wa] .welcome{background:#fff3c4;color:#54656f;border-radius:10px;padding:10px 14px;box-shadow:0 1px .5px rgba(11,20,26,.13)}html[data-skin=wa] .welcome b{color:#111b21}
+html[data-skin=wa] .typing{background:var(--ba-bg);border-radius:8px}
+.fab-ball{position:fixed;z-index:70;left:0;top:0;width:48px;height:48px;border-radius:50%;border:0;outline:0;background:var(--text);color:var(--bg);font-size:17px;font-weight:800;display:grid;place-items:center;box-shadow:0 3px 10px rgba(0,0,0,.28);touch-action:none;user-select:none;-webkit-user-select:none;transition:left .22s ease,top .22s ease}
+.fab-ball[hidden]{display:none}.fab-tab{position:fixed;z-index:70;width:16px;height:54px;border:0;padding:0;background:var(--text);opacity:.3;border-radius:12px 0 0 12px;right:0}.fab-tab.l{left:0;right:auto;border-radius:0 12px 12px 0}.fab-tab[hidden]{display:none}.fab-tab:active{opacity:.6}
 .fab-ball.drag{transition:none;transform:scale(1.08)}
 .fab-menu{position:fixed;z-index:69;min-width:150px;display:grid;gap:4px;padding:8px;border-radius:20px;background:var(--card);border:1px solid var(--line);box-shadow:0 14px 40px rgba(0,0,0,.28)}
 .fab-menu[hidden]{display:none}
@@ -230,6 +271,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .att svg,.attachment svg{width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .att span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .att.off{opacity:.45;border-style:dashed}
+.chat-bubble img.pv{display:block;max-width:min(230px,100%);max-height:260px;border-radius:10px;object-fit:cover;cursor:zoom-in;margin-bottom:5px;background:var(--soft);min-width:60px;min-height:60px}
+.atts{flex-direction:column}.attachment img{width:26px;height:26px;border-radius:7px;object-fit:cover;flex:none}
 .chat-bubble.att-only{padding:6px}
 .srcs{margin-top:8px;font-size:.78em;border-top:1px solid color-mix(in srgb,currentColor 18%,transparent);padding-top:6px}
 .srcs summary{cursor:pointer;opacity:.7;list-style:none}.srcs summary::-webkit-details-marker{display:none}
@@ -258,7 +301,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .setting h3 small{font-weight:500;color:var(--muted);font-size:12px;margin-left:6px}
 #toast{position:fixed;z-index:99;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translate(-50%,-20px);opacity:0;max-width:min(86vw,420px);padding:10px 16px;border-radius:14px;background:var(--text);color:var(--bg);font-size:14px;line-height:1.4;pointer-events:none;transition:.25s;text-align:center}
 #toast.show{opacity:1;transform:translate(-50%,0)}#toast.error{outline:2px solid var(--muted)}
-@media(max-height:680px){.ring-visual{width:48px}.ring-meta{display:none}}
+
 </style>
 </head>
 <body class="home-locked"><div id="app">
@@ -279,15 +322,17 @@ input[type=range]{width:100%;accent-color:var(--accent)}
    <div class="ta-wrap"><textarea id="naturalInput" rows="1" placeholder="说一句话记账或查询"></textarea><button class="expand-btn" id="expandBtn" type="button" aria-label="放大输入框"><svg viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg></button></div>
    <button class="send-btn" id="analyzeText" aria-label="发送"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
   </div>
+  <input type="file" id="camInput" accept="image/*" capture="environment">
   <input type="file" id="imageInput" accept="image/*,.pdf,application/pdf,.txt,.csv,.md,.json,.doc,.docx,.xls,.xlsx,.ppt,.pptx" multiple>
  </div>
 </section>
 
 <section class="page" id="page-chat">
  <div class="chat">
-  <div class="pure-head"><b>纯聊天</b><span>不记账 · 不改账本</span><button id="chatClear" type="button">清空</button></div>
   <div id="chatLog" class="conversation-log" aria-live="polite"></div>
+  <div class="attachments" id="chatAtts"></div>
   <div class="composer">
+   <button class="icon-btn" id="chatPick" aria-label="添加附件（拍照、图片、文件）"><svg viewBox="0 0 24 24"><path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/></svg></button>
    <div class="ta-wrap"><textarea id="chatInput" rows="1" placeholder="想聊什么都可以"></textarea></div>
    <button class="send-btn" id="chatSend" aria-label="发送"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
   </div>
@@ -331,15 +376,15 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 <section class="page" id="page-accounts">
  <div class="section-head"><h2>账户</h2><span id="accountSummary" style="font-size:13px;color:var(--muted)"></span></div>
  <div class="chart"><div class="account-total" id="accountFinancialSummary"></div></div>
- <div class="chart"><h3>资产账户</h3><div id="assetAccounts"></div></div>
- <div class="chart"><h3>负债账户</h3><div id="liabilityAccounts"></div></div>
- <div class="chart"><h3>校准历史</h3><div id="accountCalibrations"></div></div>
+ <div class="chart" data-fold="assets"><h3>资产账户<small id="assetCnt"></small></h3><div id="assetAccounts"></div></div>
+ <div class="chart" data-fold="liabs"><h3>负债账户<small id="liabCnt"></small></h3><div id="liabilityAccounts"></div></div>
+ <div class="chart" data-fold="calib"><h3>校准历史<small id="calCnt"></small></h3><div id="accountCalibrations"></div></div>
  <div class="note" style="text-align:center">点开账户可校准、改名或删除；也可直接在聊天里说</div>
 </section>
 
 <section class="page" id="page-settings">
  <div class="section-head"><h2>设置</h2></div>
- <div class="setting"><h3>AI 接口</h3>
+ <div class="setting" data-fold="api"><h3>AI 接口<small id="apiState"></small></h3>
   <label class="label" for="apiEndpoint">API Endpoint</label><input class="input" id="apiEndpoint" placeholder="https://api.deepseek.com/chat/completions">
   <label class="label" for="apiKey">API Key</label><input class="input" id="apiKey" type="password" autocomplete="off" placeholder="API Key">
   <label class="label" for="apiModel">模型</label><input class="input" id="apiModel" placeholder="deepseek-flash">
@@ -373,10 +418,13 @@ input[type=range]{width:100%;accent-color:var(--accent)}
  </div>
  <div class="setting"><h3>对话历史</h3>
   <div class="setting-row"><span>已保存对话</span><b id="histCount">0 条</b></div>
-  <div class="btnrow" style="margin-top:0"><button class="btn flex" id="clearHist">清除对话历史</button></div>
+  <div class="btnrow" style="margin-top:0"><button class="btn flex" id="clearHist">清除全部对话历史</button></div>
+  <div class="btnrow" style="margin-top:8px"><button class="btn flex" id="clearPure">仅清空纯聊天</button></div>
  </div>
  <div class="setting"><h3>外观</h3>
+  <div class="setting-row"><span>显示悬浮球</span><label class="switch"><input type="checkbox" id="fabSwitch" checked><span></span></label></div>
   <div class="setting-row"><span>聊天气泡字号</span><b id="bubbleLabel">17px</b></div><input id="bubbleSlider" type="range" min="13" max="24" step="1" value="17">
+  <label class="label">界面风格</label><div class="seg" id="skinSeg" style="margin:6px 0 4px"><button data-skin="classic">经典黑白</button><button data-skin="wa">Whatsup 绿聊</button></div>
   <label class="label">输入框占位符显示（可多选）</label>
   <div class="cks"><label class="ck"><input type="checkbox" data-ph="day">今日</label><label class="ck"><input type="checkbox" data-ph="week">本周</label><label class="ck"><input type="checkbox" data-ph="month">本月</label><label class="ck"><input type="checkbox" data-ph="year">本年</label><label class="ck"><input type="checkbox" data-ph="all">累计</label></div><div class="setting-row"><span>输入区底部下沉</span><b id="sinkLabel">8%</b></div><input id="sinkSlider" type="range" min="0" max="15" step="1" value="8"><div class="note" style="margin-top:4px">若输入框被挡住，把它调小；0% 为不下沉。</div><div class="setting-row"><span>界面字体</span><b id="fontScaleLabel">100%</b></div><input id="fontScaleSlider" type="range" min="0.9" max="1.2" step="0.05" value="1"></div>
  <div class="setting"><h3>Token 使用</h3><div class="token-grid"><div class="token"><small>输入</small><b id="promptTokens">0</b></div><div class="token"><small>输出</small><b id="completionTokens">0</b></div><div class="token"><small>合计</small><b id="totalTokens">0</b></div><div class="token"><small>请求</small><b id="requestCount">0</b></div></div></div>
@@ -393,6 +441,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 
 <div class="modal-backdrop" id="sheet" hidden><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-head"><div><b id="sheetTitle"></b><small id="sheetSub"></small></div><button class="icon" data-act="close" aria-label="关闭">×</button></div><div class="sheet-body" id="sheetBody"></div><div class="sheet-foot" id="sheetFoot"></div></div></div>
 <button class="fab-ball" id="fabBall" type="button" aria-label="导航（可拖动）">记</button>
+<button class="fab-tab" id="fabTab" type="button" aria-label="显示悬浮球" hidden></button>
 <div class="fab-menu" id="fabMenu" hidden>
  <button class="fab-item active" data-page="home" data-short="记"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>记账</button>
  <button class="fab-item" data-page="chat" data-short="聊"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8.5 10h7"/></svg>纯聊天</button>
@@ -401,11 +450,13 @@ input[type=range]{width:100%;accent-color:var(--accent)}
  <button class="fab-item" data-page="accounts" data-short="户"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg>账户</button>
  <button class="fab-item" data-page="settings" data-short="设"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>设置</button>
  <div class="fab-sep"></div>
+ <button class="fab-item" id="fabHide" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M8 12h8"/></svg><span>隐藏悬浮球</span></button>
  <button class="fab-item" id="fabEye" type="button"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path class="slash" d="M3 3l18 18"/></svg><span>隐藏金额</span></button>
 </div>
 <div class="expand" id="expandSheet" hidden><textarea id="expandText" placeholder="输入更长的内容…"></textarea><div class="expand-bar"><button class="btn flex" id="expandClose" type="button">收起</button><button class="btn primary flex" id="expandSend" type="button">发送</button></div></div>
 <div id="msgMenu" hidden><button id="mmQuote" type="button">引用</button><button id="mmCopy" type="button">复制</button></div>
 <div id="viewer" hidden><div class="viewer-bar"><span id="viewerName"></span><button id="viewerClose" type="button" aria-label="关闭">×</button></div><div id="viewerBody"></div></div>
+<div class="modal-backdrop dlg-bk" id="dlg" hidden><div class="modal-sheet dlg"><b id="dlgTitle"></b><p id="dlgMsg"></p><div class="sheet-foot"><button class="btn flex" id="dlgNo" type="button">取消</button><button class="btn flex primary" id="dlgOk" type="button">确认</button></div></div></div>
 <div id="toast"></div>
 </div>
 <script>
@@ -504,27 +555,34 @@ async function loadHistory(){const rows=(await all('conversationHistory')).sort(
 function setHistCount(){const e=$('histCount');if(e)e.textContent=history.length+' 条';}
 function splitParas(t){const out=[];String(t).split(/\n+/).forEach(line=>{line=line.trim();if(!line)return;(line.match(/[^。！？!?；;]+[。！？!?；;]*[”’」』）)]*/g)||[line]).forEach(p=>{p=p.trim();if(p)out.push(p);});});return out;}
 const CLIP='<svg viewBox="0 0 24 24"><path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/></svg>';
-function attChip(a){const exp=Date.now()-Number(a.at||0)>7*DAY;const nm=esc(a.name||(a.kind==='image'?'图片':'文件'));
+const thumbCache=new Map();
+function attChip(a){if(a.kind==='image'&&Date.now()-Number(a.at||0)<=7*DAY){const c=thumbCache.get(a.id);return'<img class="pv" data-att="'+esc(a.id)+'" alt="'+esc(a.name||'图片')+'"'+(c?' src="'+c+'"':'')+'>';}
+ return attChip0(a);}
+async function hydrateThumbs(root){if(!root||!db)return;for(const im of root.querySelectorAll('img.pv:not([src])')){const id=im.dataset.att;let u=thumbCache.get(id);
+  if(!u){const r=await new Promise(ok=>{try{const q=db.transaction('attachments').objectStore('attachments').get(id);q.onsuccess=()=>ok(q.result);q.onerror=()=>ok(null);}catch(e){ok(null);}});u=r&&(r.thumb||r.dataUrl);if(u)thumbCache.set(id,u);}
+  if(u)im.src=u;else{const sp=document.createElement('span');sp.className='att off';sp.innerHTML=CLIP+'<span>'+esc(im.alt||'图片')+'（已过期）</span>';im.replaceWith(sp);}}}
+function attChip0(a){const exp=Date.now()-Number(a.at||0)>7*DAY;const nm=esc(a.name||(a.kind==='image'?'图片':'文件'));
  return exp?'<span class="att off">'+CLIP+'<span>'+nm+'（已过期）</span></span>':'<button type="button" class="att" data-att="'+esc(a.id)+'">'+CLIP+'<span>'+nm+'</span></button>';}
 function safeUrl(u){u=String(u||'').trim();return /^https?:\/\//i.test(u)?u:'';}
 const AMT_RX=/[-+−]?[¥￥$€£]\s?\d[\d,]*(?:\.\d+)?(?:\s?[万kK])?|[-+−]?\d[\d,]*(?:\.\d+)?\s?(?:元|块钱|块|万元|円|CNY|RMB|USD|JPY)/g;
 const maskAmt=t=>hideAmt?String(t).replace(AMT_RX,'••••'):t;
+const plainMd=t=>String(t).replace(/```[a-z]*\n?([\s\S]*?)```/g,'$1').replace(/\*\*([^*\n]+?)\*\*/g,'$1').replace(/__([^_\n]+?)__/g,'$1').replace(/(^|[^*])\*([^*\s][^*\n]*?)\*(?!\*)/g,'$1$2').replace(/`([^`\n]+)`/g,'$1').replace(/^\s{0,3}#{1,6}\s*/gm,'').replace(/^\s*[-*+]\s+/gm,'• ').replace(/^\s*>\s?/gm,'').replace(/\[([^\]]+)\]\((https?:[^)]+)\)/g,'$1').replace(/\*\*/g,'');
 function bubbleHTML(h){const side=h.role==='user'?'user':'assistant';let inner='';
  if(h.tags&&h.tags.includes('non_ledger'))inner+='<span class="lbl">非记账</span>';
  if(h.quote)inner+='<div class="quote"><b>'+esc(h.quote.who||'')+'</b>'+esc(h.quote.text||'')+'</div>';
  if(h.atts&&h.atts.length)inner+='<div class="atts">'+h.atts.map(attChip).join('')+'</div>';
- const txt=/^\[附件 \d+\]$/.test(h.content)?'':splitParas(maskAmt(h.content)).map(p=>'<p>'+esc(p)+'</p>').join('');inner+=txt;
+ const txt=/^\[附件 \d+\]$/.test(h.content)?'':splitParas(maskAmt(h.role==='user'?h.content:plainMd(h.content))).map(p=>'<p>'+esc(p)+'</p>').join('');inner+=txt;
  const src=(h.sources||[]).filter(s=>safeUrl(s.url));
  if(src.length)inner+='<details class="srcs"><summary>来源 · '+src.length+'</summary>'+src.map(s=>'<a href="'+esc(safeUrl(s.url))+'" target="_blank" rel="noopener noreferrer">'+esc(s.title||s.url)+'</a>').join('')+'</details>';
- return'<div class="chat-bubble '+side+((!txt&&!h.quote&&!h.tags)?' att-only':'')+'" data-id="'+esc(h.id)+'">'+inner+'</div>';}
+ const tm='<div class="tm">'+new Date(h.createdAt||Date.now()).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false})+(side==='user'?'<i>✓✓</i>':'')+'</div>';
+ return'<div class="chat-bubble '+side+((!txt&&!h.quote&&!h.tags)?' att-only':'')+'" data-id="'+esc(h.id)+'">'+inner+tm+'</div>';}
 function renderConversation(force){const log=$('conversationLog');if(!log)return;
  const stick=force||log.scrollHeight-log.scrollTop-log.clientHeight<90,keep=log.scrollTop;
  let html=history.slice(-60).map(bubbleHTML).join('');
- if(!history.length&&!streaming)html='<div class="welcome"><b>我是 Atron 🤖</b>你的记账管家，也能陪你聊任何事<br>记账 · 查询 · 报告 · 规划 · 联网搜索<br>也可以发账单截图或 PDF<br><br>试试：午饭 28 微信 / 2.5，网商，可乐<br>统计今天 / 300 元能撑几天 / 开放聊天</div>';
- if(streaming){const t=streaming.text?splitParas(maskAmt(streaming.text)).map(p=>'<p>'+esc(p)+'</p>').join(''):'<div class="typing"><span></span><span></span><span></span></div>';
+  if(streaming){const t=streaming.text?splitParas(maskAmt(plainMd(streaming.text))).map(p=>'<p>'+esc(p)+'</p>').join(''):'<div class="typing"><span></span><span></span><span></span></div>';
   html+='<div class="chat-bubble assistant">'+t+(streaming.status?'<div class="status">'+esc(streaming.status)+(streaming.sec?' '+streaming.sec+'s':'')+'</div>':'')+'</div>';}
  else if(busyAI)html+='<div class="chat-bubble assistant typing"><span></span><span></span><span></span></div>';
- log.innerHTML=html;log.scrollTop=stick?log.scrollHeight:keep;}
+ log.innerHTML=html;hydrateThumbs(log);log.scrollTop=stick?log.scrollHeight:keep;}
 function historyBlock(dropLast){const d=settings().histDays,cutoff=Date.now()-d*DAY,maxMsg=d<=3?12:Math.min(80,12+d*2),maxChars=d<=3?7000:Math.min(30000,7000+d*700);
  let base=history.slice();if(dropLast&&base.length&&base[base.length-1].role==='user')base.pop();
  const src=base.filter(h=>Number(h.createdAt||0)>=cutoff).slice(-maxMsg),out=[];let used=0;
@@ -694,10 +752,11 @@ function prompt(ctx,opt){opt=opt||{};
  '【资金流向】用户要分析资金流向时，用 context.flows（来源→账户→去向、账户间转账、账户净变动）与 monthly，指出主要来源与去向、占比、异常与可优化之处，结合聊天中提到的背景。',
  '【附件】用户发来图片/PDF：识别其为账单、小票、云闪付或支付记录、银行余额/账户截图、转账凭证或其他，提取金额、商户、时间、账户，并推断用户意图（记一笔或多笔、校准余额等），在 actions 给出建议操作，reply 说明你识别到了什么、哪里不确定。'+(opt.screenshotOnly?'本次用户只发了附件没有文字：系统会在执行前让用户确认，请把意图判断写清楚。':''),
  '【非记账与开放聊天】与记账无关的问题（查单词、常识、翻译、写作、闲聊等）：intent 用 "general"，直接回答，必要时深度思考或联网搜索，不产生 actions，系统会自动打上“非记账”标签。'+(opt.open?'当前处于【开放聊天】模式：用户问什么答什么（合法范围内），不要把话题强行拉回记账；一旦用户发来明确的记账/账户操作，正常执行并把 mode 设为 "ledger" 以结束开放聊天。':'用户说“开放聊天/随便聊聊”时把 mode 设为 "open"；平时默认 "keep"。'),
+ '【查单词】用户查英文单词/短语时（如“apple 什么意思”“查 resilient”“define x”），严格按下面分行格式回答，每项各占一行或多行，不要使用任何 Markdown 符号（不要 ** # ` 等）：\n📖 单词\n英标：英 /…/ · 美 /…/\n音节：ap·ple\n柯林斯英文释义（Collins 风格，一句话英文释义，按词性分条）：\n1. (noun) …\n2. (verb) …\n中文释义：\n1. 名词：…\n2. 动词：…\n例句：\n1. English sentence. — 中文翻译\n2. …\n给 2–3 个常用释义、2–3 条例句；不确定的读音或释义要如实说明，不要编造。',
  '【联网与思考】需要最新信息（汇率、价格、新闻、地点、攻略等）时可使用联网搜索，用自己的话归纳；来源链接由系统折叠展示，reply 里不必罗列 URL。搜索词里不要包含账号、余额、姓名等隐私，只写必要的公开关键词。简单问题简短回答，复杂问题再展开。',
- '【偏好与记忆】context.habits 是用户历史习惯（m=商户，c=常用分类，a=常用账户）：同一商户优先沿用，除非用户本次明确指定。用户表达长期习惯（含“以后/默认/总是/一般/都算/每次”）或连续纠正同类错误时，在 actions 末尾追加 preference（note 写成完整、可独立理解的一句话，已有偏好不要重复）；用户说“忘记/不要再…/取消那个偏好”用 forget_preference（note 填关键词）；账户改名 rename_account(account,newName)；删除账户 delete_account(account)（流水保留）。',
+ '【偏好与记忆】context.habits 是用户历史习惯（m=商户，c=常用分类，a=常用账户）：同一商户优先沿用，除非用户本次明确指定。用户表达长期习惯（含“以后/默认/总是/一般/都算/每次”）或连续纠正同类错误时，在 actions 末尾追加 preference（note 写成完整、可独立理解的一句话，已有偏好不要重复）；用户说“忘记/不要再…/取消那个偏好”用 forget_preference（note 填关键词）；用户提供信用卡额度 set_credit_limit(account,creditLimit)；账户改名 rename_account(account,newName)；删除账户 delete_account(account)（流水保留）。',
  '当前时间：'+new Date().toLocaleString('zh-CN',{hour12:false})+'；时区：'+Intl.DateTimeFormat().resolvedOptions().timeZone+'；手动偏好：'+(settings().rules||'无')+'；记忆偏好：'+preferenceMemory()+'；context：'+JSON.stringify(ctx),
- 'actions 元素格式：{"type":"expense|income|transfer|refund|create_account|budget|daily_budget|budget_override|clear_budget_override|balance_snapshot|update_transaction|delete_transaction|mark_special|create_project|delete_project|rename_account|delete_account|preference|forget_preference|report|set_mode","amount":null,"expr":"","balance":null,"currency":"CNY","fxRate":null,"account":"","toAccount":"","merchant":"","category":"","occurredAt":"","budgetName":"","accountType":"credit_card|savings_card|payment|wallet|cash|other","institution":"","last4":"","availableCredit":null,"creditLimit":null,"targetId":"","changes":{},"newName":"","neutral":false,"special":false,"tag":"","name":"","from":"","to":"","dates":[],"groupBy":"","accountAmount":null,"toAmount":null,"confidence":0.9,"note":"","transferKind":"internal|external","toPerson":"","effectiveFrom":"YYYY-MM-DD"}。无操作时 actions=[]。'];
+ 'actions 元素格式：{"type":"expense|income|transfer|refund|create_account|budget|daily_budget|budget_override|clear_budget_override|balance_snapshot|update_transaction|delete_transaction|mark_special|create_project|delete_project|rename_account|set_credit_limit|delete_account|preference|forget_preference|report|set_mode","amount":null,"expr":"","balance":null,"currency":"CNY","fxRate":null,"account":"","toAccount":"","merchant":"","category":"","occurredAt":"","budgetName":"","accountType":"credit_card|savings_card|payment|wallet|cash|other","institution":"","last4":"","availableCredit":null,"creditLimit":null,"targetId":"","changes":{},"newName":"","neutral":false,"special":false,"tag":"","name":"","from":"","to":"","dates":[],"groupBy":"","accountAmount":null,"toAmount":null,"confidence":0.9,"note":"","transferKind":"internal|external","toPerson":"","effectiveFrom":"YYYY-MM-DD"}。无操作时 actions=[]。'];
  return L.join('\n');}
 function parseAmount(v){if(v==null||v==='')return null;if(typeof v==='number')return Number.isFinite(v)?v:null;let s=String(v).normalize('NFKC').replace(/[￥¥$人民币元,，\s]/g,'').replace(/负/g,'-'),m=1;const u=s.match(/(万|千|百)$/);if(u){m=u[1]==='万'?1e4:u[1]==='千'?1e3:100;s=s.slice(0,-1);}const n=Number(s.replace(/[^\d.-]/g,''));return Number.isFinite(n)&&/\d/.test(s)?r2(n*m):null;}
 function normChanges(c){if(!c||typeof c!=='object')return{};const o={},am=parseAmount(c.amount);if(am!=null)o.amount=am;['account','toAccount','merchant','category','note'].forEach(k=>{if(clean(c[k]))o[k]=clean(c[k]);});if(clean(c.occurredAt))o.occurredAt=normalizeDate(c.occurredAt);if(typeof c.special==='boolean')o.special=c.special;if(clean(c.tag))o.tag=clean(c.tag);return o;}
@@ -741,14 +800,17 @@ function partialReply(buf){const m=buf.match(/"(?:reply|answer)"\s*:\s*"/);
 const RX_COMPLEX=/分析|报告|流向|统计|建议|计划|方案|规划|为什么|对比|比较|趋势|撑多少天|撑几天|够用|旅游|旅行|出行|行程|攻略|汇率|换算|计算|算一下|合计|预测|总结|复盘|优化|省钱|策略|analy[sz]e|report|plan|why|compare|budget plan|分析して|計画/i;
 const RX_WEB=/联网|搜索|搜一下|查一下|查查|最新|新闻|天气|汇率|价格|多少钱|攻略|景点|机票|酒店|营业时间|怎么走|什么意思|翻译|百科|谁是|什么时候|https?:\/\/|www\.|search|latest|news|weather|exchange rate|検索|最新/i;
 const RX_PLAN=/旅游|旅行|出行|行程|规划|方案|流向|复盘|trip|travel|itinerary/i;
+const RX_WORD=/^(?:查(?:一下|询)?(?:单词)?|查查|define|meaning of|what(?:'s| is| does)(?: the meaning of)?)?\s*[A-Za-z][A-Za-z'’-]{1,28}(?:\s+[A-Za-z'’-]{1,20}){0,2}\s*(?:是什么意思|什么意思|的意思|怎么读|meaning|means?)?\s*[?？]?$/i;
 function planFor(text,list,S,open){const t=String(text||''),len=t.length,hasAtt=list&&list.length>0;
  const quick=len<=24&&!RX_COMPLEX.test(t)&&!RX_WEB.test(t)&&!hasAtt&&!open;
  const ledgerish=/\d+(\.\d+)?|记|花|买|转|余额|预算|账户|校准/.test(t);
+ const isWord=RX_WORD.test(t.trim())&&!/^(hi|hello|hey|ok|okay|yes|no|thanks|thank you|bye)$/i.test(t.trim().replace(/[?？!！.]/g,''));
  const explicit=/联网|搜索|搜一下|查一下|查查|最新|新闻|天气|汇率|search|latest|news/i.test(t),web=S.web&&!hasAtt&&((RX_WEB.test(t)&&(explicit||!RX_LEDGERQ.test(t)))||(!ledgerish&&len>=12&&/最近|现在|今年|本周|目前|有没有|哪家|推荐|排名|多少钱|能不能|是不是真的/.test(t)));
  const think=S.think&&!quick&&(RX_COMPLEX.test(t)||len>120||(hasAtt&&len>=6));
  let effort=S.effort!=='auto'?S.effort:(think?(RX_PLAN.test(t)||len>200?'max':RX_COMPLEX.test(t)||hasAtt?'high':'low'):'low');
  const maxTokens=think?S.maxTokens:Math.min(S.maxTokens,quick?2048:8192);
  const kind=think&&web?'think+web':think?'think':web?'web':'chat';
+ if(isWord){return{think:false,effort:'low',web:false,maxTokens:Math.min(S.maxTokens,2048),kind:'chat',quick:true};}
  return{think,effort,web,maxTokens,kind,quick};}
 function apiErr(status,raw){const e=new Error(apiError(status,raw));e.status=status;return e;}
 async function streamChat(S,body,cb){
@@ -897,6 +959,7 @@ async function executeOne(a){
    row.dailyLimit=v;row.limit=r2(v*daysInMonth(n.getFullYear(),n.getMonth()));await put('budgets',row);return{ok:true,text:'「'+name+'」每日预算已设为 '+fmt(v)};}
   case'update_transaction':return await updateTx(a);
   case'delete_transaction':return await deleteTx(a);
+  case'set_credit_limit':{const acc=await resolveAccount(a.account,{accountType:'credit_card'},{create:false});const v=a.creditLimit??a.amount;if(!(v>=0&&v<=1e9))throw new Error('额度金额无效');acc.creditLimit=r2(v);if(!acc.accountType||acc.accountType==='other')acc.accountType='credit_card';await put('accounts',acc);return{ok:true,text:'已将「'+acc.name+'」额度设为 '+fmt(acc.creditLimit,acc.currency)};}
   case'rename_account':{
    if(!a.newName)throw new Error('新名称缺失');const acc=await resolveAccount(a.account,{accountType:a.accountType});
    const dupe=(await all('accounts')).find(x=>x.id!==acc.id&&accountKey(x.name)===accountKey(a.newName));if(dupe)throw new Error('已有同名账户「'+dupe.name+'」');
@@ -925,6 +988,7 @@ async function describe(a){const L={expense:'支出',income:'收入',refund:'退
   case'balance_snapshot':return'校准「'+a.account+'」余额为 '+fmt(a.balance);
   case'create_account':return'新建账户「'+a.account+'」';
   case'delete_account':return'删除账户「'+a.account+'」（流水保留）';
+  case'set_credit_limit':return'设置「'+a.account+'」信用卡额度 '+fmt(a.creditLimit??a.amount);
   case'rename_account':return'账户「'+a.account+'」改名为「'+a.newName+'」';
   case'daily_budget':return'每日预算 '+fmt(a.amount??a.budgetLimit);
   case'budget':return'「'+(a.budgetName||a.category)+'」每日预算 '+fmt(a.amount??a.budgetLimit);
@@ -1048,7 +1112,7 @@ async function analyzeText(){
  const list=images.slice(),focus=focusTx,q=quoteMsg;
  clearComposer();setFocus(null);setQuote(null);if(pending){pending=null;hideConfirm();}
  const meta=[];
- for(const a of list){try{await put('attachments',{id:a.id,name:a.name,kind:a.kind,mime:a.mime,size:a.size,dataUrl:a.dataUrl,createdAt:Date.now()});}catch(e){}meta.push({id:a.id,name:a.name,kind:a.kind,size:a.size,at:Date.now()});}
+ for(const a of list){try{await put('attachments',{id:a.id,name:a.name,kind:a.kind,mime:a.mime,size:a.size,dataUrl:a.dataUrl,thumb:a.thumb,createdAt:Date.now()});}catch(e){}if(a.thumb)thumbCache.set(a.id,a.thumb);meta.push({id:a.id,name:a.name,kind:a.kind,size:a.size,at:Date.now()});}
  pushHist('user',raw||('[附件 '+list.length+']'),{atts:meta.length?meta:undefined,quote:q?{who:q.who,text:q.text}:undefined});
  if(!list.length){
   if(/^(撤销|撤回|撤销上一步|撤销上一次|undo)$/i.test(raw)){await doUndo();return;}
@@ -1074,17 +1138,41 @@ async function updateSuggest(){const ta=$('naturalInput'),v=ta.value,m=v.match(/
  host.querySelectorAll('button').forEach(b=>b.onclick=()=>{ta.value=v.slice(0,m.index)+b.dataset.n+' ';hideSuggest();ta.focus();});}
 /* ---------- 附件选择 / 查看 / 过期 / 消息菜单 ---------- */
 function renderAttachments(){const host=$('attachments');if(!images.length){host.innerHTML='';return;}
- host.innerHTML=images.map((a,i)=>'<div class="attachment">'+CLIP+'<span>'+esc(a.name)+'</span><button type="button" data-i="'+i+'" aria-label="移除">×</button></div>').join('');
+ host.innerHTML=images.map((a,i)=>'<div class="attachment">'+(a.kind==='image'&&a.thumb?'<img src="'+a.thumb+'" alt="">':CLIP)+'<span>'+esc(a.name)+'</span><button type="button" data-i="'+i+'" aria-label="移除">×</button></div>').join('');
  host.querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{images.splice(+b.dataset.i,1);renderAttachments();});}
 function fileToImage(f,max){max=max||1280;return new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const s=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(img,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.82));};img.onerror=()=>no(new Error('图片无法读取'));img.src=r.result;};r.onerror=()=>no(r.error);r.readAsDataURL(f);});}
 function readAs(f,mode){return new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=()=>no(r.error);mode==='text'?r.readAsText(f):r.readAsDataURL(f);});}
+
+function shrinkImg(url,max){return new Promise(ok=>{const im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.75));};im.onerror=()=>ok(url);im.src=url;});}
+async function unzipEntries(buf,want){const u8=new Uint8Array(buf),dv=new DataView(buf);let e=u8.length-22;while(e>=0&&dv.getUint32(e,true)!==0x06054b50)e--;if(e<0)throw new Error('不是有效的 Office 文件');
+ const n=dv.getUint16(e+10,true);let p=dv.getUint32(e+16,true);const out={},td=new TextDecoder();
+ for(let i=0;i<n;i++){if(dv.getUint32(p,true)!==0x02014b50)break;const meth=dv.getUint16(p+10,true),csz=dv.getUint32(p+20,true),nl=dv.getUint16(p+28,true),el=dv.getUint16(p+30,true),cl=dv.getUint16(p+32,true),off=dv.getUint32(p+42,true),name=td.decode(u8.subarray(p+46,p+46+nl));p+=46+nl+el+cl;
+  if(!want(name))continue;const lnl=dv.getUint16(off+26,true),lel=dv.getUint16(off+28,true),st=off+30+lnl+lel,raw=u8.subarray(st,st+csz);
+  if(meth===0)out[name]=td.decode(raw);else if(meth===8){const ds=new DecompressionStream('deflate-raw'),w=ds.writable.getWriter();w.write(raw);w.close();out[name]=td.decode(await new Response(ds.readable).arrayBuffer());}}
+ return out;}
+const xmlTxt=x=>x.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,'&');
+async function officeText(att){const buf=await(await fetch(att.dataUrl)).arrayBuffer(),nm=att.name.toLowerCase();
+ if(nm.endsWith('.docx')){const f=await unzipEntries(buf,n=>n==='word/document.xml');const x=f['word/document.xml']||'';return xmlTxt(x.replace(/<w:tab\/>/g,'\t').replace(/<\/w:p>/g,'\n').replace(/<[^>]+>/g,'')).replace(/\n{3,}/g,'\n\n').trim();}
+ if(nm.endsWith('.pptx')){const f=await unzipEntries(buf,n=>/^ppt\/slides\/slide\d+\.xml$/.test(n)),ks=Object.keys(f).sort((a,b)=>parseInt(a.match(/\d+/)[0])-parseInt(b.match(/\d+/)[0]));return ks.map((k,i)=>'[幻灯片 '+(i+1)+']\n'+xmlTxt((f[k].match(/<a:t>[^<]*<\/a:t>/g)||[]).map(t=>t.replace(/<[^>]+>/g,'')).join('\n'))).join('\n\n');}
+ if(nm.endsWith('.xlsx')){const f=await unzipEntries(buf,n=>n==='xl/sharedStrings.xml'||/^xl\/worksheets\/sheet\d+\.xml$/.test(n)||n==='xl/workbook.xml');
+  const ss=(f['xl/sharedStrings.xml']||'').split(/<si[ >]/).slice(1).map(x=>xmlTxt((x.match(/<t[^>]*>[^<]*<\/t>/g)||[]).map(t=>t.replace(/<[^>]+>/g,'')).join('')));
+  const names=((f['xl/workbook.xml']||'').match(/<sheet [^>]*name="[^"]*"/g)||[]).map(x=>xmlTxt(x.match(/name="([^"]*)"/)[1]));
+  const ks=Object.keys(f).filter(k=>/worksheets/.test(k)).sort((a,b)=>parseInt(a.match(/\d+/)[0])-parseInt(b.match(/\d+/)[0]));let out='';
+  ks.forEach((k,si)=>{out+='\n[工作表 '+(names[si]||si+1)+']\n';(f[k].match(/<row[\s\S]*?<\/row>/g)||[]).forEach(r=>{const cells=[];(r.match(/<c [^>]*?(?:\/>|>[\s\S]*?<\/c>)/g)||[]).forEach(c=>{const t=(c.match(/ t="(\w+)"/)||[])[1],v=(c.match(/<v>([^<]*)<\/v>/)||[])[1],is=(c.match(/<is>[\s\S]*?<\/is>/)||[])[0];cells.push(t==='s'&&v!=null?ss[+v]||'':is?xmlTxt(is.replace(/<[^>]+>/g,'')):v!=null?xmlTxt(v):'');});out+=cells.join('\t').replace(/\s+$/,'')+'\n';});});
+  return out.trim();}
+ throw new Error('暂不支持解析该格式');}
 async function fileToAtt(f){const name=f.name||'附件',id=uid();
- if(/^image\//.test(f.type))return{id,name:name&&!/^image\.(png|jpe?g)$/i.test(name)?name:'图片',kind:'image',mime:'image/jpeg',size:f.size,dataUrl:await fileToImage(f)};
+ if(/^image\//.test(f.type)){const du=await fileToImage(f);return{id,name:name&&!/^image\.(png|jpe?g)$/i.test(name)?name:'图片',kind:'image',mime:'image/jpeg',size:f.size,dataUrl:du,thumb:await shrinkImg(du,420)};}
  if(f.size>25*1024*1024)throw new Error('文件太大（上限 25MB）：'+name);
  const att={id,name,kind:'file',mime:f.type||'',size:f.size,dataUrl:await readAs(f,'url')};
  if(/\.(txt|csv|md|json)$/i.test(name)||/^text\//.test(f.type)){att.text=await readAs(f,'text');}
+ else if(/\.(docx|xlsx|pptx)$/i.test(name)){try{const t=await officeText(att);if(t&&t.trim())att.text=t;else att.noteErr='文件里没有可提取的文字';}catch(e){att.noteErr=e.message;}}
  return att;}
 async function addFiles(files){for(const f of Array.from(files||[])){if(images.length>=4){toast('最多添加 4 个附件');break;}try{images.push(await fileToAtt(f));}catch(e){toast(e.message,'error');}}renderAttachments();}
+let attachTarget='home',chatAtts=[];
+function attachMenu(t){attachTarget=t;openSheet('添加附件','图片、PDF、Word、Excel、PPT、文本','',[{text:'拍照',fn:()=>{closeSheet();$('camInput').click();}},{text:'相册 / 文件',cls:'primary',fn:()=>{closeSheet();$('imageInput').click();}}]);}
+async function addTo(t,files){if(t==='home')return addFiles(files);for(const f of Array.from(files||[])){if(chatAtts.length>=4){toast('最多添加 4 个附件');break;}try{chatAtts.push(await fileToAtt(f));}catch(e){toast(e.message,'error');}}renderChatAtts();}
+function renderChatAtts(){const host=$('chatAtts');if(!chatAtts.length){host.innerHTML='';return;}host.innerHTML=chatAtts.map((a,i)=>'<div class="attachment">'+(a.kind==='image'&&a.thumb?'<img src="'+a.thumb+'" alt="">':CLIP)+'<span>'+esc(a.name)+'</span><button type="button" data-i="'+i+'" aria-label="移除">×</button></div>').join('');host.querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{chatAtts.splice(+b.dataset.i,1);renderChatAtts();});}
 async function purgeAtt(){try{const cut=Date.now()-7*DAY;for(const r of await all('attachments'))if(Number(r.createdAt||0)<cut)await del('attachments',r.id);}catch(e){}}
 async function openAtt(id){const r=await new Promise(ok=>{const q=db.transaction('attachments').objectStore('attachments').get(id);q.onsuccess=()=>ok(q.result);q.onerror=()=>ok(null);});
  if(!r){toast('附件已过期或不存在');return;}
@@ -1106,22 +1194,23 @@ function chatPush(role,content,extra){content=String(content);if(role==='assista
  chatHist.push(row);if(db)put('conversationHistory',row).catch(()=>{});renderChat(true);return row;}
 function renderChat(force){const log=$('chatLog');if(!log)return;const stick=force||log.scrollHeight-log.scrollTop-log.clientHeight<90,keep=log.scrollTop;
  let html=chatHist.slice(-60).map(bubbleHTML).join('');
- if(!chatHist.length&&!chatStream)html='<div class="welcome"><b>纯聊天 💬</b>想聊什么都可以<br>这里不会记账，也不会改动你的账本<br>只有你主动问起消费、账户，我才会去看账本<br>需要时会自动联网搜索、深度思考</div>';
- if(chatStream){const t=chatStream.text?splitParas(maskAmt(chatStream.text)).map(p=>'<p>'+esc(p)+'</p>').join(''):'<div class="typing"><span></span><span></span><span></span></div>';
+ if(chatStream){const t=chatStream.text?splitParas(maskAmt(plainMd(chatStream.text))).map(p=>'<p>'+esc(p)+'</p>').join(''):'<div class="typing"><span></span><span></span><span></span></div>';
   html+='<div class="chat-bubble assistant">'+t+(chatStream.status?'<div class="status">'+esc(chatStream.status)+(chatStream.sec?' '+chatStream.sec+'s':'')+'</div>':'')+'</div>';}
- log.innerHTML=html;log.scrollTop=stick?log.scrollHeight:keep;}
+ log.innerHTML=html;hydrateThumbs(log);log.scrollTop=stick?log.scrollHeight:keep;}
 async function sendPure(){
- if(busyChat)return;const ta=$('chatInput'),raw=clean(ta.value);if(!raw)return;ta.value='';ta.style.height='';
- chatPush('user',raw);busyChat=true;busy($('chatSend'),true);
+ if(busyChat)return;const ta=$('chatInput'),raw=clean(ta.value),list=chatAtts.slice();if(!raw&&!list.length)return;ta.value='';ta.style.height='';chatAtts=[];renderChatAtts();
+ const meta=[];for(const a of list){try{await put('attachments',{id:a.id,name:a.name,kind:a.kind,mime:a.mime,size:a.size,dataUrl:a.dataUrl,thumb:a.thumb,createdAt:Date.now()});}catch(e){}if(a.thumb)thumbCache.set(a.id,a.thumb);meta.push({id:a.id,name:a.name,kind:a.kind,size:a.size,at:Date.now()});}
+ chatPush('user',raw||('[附件 '+list.length+']'),{atts:meta.length?meta:undefined});busyChat=true;busy($('chatSend'),true);
  chatStream={text:'',status:'',sec:0};renderChat(true);const tm=setInterval(()=>{if(chatStream){chatStream.sec++;renderChat();}},1000);
  try{
   const S=settings();if(!S.key)throw new Error('还没有填写 API Key，请到“设置”里填写');
-  const pl=planFor(raw,[],S,false);
+  const pl=planFor(raw,list,S,false);
   if(pl.think)chatStream.status='深度思考中…';
   let ledger='';if(RX_LEDGERQ.test(raw)){chatStream.status=chatStream.status||'正在查看账本…';const c=await context(raw);ledger='\n\n【用户账本数据（只读，仅因用户提到消费/账户而提供；金额单位见字段，勿编造）】\n'+JSON.stringify(c).slice(0,16000);}
-  const sys='你是 Atron🤖，一位开放、理性、温暖、博学的聊天伙伴。这是“纯聊天”页面：你没有任何记账、改账、预算、账户操作的能力，不要输出 JSON 或操作指令；用户想记账或改账时，友好地请他回到“记账”页面。只有用户主动问及自己的消费或账户情况时，下方才会提供只读的账本数据，请据此如实回答；其他时候不要提及账本。每条回复至少含一个 emoji；用户用中文、English 或日本語就用同一种语言回复。简单问题简短回答，复杂问题再展开；每句话尽量独立成行。需要最新信息时可联网搜索，搜索词不得包含账号、余额等隐私。不确定就如实说，不要编造。\n当前时间：'+new Date().toLocaleString('zh-CN',{hour12:false})+(localStorage.getItem('ledger.style')?'\n用户的说话风格：'+localStorage.getItem('ledger.style'):'')+ledger;
+  const sys='你是 Atron🤖，一位开放、理性、温暖、博学的聊天伙伴。这是“纯聊天”页面：你没有任何记账、改账、预算、账户操作的能力，不要输出 JSON 或操作指令；用户想记账或改账时，友好地请他回到“记账”页面。只有用户主动问及自己的消费或账户情况时，下方才会提供只读的账本数据，请据此如实回答；其他时候不要提及账本。每条回复至少含一个 emoji；用户用中文、English 或日本語就用同一种语言回复。简单问题简短回答，复杂问题再展开；每句话尽量独立成行。需要最新信息时可联网搜索，搜索词不得包含账号、余额等隐私。不确定就如实说，不要编造。回答不要使用 Markdown 符号（不要 ** # ` 等），用纯文本分行。【查单词】用户查英文单词/短语时（如“apple 什么意思”“查 resilient”“define x”），严格按下面分行格式回答，每项各占一行或多行，不要使用任何 Markdown 符号（不要 ** # ` 等）：\n📖 单词\n英标：英 /…/ · 美 /…/\n音节：ap·ple\n柯林斯英文释义（Collins 风格，一句话英文释义，按词性分条）：\n1. (noun) …\n2. (verb) …\n中文释义：\n1. 名词：…\n2. 动词：…\n例句：\n1. English sentence. — 中文翻译\n2. …\n给 2–3 个常用释义、2–3 条例句；不确定的读音或释义要如实说明，不要编造。\n当前时间：'+new Date().toLocaleString('zh-CN',{hour12:false})+(localStorage.getItem('ledger.style')?'\n用户的说话风格：'+localStorage.getItem('ledger.style'):'')+ledger;
   const prior=chatHist.slice(0,-1).slice(-24);let used=0,keep=[];for(let i=prior.length-1;i>=0;i--){const c=String(prior[i].content||'').slice(0,1500);if(used+c.length>9000)break;used+=c.length;keep.unshift({role:prior[i].role==='user'?'user':'assistant',content:c});}
-  const msgs=[{role:'system',content:sys},...keep,{role:'user',content:raw}],notes=[];
+  const built=await buildParts(list,S,false),notes=built.notes.slice();if(built.usedFile)pl.kind+='+file';
+  const utext=(raw||'（只发送了附件，请先说明你看到了什么，并询问我想怎么处理）')+built.extra,msgs=[{role:'system',content:sys},...keep,{role:'user',content:built.parts.length?[{type:'text',text:utext},...built.parts]:utext}];
   let pend=false;const cb=u=>{if(u.content!==undefined&&u.content)chatStream.text=u.content;if(u.thinking)chatStream.status='深度思考中…';if(u.event)chatStream.status='正在联网搜索…';if(u.content)chatStream.status='';
    if(!pend){pend=true;setTimeout(()=>{pend=false;if(chatStream)renderChat();},100);}};
   const out=await chatWithFallback(S,msgs,pl,cb,notes),u=out.usage||{};
@@ -1231,13 +1320,17 @@ async function renderAccounts(){
  $('accountFinancialSummary').innerHTML='<div><small>资产总额</small><b>'+money(sa)+'</b></div><div><small>负债总额</small><b'+(sl>0?' class="expense-text"':'')+'>'+money(sl)+'</b></div><div><small>净资产</small><b'+(sa-sl<0?' class="expense-text"':'')+'>'+money(r2(sa-sl))+'</b></div>';
  $('accountSummary').textContent=acs.length+' 个账户';
  const draw=(arr,host)=>{if(!arr.length){host.innerHTML='<div class="empty">暂无</div>';return;}
-  host.innerHTML=arr.map(a=>{const b=Number(a.balance||0);return'<div class="acct-card" data-id="'+esc(a.id)+'">'+bankMark(a)+'<div class="acct-main"><div class="acct-top"><b>'+esc(a.name)+'</b><b class="'+(b>=0?'income-text':'expense-text')+'">'+money(b,a.currency)+'</b></div><small>'+esc(accountTypeName(a.accountType||guessAccountType(a.name)))+(a.last4?' ·· '+esc(a.last4):'')+(verifiedTime(a)?' · 已校准':'')+'</small></div></div>';}).join('');};
+  host.innerHTML=arr.map(a=>{const b=Number(a.balance||0);const typ=a.accountType||guessAccountType(a.name),od=b<0?r2(-b):0;let cl=a.creditLimit!=null&&a.creditLimit>0?Number(a.creditLimit):(a.availableCredit!=null?r2(Number(a.availableCredit)+od):null);const credit=typ==='credit_card'?'<div class="credit-line">'+(cl?'额度 '+money(cl,a.currency)+' / ':'')+'<span class="'+(od>0?'expense-text':'')+'">透支 '+money(od,a.currency)+'</span></div>':'';return'<div class="acct-card" data-id="'+esc(a.id)+'">'+bankMark(a)+'<div class="acct-main"><div class="acct-top"><b>'+esc(a.name)+'</b><b class="'+(b>=0?'income-text':'expense-text')+'">'+money(b,a.currency)+'</b></div><small>'+esc(accountTypeName(a.accountType||guessAccountType(a.name)))+(a.last4?' ·· '+esc(a.last4):'')+(verifiedTime(a)?' · 已校准':'')+'</small>'+credit+'</div></div>';}).join('');};
  draw(assets,$('assetAccounts'));draw(liabs,$('liabilityAccounts'));
+ $('assetCnt').textContent=assets.length?assets.length+' 个 · '+money(sa):'';$('liabCnt').textContent=liabs.length?liabs.length+' 个 · '+money(sl):'';
  const recs=await all('reconciliations'),rh=$('accountCalibrations');
- rh.innerHTML=recs.length?recs.sort((a,b)=>b.createdAt-a.createdAt).slice(0,15).map(r=>'<div class="acct-card" style="cursor:default;display:block"><div class="kv"><span>'+esc(r.accountName)+'</span><b>'+money(r.statementBalance)+'</b></div><div class="kv"><span>校准前 / 差额</span><b>'+money(r.previousBalance)+' / <span class="'+(r.difference>=0?'income-text':'expense-text')+'">'+money(r.difference)+'</span></b></div></div>').join(''):'<div class="empty">暂无校准记录</div>';}
+ if(!recs.length){rh.innerHTML='<div class="empty">暂无校准记录</div>';$('calCnt').textContent='';return;}
+ const by={};recs.sort((a,b)=>b.createdAt-a.createdAt).forEach(r=>{(by[dayKey(r.createdAt)]||(by[dayKey(r.createdAt)]=[])).push(r);});
+ $('calCnt').textContent=recs.length+' 条';
+ rh.innerHTML=Object.keys(by).sort().reverse().map((d,i)=>'<details class="cal-group"'+(i===0?' open':'')+'><summary><span>'+d+' '+WD[new Date(d+'T00:00:00').getDay()]+'</span><small>'+by[d].length+' 条</small></summary>'+by[d].map(r=>'<div class="acct-card" style="cursor:default;display:block"><div class="kv"><span>'+esc(r.accountName)+' · '+new Date(r.createdAt).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false})+'</span><b>'+money(r.statementBalance)+'</b></div><div class="kv"><span>校准前 / 差额</span><b>'+money(r.previousBalance)+' / <span class="'+(r.difference>=0?'income-text':'expense-text')+'">'+money(r.difference)+'</span></b></div></div>').join('')+'</details>').join('');}
 async function renderSettings(){
- const s=settings();$('apiEndpoint').value=s.endpoint;$('apiKey').value=s.key;$('apiModel').value=s.model;$('rulesInput').value=s.rules;$('autoSave').checked=s.auto;$('histDays').value=s.histDays;$('txScope').value=s.txScope;setHistCount();renderPrefs();
- $('thinkSwitch').checked=s.think;$('webSwitch').checked=s.web;$('effortSel').value=s.effort;$('maxTokInput').value=s.maxTokens;$('bubbleSlider').value=s.bubblePx;$('bubbleLabel').textContent=s.bubblePx+'px';qa('[data-ph]').forEach(c=>c.checked=s.ph.includes(c.dataset.ph));renderTokens();
+ const s=settings();$('apiState').textContent=s.key?' · 已配置':' · 未配置';$('apiEndpoint').value=s.endpoint;$('apiKey').value=s.key;$('apiModel').value=s.model;$('rulesInput').value=s.rules;$('autoSave').checked=s.auto;$('histDays').value=s.histDays;$('txScope').value=s.txScope;setHistCount();renderPrefs();
+ $('fabSwitch').checked=localStorage.getItem('ledger.fabHidden')!=='1';$('thinkSwitch').checked=s.think;$('webSwitch').checked=s.web;$('effortSel').value=s.effort;$('maxTokInput').value=s.maxTokens;$('bubbleSlider').value=s.bubblePx;$('bubbleLabel').textContent=s.bubblePx+'px';qa('[data-ph]').forEach(c=>c.checked=s.ph.includes(c.dataset.ph));renderTokens();
  const u=await all('tokenUsage'),p=u.reduce((a,x)=>a+Number(x.promptTokens||0),0),c=u.reduce((a,x)=>a+Number(x.completionTokens||0),0);
  $('promptTokens').textContent=p;$('completionTokens').textContent=c;$('totalTokens').textContent=p+c;$('requestCount').textContent=u.length;
  {const sk=localStorage.getItem('ledger.sink'),v=sk==null?8:Math.max(0,Math.min(15,parseInt(sk,10)||0));$('sinkSlider').value=v;$('sinkLabel').textContent=v+'%';}
@@ -1245,6 +1338,9 @@ async function renderSettings(){
 async function refreshAll(){await loadMeta();await Promise.all([renderHome(),renderTransactions(),renderAccounts(),renderAnalytics()]);}
 
 /* ---------- 弹层 ---------- */
+function askDlg(msg,title,o){o=o||{};return new Promise(res=>{const d=$('dlg');$('dlgTitle').textContent=title||'请确认';$('dlgMsg').textContent=msg;const ok=$('dlgOk'),no=$('dlgNo');ok.textContent=o.ok||'确认';ok.className='btn flex '+(o.danger?'danger':'primary');no.textContent=o.cancel||'取消';d.hidden=false;
+ const done=v=>{d.hidden=true;ok.onclick=no.onclick=d.onclick=null;document.removeEventListener('keydown',key);res(v);},key=e=>{if(e.key==='Escape')done(false);};
+ ok.onclick=()=>done(true);no.onclick=()=>done(false);d.onclick=e=>{if(e.target===d)done(false);};document.addEventListener('keydown',key);});}
 function openSheet(title,sub,body,foot){$('sheetTitle').textContent=title;$('sheetSub').textContent=sub||'';$('sheetBody').innerHTML=body||'';const f=$('sheetFoot');f.innerHTML='';(foot||[]).forEach(b=>{const el=document.createElement('button');el.className='btn flex '+(b.cls||'');el.textContent=b.text;el.onclick=b.fn;f.appendChild(el);});$('sheet').hidden=false;}
 function closeSheet(){$('sheet').hidden=true;}
 function goChat(prefill,focus){closeSheet();showPage('home');if(focus)setFocus(focus);const ta=$('naturalInput');if(prefill!=null){ta.value=prefill;}ta.focus();}
@@ -1253,13 +1349,13 @@ async function openTx(id){const t=(await all('transactions')).find(x=>x.id===id)
  const kv=(k,v)=>v?'<div class="kv"><span>'+k+'</span><b>'+esc(v)+'</b></div>':'';
  const label=(t.merchant||t.category||lab)+' '+fmt(t.amount,t.currency);
  openSheet(t.merchant||t.toPerson||t.category||lab,when(t),kv('类型',lab)+kv('金额',fmt(t.amount,t.currency))+kv('账户',t.account+(t.toAccount?' → '+t.toAccount:t.toPerson?' → '+t.toPerson:''))+kv('分类',t.category)+kv('商户',t.merchant)+kv('标签',tagOf(t))+kv('备注',t.note),
-  [{text:'删除',cls:'danger',fn:async()=>{if(!confirm('删除这笔流水？账户余额会同步回退。'))return;undoSnap=await snapshot();try{const r=await deleteTx({targetId:id});closeSheet();await refreshAll();toast(r.text);showUndo('已删除');}catch(e){toast(e.message,'error');}}},
+  [{text:'删除',cls:'danger',fn:async()=>{if(!await askDlg('删除这笔流水？账户余额会同步回退。'))return;undoSnap=await snapshot();try{const r=await deleteTx({targetId:id});closeSheet();await refreshAll();toast(r.text);showUndo('已删除');}catch(e){toast(e.message,'error');}}},
    {text:t.special?'取消专项':'设为专项',fn:async()=>{undoSnap=await snapshot();t.special=!t.special;t.tag=t.special?(t.tag||'专项'):'';await put('transactions',t);closeSheet();await refreshAll();toast(t.special?'已列为专项':'已取消专项');showUndo('已修改');}},
    {text:'用聊天修改',cls:'primary',fn:()=>goChat('',{id:t.id,label})}]);}
 async function openAccount(id){const a=(await all('accounts')).find(x=>x.id===id);if(!a)return;
  const kv=(k,v)=>v?'<div class="kv"><span>'+k+'</span><b>'+esc(v)+'</b></div>':'';
  openSheet(a.name,accountTypeName(a.accountType||guessAccountType(a.name)),kv('余额',fmt(a.balance,a.currency))+kv('机构',a.institution)+kv('尾号',a.last4)+kv('额度',a.creditLimit!=null?fmt(a.creditLimit):'')+kv('上次校准',verifiedTime(a)?new Date(verifiedTime(a)).toLocaleString('zh-CN',{hour12:false}):'')+'<div class="note">选择操作后，在聊天里补全内容发送即可。</div>',
-  [{text:'校准余额',cls:'primary',fn:()=>goChat('把 '+a.name+' 余额校准为 ')},{text:'改名',fn:()=>goChat('把 '+a.name+' 改名为 ')},{text:'删除',cls:'danger',fn:async()=>{if(!confirm('删除账户「'+a.name+'」？相关流水会保留。'))return;undoSnap=await snapshot();await removeAccount(a);closeSheet();await refreshAll();toast('已删除账户');showUndo('已删除账户');}}]);}
+  [{text:'校准余额',cls:'primary',fn:()=>goChat('把 '+a.name+' 余额校准为 ')},{text:'改名',fn:()=>goChat('把 '+a.name+' 改名为 ')},{text:'删除',cls:'danger',fn:async()=>{if(!await askDlg('删除账户「'+a.name+'」？相关流水会保留。'))return;undoSnap=await snapshot();await removeAccount(a);closeSheet();await refreshAll();toast('已删除账户');showUndo('已删除账户');}}]);}
 
 /* ---------- 资金流向 ---------- */
 function flowRows(arr,cls){if(!arr.length)return'<div class="empty" style="padding:8px">暂无</div>';const mx=Math.max(1,...arr.map(x=>Math.abs(x.amount)));
@@ -1324,7 +1420,7 @@ async function exportData(){const o=await snapshot();o.exportedAt=new Date().toI
 async function importData(file){let o;try{o=JSON.parse(await file.text());}catch(e){throw new Error('文件不是有效的 JSON');}
  if(!o||!Array.isArray(o.accounts)||!Array.isArray(o.transactions))throw new Error('不是有效的 AI Ledger 备份');
  for(const s of SNAP)if(o[s]!==undefined&&(!Array.isArray(o[s])||o[s].some(x=>!x||!x.id)))throw new Error('备份数据格式错误：'+s);
- if(!confirm('导入将覆盖当前全部数据（可在聊天里用“撤销”恢复一次）。继续？'))return;
+ if(!await askDlg('导入将覆盖当前全部数据：账户 '+o.accounts.length+' 个、流水 '+o.transactions.length+' 笔。导入后可在聊天里发“撤销”恢复一次。','导入备份',{ok:'导入并覆盖',danger:true}))return;
  undoSnap=await snapshot();await restore(o);await refreshAll();toast('导入完成');}
 
 /* ---------- 导航与事件 ---------- */
@@ -1346,7 +1442,9 @@ function initFab(){
  const ball=$('fabBall'),menu=$('fabMenu'),S=48,M=8;
  let pos={rx:1,ry:.62};try{const p=JSON.parse(localStorage.getItem('ledger.fabPos')||'null');if(p&&isFinite(p.rx)&&isFinite(p.ry))pos=p;}catch(e){}
  const lim=()=>({w:Math.max(0,window.innerWidth-S-2*M),h:Math.max(0,window.innerHeight-S-2*M)});
- const place=()=>{const l=lim();ball.style.left=(M+pos.rx*l.w)+'px';ball.style.top=(M+pos.ry*l.h)+'px';};
+ const tab=$('fabTab'),place=()=>{const l=lim();ball.style.left=(M+pos.rx*l.w)+'px';ball.style.top=(M+pos.ry*l.h)+'px';tab.style.top=(M+pos.ry*l.h-3)+'px';tab.classList.toggle('l',pos.rx===0);};
+ const setHidden=h=>{ball.hidden=h;tab.hidden=!h;menu.hidden=true;try{localStorage.setItem('ledger.fabHidden',h?'1':'0');}catch(e){}const sw=$('fabSwitch');if(sw)sw.checked=!h;if(!h)place();};
+ window.setFabHidden=setHidden;
  const save=()=>{try{localStorage.setItem('ledger.fabPos',JSON.stringify(pos));}catch(e){}};
  const closeMenu=()=>{menu.hidden=true;};
  const openMenu=()=>{menu.hidden=false;const r=ball.getBoundingClientRect(),mw=menu.offsetWidth,mh=menu.offsetHeight,W=window.innerWidth,H=window.innerHeight;
@@ -1365,7 +1463,15 @@ function initFab(){
  const eye=$('fabEye'),setEye=()=>{eye.classList.toggle('off',hideAmt);eye.querySelector('span').textContent=hideAmt?'显示金额':'隐藏金额';};
  eye.onclick=()=>{hideAmt=!hideAmt;try{localStorage.setItem('ledger.hideAmounts',hideAmt?'1':'0');}catch(e){}setEye();closeMenu();refreshAll();renderConversation();renderChat();};setEye();
  document.addEventListener('pointerdown',e=>{if(!menu.hidden&&!menu.contains(e.target)&&e.target!==ball)closeMenu();});
- window.addEventListener('resize',place);place();}
+ $('fabHide').onclick=()=>{setHidden(true);toast('已隐藏，点屏幕边缘的细条可恢复，或在设置里开启');};tab.onclick=()=>setHidden(false);
+ window.addEventListener('resize',place);place();{let h=false;try{h=localStorage.getItem('ledger.fabHidden')==='1';}catch(e){}setHidden(h);}}
+function foldState(){try{return JSON.parse(localStorage.getItem('ledger.fold')||'{}');}catch(e){return{};}}
+function initFolds(){const st=foldState();qa('.setting,.chart[data-fold]').forEach((el,i)=>{const h=el.querySelector(':scope>h3');if(!h||el.dataset.folded)return;el.dataset.folded='1';
+  const key=el.dataset.fold||('s'+(h.firstChild?h.firstChild.textContent:i)),body=document.createElement('div');body.className='cbody';
+  while(h.nextSibling)body.appendChild(h.nextSibling);el.appendChild(body);h.classList.add('fold');h.setAttribute('role','button');h.tabIndex=0;
+  const def=key==='api'?!!localStorage.getItem('ledger.key'):false,closed=key in st?!!st[key]:def;el.classList.toggle('closed',closed);
+  const tog=()=>{const c=!el.classList.contains('closed');el.classList.toggle('closed',c);const s2=foldState();s2[key]=c;try{localStorage.setItem('ledger.fold',JSON.stringify(s2));}catch(e){}};
+  h.onclick=tog;h.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();tog();}};});}
 function bindEvents(){
  initFab();
  $('sheet').onclick=e=>{if(e.target===$('sheet'))closeSheet();};
@@ -1391,14 +1497,16 @@ $('analyzeText').onclick=analyzeText;
  $('calNext').onclick=()=>{calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+1,1);renderCalendar();};
  $('calGrid').onclick=e=>{const b=e.target.closest('[data-day]');if(!b)return;detailBase=new Date(b.dataset.day+'T00:00:00');detailRange='day';qa('[data-detail-range]').forEach(x=>x.classList.toggle('active',x.dataset.detailRange==='day'));showPage('transactions');};
  $('prefList').onclick=e=>{const b=e.target.closest('[data-pi]');if(!b)return;const r=prefs();r.splice(+b.dataset.pi,1);savePrefs(r);renderPrefs();};
- $('clearPrefs').onclick=()=>{if(!confirm('清空所有已记住的偏好和自动学习的习惯？'))return;savePrefs([]);try{localStorage.removeItem('ledger.habits');}catch(e){}renderPrefs();toast('已清空');};
+ $('clearPrefs').onclick=async()=>{if(!await askDlg('清空所有已记住的偏好和自动学习的习惯？'))return;savePrefs([]);try{localStorage.removeItem('ledger.habits');}catch(e){}renderPrefs();toast('已清空');};
  $('confirmYes').onclick=()=>confirmPending(true);$('confirmNo').onclick=()=>confirmPending(false);
  $('undoBtn').onclick=doUndo;$('undoClose').onclick=hideUndo;$('focusClear').onclick=()=>setFocus(null);
+ $('fabSwitch').onchange=()=>window.setFabHidden&&window.setFabHidden(!$('fabSwitch').checked);
  $('chatSend').onclick=sendPure;
+ qa('#skinSeg button').forEach(b=>b.onclick=()=>{try{localStorage.setItem('ledger.skin',b.dataset.skin);}catch(e){}applySkin();});
  {const ci=$('chatInput');ci.oninput=()=>{ci.style.height='auto';ci.style.height=Math.min(ci.scrollHeight,120)+'px';};ci.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229&&!('ontouchstart' in window)){e.preventDefault();sendPure();}};}
- $('chatClear').onclick=async()=>{if(!chatHist.length||!confirm('清空纯聊天记录？'))return;for(const r of chatHist)await del('conversationHistory',r.id).catch(()=>{});chatHist=[];renderChat(true);};
- $('pickImages').onclick=()=>$('imageInput').click();
- $('imageInput').onchange=async e=>{const fi=e.target;await addFiles(fi.files);fi.value='';};
+ $('clearPure').onclick=async()=>{if(!chatHist.length){toast('纯聊天没有记录');return;}if(!await askDlg('清空纯聊天的全部记录？','清空纯聊天',{ok:'清空',danger:true}))return;for(const r of chatHist)await del('conversationHistory',r.id).catch(()=>{});chatHist=[];renderChat(true);toast('已清空');};
+ $('pickImages').onclick=()=>attachMenu('home');$('chatPick').onclick=()=>attachMenu('chat');
+ $('imageInput').onchange=async e=>{const fi=e.target;await addTo(attachTarget,fi.files);fi.value='';};$('camInput').onchange=async e=>{const fi=e.target;await addTo(attachTarget,fi.files);fi.value='';};
  const ta=$('naturalInput');
  ta.oninput=()=>{updateSuggest();};
  ta.onpaste=async e=>{const fs=Array.from((e.clipboardData&&e.clipboardData.files)||[]);if(!fs.length)return;e.preventDefault();await addFiles(fs);};
@@ -1420,7 +1528,7 @@ $('analyzeText').onclick=analyzeText;
  $('saveSettings').onclick=()=>{localStorage.setItem('ledger.endpoint',$('apiEndpoint').value.trim());localStorage.setItem('ledger.key',$('apiKey').value.trim());localStorage.setItem('ledger.model',$('apiModel').value.trim());toast('已保存');};
  $('saveRules').onclick=()=>{localStorage.setItem('ledger.rules',$('rulesInput').value);toast('已保存偏好');};
  $('autoSave').onchange=()=>localStorage.setItem('ledger.autosave',$('autoSave').checked?'1':'0');
- $('clearHist').onclick=async()=>{if(!confirm('清除全部对话历史？'))return;history=[];chatHist=[];await clear('conversationHistory');renderChat();try{localStorage.removeItem('ledger.hist');}catch(e){}setHistCount();renderConversation();toast('已清除');};
+ $('clearHist').onclick=async()=>{if(!await askDlg('清除全部对话历史？'))return;history=[];chatHist=[];await clear('conversationHistory');renderChat();try{localStorage.removeItem('ledger.hist');}catch(e){}setHistCount();renderConversation();toast('已清除');};
  $('sinkSlider').oninput=()=>{const v=Math.max(0,Math.min(15,parseInt($('sinkSlider').value,10)||0));$('sinkLabel').textContent=v+'%';try{localStorage.setItem('ledger.sink',String(v));}catch(e){}fitSink();};
  $('fontScaleSlider').oninput=()=>{const v=parseFloat($('fontScaleSlider').value)||1;document.documentElement.style.setProperty('--font-scale',v);$('fontScaleLabel').textContent=Math.round(v*100)+'%';localStorage.setItem('ledger.fontScale',String(v));};
  $('exportData').onclick=()=>exportData().catch(e=>toast(e.message,'error'));
@@ -1433,9 +1541,12 @@ $('analyzeText').onclick=analyzeText;
    const r=await post(s,{model:s.model,messages:[{role:'user',content:'hi'}],max_tokens:5},15000);if(!r.res.ok)throw new Error(apiError(r.res.status,r.raw));m.className='msg ok';m.textContent='连接正常';}
   catch(e){m.className='msg error';m.textContent='失败：'+e.message;}};
 }
+function applySkin(){let k='classic';try{k=localStorage.getItem('ledger.skin')==='wa'?'wa':'classic';}catch(e){}document.documentElement.dataset.skin=k;
+ const m=qa('meta[name=theme-color]');if(k==='wa'){m.forEach(x=>x.content=/dark/.test(x.media||'')?'#202c33':'#008069');}else{m.forEach(x=>x.content=/dark/.test(x.media||'')?'#000000':'#f4f4f4');}
+ qa('[data-skin]').forEach(b=>{if(b.tagName==='BUTTON')b.classList.toggle('active',b.dataset.skin===k);});}
 function applyBubble(){document.documentElement.style.setProperty('--bubble-px',settings().bubblePx+'px');}
 async function init(){
- try{await openDB();await loadHistory();applyBubble();renderModeBar();purgeAtt();setInterval(purgeAtt,1800000);const fs=parseFloat(localStorage.getItem('ledger.fontScale')||'1');document.documentElement.style.setProperty('--font-scale',fs);bindEvents();await refreshAll();fitSink();}
+ try{await openDB();await loadHistory();applyBubble();applySkin();renderModeBar();purgeAtt();setInterval(purgeAtt,1800000);const fs=parseFloat(localStorage.getItem('ledger.fontScale')||'1');document.documentElement.style.setProperty('--font-scale',fs);bindEvents();initFolds();await refreshAll();fitSink();}
  catch(e){const l=$('conversationLog');if(l)l.innerHTML='<div class="chat-bubble assistant">⚠️ 初始化失败：'+esc(e.message)+'</div>';}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
