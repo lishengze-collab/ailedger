@@ -482,7 +482,7 @@ try{const s=JSON.parse(localStorage.getItem('ledger.hist')||'[]');if(Array.isArr
   if(key!==last){last=key;r.setProperty('--home-vh',eff+'px');r.setProperty('--home-vv-top',tp+'px');r.setProperty('--cpad',pad+'px');
    const a=document.activeElement,l=document.querySelector('.page.active .conversation-log');if(kb&&l&&a&&(a.id==='naturalInput'||a.id==='chatInput'))l.scrollTop=l.scrollHeight;return true;}return false;};
  window.__applyVV=()=>{last='';apply();};
- const loop=()=>{raf=0;calm=apply()?0:calm+1;if(performance.now()<until||calm<10){raf=requestAnimationFrame(loop);}else if(!document.body.classList.contains('kb'))window.scrollTo(0,0);};
+ const loop=()=>{raf=0;calm=apply()?0:calm+1;if(performance.now()<until||calm<10){raf=requestAnimationFrame(loop);}};
  const kick=()=>{until=performance.now()+900;calm=0;if(!raf)raf=requestAnimationFrame(loop);};
  if(vv){vv.addEventListener('resize',kick);vv.addEventListener('scroll',kick);}
  window.addEventListener('resize',kick);window.addEventListener('pageshow',kick);window.addEventListener('orientationchange',()=>setTimeout(kick,150));
