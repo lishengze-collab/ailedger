@@ -674,7 +674,6 @@ function prompt(ctx,opt){opt=opt||{};
  '当前时间：'+new Date().toLocaleString('zh-CN',{hour12:false})+'；时区：'+Intl.DateTimeFormat().resolvedOptions().timeZone+'；手动偏好：'+(settings().rules||'无')+'；记忆偏好：'+preferenceMemory()+'；context：'+JSON.stringify(ctx),
  'actions 元素格式：{"type":"expense|income|transfer|refund|create_account|budget|daily_budget|budget_override|clear_budget_override|balance_snapshot|update_transaction|delete_transaction|mark_special|create_project|delete_project|rename_account|delete_account|preference|forget_preference|report|set_mode","amount":null,"expr":"","balance":null,"currency":"CNY","fxRate":null,"account":"","toAccount":"","merchant":"","category":"","occurredAt":"","budgetName":"","accountType":"credit_card|savings_card|payment|wallet|cash|other","institution":"","last4":"","availableCredit":null,"creditLimit":null,"targetId":"","changes":{},"newName":"","neutral":false,"special":false,"tag":"","name":"","from":"","to":"","dates":[],"groupBy":"","accountAmount":null,"toAmount":null,"confidence":0.9,"note":"","transferKind":"internal|external","toPerson":"","effectiveFrom":"YYYY-MM-DD"}。无操作时 actions=[]。'];
  return L.join('\n');}
-function parseJSON(t){t=clean(t);const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a<0||b<a)throw Error('AI 返回格式无法识别');try{return JSON.parse(t.slice(a,b+1));}catch(e){throw Error('AI 返回的 JSON 有误，请重试');}}
 function parseAmount(v){if(v==null||v==='')return null;if(typeof v==='number')return Number.isFinite(v)?v:null;let s=String(v).normalize('NFKC').replace(/[￥¥$人民币元,，\s]/g,'').replace(/负/g,'-'),m=1;const u=s.match(/(万|千|百)$/);if(u){m=u[1]==='万'?1e4:u[1]==='千'?1e3:100;s=s.slice(0,-1);}const n=Number(s.replace(/[^\d.-]/g,''));return Number.isFinite(n)&&/\d/.test(s)?r2(n*m):null;}
 function normChanges(c){if(!c||typeof c!=='object')return{};const o={},am=parseAmount(c.amount);if(am!=null)o.amount=am;['account','toAccount','merchant','category','note'].forEach(k=>{if(clean(c[k]))o[k]=clean(c[k]);});if(clean(c.occurredAt))o.occurredAt=normalizeDate(c.occurredAt);if(typeof c.special==='boolean')o.special=c.special;if(clean(c.tag))o.tag=clean(c.tag);return o;}
 function clampFuture(iso){const t=Date.parse(iso);return Number.isFinite(t)&&t>Date.now()&&dayKey(t)===dayKey(Date.now())?localISO():iso;}
@@ -1038,7 +1037,7 @@ async function analyzeText(){
   const result=await askAtron(raw,list,{focus,quote:q,open:isOpen(),screenshotOnly:shot});
   streaming=null;
   await handleResult(result,{focus,forceConfirm:shot,sources:result._sources,notes:result._notes});
- }catch(e){streaming=null;pushHist('assistant','⚠️ '+e.message);}
+ }catch(e){streaming=null;const m=String(e&&e.message||e||'');pushHist('assistant','⚠️ '+(/Failed to fetch|NetworkError|Load failed/i.test(m)?'网络连接失败，请检查网络或接口地址后重试 🌐':m||'出了点小问题，请再说一次 🙂'));}
  finally{clearInterval(tm);streaming=null;busyAI=false;busy($('analyzeText'),false);renderConversation(true);}}
 function clearComposer(){const ta=$('naturalInput');ta.value='';ta.style.height='';images=[];renderAttachments();hideSuggest();}
 function setFocus(f){focusTx=f;const b=$('focusBar');if(f){$('focusText').textContent='✎ 正在修改：'+f.label;b.hidden=false;}else b.hidden=true;}
