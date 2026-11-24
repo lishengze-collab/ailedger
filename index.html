@@ -35,10 +35,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 
 /* ===== 首页（聊天） ===== */
 html.home-locked,body.home-locked{height:100%;overflow:hidden!important;overscroll-behavior:none}
-body.home-locked{position:fixed;top:0;bottom:calc(-1*var(--sink));left:0;right:0;width:100%;height:auto;min-height:0}
-body.home-locked.kb{top:var(--home-vv-top);bottom:auto;height:var(--home-vh)}
+body.home-locked{position:fixed;top:var(--home-vv-top);bottom:auto;left:0;right:0;width:100%;height:var(--home-vh);min-height:0}
 body.home-locked #app{height:100%;min-height:0;display:flex;flex-direction:column;padding-bottom:0;overflow:hidden}
-body.home-locked.kb #app{padding-bottom:8px}
+body.home-locked .composer{padding-bottom:var(--cpad,10px)}
 body.home-locked main{flex:1 1 0;min-height:0;display:flex}
 #page-home.active,#page-chat.active{display:flex;flex-direction:column;flex:1;min-width:0;width:100%;min-height:0;animation:none}
 .overview{flex:none;padding:10px 12px 4px;background:transparent}
@@ -97,7 +96,7 @@ select.input{padding-right:8px}
 textarea::placeholder,input::placeholder{color:var(--muted)}
 .send-btn{width:42px;height:42px;flex:none;border-radius:50%;border:0;background:var(--accent);color:var(--on);display:grid;place-items:center}
 .send-btn:disabled{opacity:.6}
-#imageInput,#camInput,#importData{display:none!important}
+#imageInput,#importData{display:none!important}
 
 /* ===== 明细 ===== */
 .sticky-head{position:sticky;top:0;z-index:5;background:var(--bg);padding-bottom:6px;margin:0 calc(-1*var(--gx));padding-left:var(--gx);padding-right:var(--gx)}
@@ -207,8 +206,10 @@ html[data-skin=wa] .wa-bar b{display:block;font-size:16px;font-weight:600;line-h
 html[data-skin=wa] .wa-bar button{margin-left:auto}
 html[data-skin=wa] .pure-head{background:var(--card);padding:6px 14px;border-bottom:1px solid var(--line)}
 html[data-skin=wa] .wa-bar .wa-clear{background:transparent;border:0;color:#fff;font-size:13px;opacity:.85}
-html[data-skin=wa] .overview{background:var(--card);border-bottom:1px solid var(--line);padding-top:8px}
-html[data-skin=wa] .conversation-log{background-color:var(--bg);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cg fill='none' stroke='%23808080' stroke-opacity='.09' stroke-width='1.6' stroke-linecap='round'%3E%3Ccircle cx='20' cy='22' r='7'/%3E%3Cpath d='M70 16l9 9m0-9l-9 9'/%3E%3Cpath d='M18 78q8-12 16 0t16 0'/%3E%3Crect x='80' y='70' width='16' height='12' rx='3'/%3E%3Cpath d='M58 52l5 9 5-9'/%3E%3Ccircle cx='100' cy='36' r='3'/%3E%3C/g%3E%3C/svg%3E");padding:12px 12px 8px;gap:4px}
+html[data-skin=wa] .overview{background:transparent;border:0;padding-top:6px}
+html[data-skin=wa] .ring-visual:before{background:var(--bg)}
+html[data-skin=wa] body.home-locked{background-color:var(--bg);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cg fill='none' stroke='%23808080' stroke-opacity='.09' stroke-width='1.6' stroke-linecap='round'%3E%3Ccircle cx='20' cy='22' r='7'/%3E%3Cpath d='M70 16l9 9m0-9l-9 9'/%3E%3Cpath d='M18 78q8-12 16 0t16 0'/%3E%3Crect x='80' y='70' width='16' height='12' rx='3'/%3E%3Cpath d='M58 52l5 9 5-9'/%3E%3Ccircle cx='100' cy='36' r='3'/%3E%3C/g%3E%3C/svg%3E");background-position:center top}
+html[data-skin=wa] .conversation-log{background:transparent;padding:12px 12px 8px;gap:4px}
 html[data-skin=wa] .chat-bubble{position:relative;border:0;border-radius:8px;padding:6px 9px 4px;box-shadow:0 1px .5px rgba(11,20,26,.13);max-width:84%;margin-bottom:3px}
 html[data-skin=wa] .chat-bubble p+p{margin-top:5px}
 html[data-skin=wa] .chat-bubble.user{border-top-right-radius:0;margin-right:7px}
@@ -220,7 +221,7 @@ html[data-skin=wa] .chat-bubble.att-only,html[data-skin=wa] .chat-bubble.img-onl
 .chat-bubble .tm{display:none}
 html[data-skin=wa] .chat-bubble .tm{display:block;text-align:right;font-size:11px;line-height:1.2;color:var(--muted);margin-top:2px}
 html[data-skin=wa] .chat-bubble .tm i{font-style:normal;color:var(--wa-tick);margin-left:3px;letter-spacing:-2px}
-html[data-skin=wa] .composer{background:transparent;padding:6px 8px 8px}
+html[data-skin=wa] .chat{background:transparent}html[data-skin=wa] .composer{background:transparent;padding-left:8px;padding-right:8px;padding-top:6px}
 html[data-skin=wa] .composer textarea{background:var(--card);border-color:transparent;border-radius:22px}
 html[data-skin=wa] .icon-btn{background:transparent;border-color:transparent}
 html[data-skin=wa] .send-btn{background:var(--accent)}
@@ -233,6 +234,7 @@ html[data-skin=wa] .welcome{background:#fff3c4;color:#54656f;border-radius:10px;
 html[data-skin=wa] .typing{background:var(--ba-bg);border-radius:8px}
 .fab-ball{position:fixed;z-index:70;left:0;top:0;width:48px;height:48px;border-radius:50%;border:0;outline:0;background:var(--text);color:var(--bg);font-size:17px;font-weight:800;display:grid;place-items:center;box-shadow:0 3px 10px rgba(0,0,0,.28);touch-action:none;user-select:none;-webkit-user-select:none;transition:left .22s ease,top .22s ease}
 .fab-ball[hidden]{display:none}.fab-tab{position:fixed;z-index:70;width:16px;height:54px;border:0;padding:0;background:var(--text);opacity:.3;border-radius:12px 0 0 12px;right:0}.fab-tab.l{left:0;right:auto;border-radius:0 12px 12px 0}.fab-tab[hidden]{display:none}.fab-tab:active{opacity:.6}
+.fab-ball svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
 .fab-ball.drag{transition:none;transform:scale(1.08)}
 .fab-menu{position:fixed;z-index:69;min-width:150px;display:grid;gap:4px;padding:8px;border-radius:20px;background:var(--card);border:1px solid var(--line);box-shadow:0 14px 40px rgba(0,0,0,.28)}
 .fab-menu[hidden]{display:none}
@@ -322,7 +324,6 @@ html[data-skin=wa] .typing{background:var(--ba-bg);border-radius:8px}
    <div class="ta-wrap"><textarea id="naturalInput" rows="1" placeholder="说一句话记账或查询"></textarea><button class="expand-btn" id="expandBtn" type="button" aria-label="放大输入框"><svg viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg></button></div>
    <button class="send-btn" id="analyzeText" aria-label="发送"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
   </div>
-  <input type="file" id="camInput" accept="image/*" capture="environment">
   <input type="file" id="imageInput" accept="image/*,.pdf,application/pdf,.txt,.csv,.md,.json,.doc,.docx,.xls,.xlsx,.ppt,.pptx" multiple>
  </div>
 </section>
@@ -330,6 +331,7 @@ html[data-skin=wa] .typing{background:var(--ba-bg);border-radius:8px}
 <section class="page" id="page-chat">
  <div class="chat">
   <div id="chatLog" class="conversation-log" aria-live="polite"></div>
+  <div class="pill-bar" id="chatQuoteBar" hidden><span id="chatQuoteText"></span><button id="chatQuoteClear" type="button" aria-label="取消引用">×</button></div>
   <div class="attachments" id="chatAtts"></div>
   <div class="composer">
    <button class="icon-btn" id="chatPick" aria-label="添加附件（拍照、图片、文件）"><svg viewBox="0 0 24 24"><path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/></svg></button>
@@ -440,7 +442,7 @@ html[data-skin=wa] .typing{background:var(--ba-bg);border-radius:8px}
 </main>
 
 <div class="modal-backdrop" id="sheet" hidden><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-head"><div><b id="sheetTitle"></b><small id="sheetSub"></small></div><button class="icon" data-act="close" aria-label="关闭">×</button></div><div class="sheet-body" id="sheetBody"></div><div class="sheet-foot" id="sheetFoot"></div></div></div>
-<button class="fab-ball" id="fabBall" type="button" aria-label="导航（可拖动）">记</button>
+<button class="fab-ball" id="fabBall" type="button" aria-label="导航（可拖动）"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></button>
 <button class="fab-tab" id="fabTab" type="button" aria-label="显示悬浮球" hidden></button>
 <div class="fab-menu" id="fabMenu" hidden>
  <button class="fab-item active" data-page="home" data-short="记"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>记账</button>
@@ -457,6 +459,7 @@ html[data-skin=wa] .typing{background:var(--ba-bg);border-radius:8px}
 <div id="msgMenu" hidden><button id="mmQuote" type="button">引用</button><button id="mmCopy" type="button">复制</button></div>
 <div id="viewer" hidden><div class="viewer-bar"><span id="viewerName"></span><button id="viewerClose" type="button" aria-label="关闭">×</button></div><div id="viewerBody"></div></div>
 <div class="modal-backdrop dlg-bk" id="dlg" hidden><div class="modal-sheet dlg"><b id="dlgTitle"></b><p id="dlgMsg"></p><div class="sheet-foot"><button class="btn flex" id="dlgNo" type="button">取消</button><button class="btn flex primary" id="dlgOk" type="button">确认</button></div></div></div>
+<div id="safeProbe" style="position:fixed;left:0;bottom:0;width:0;height:0;visibility:hidden;padding-bottom:env(safe-area-inset-bottom,0px)"></div>
 <div id="toast"></div>
 </div>
 <script>
@@ -471,15 +474,19 @@ let hideAmt=false;try{hideAmt=localStorage.getItem('ledger.hideAmounts')==='1';}
 try{const s=JSON.parse(localStorage.getItem('ledger.hist')||'[]');if(Array.isArray(s))history=s;}catch(e){}
 
 /* 键盘：弹出时跟随可视区域，收起后立即复位 */
-(function(){const vv=window.visualViewport,r=document.documentElement.style;let t=null;
- const apply=()=>{const kb=!!vv&&(window.innerHeight-vv.height>120);document.body.classList.toggle('kb',kb);
-  if(kb){r.setProperty('--home-vh',Math.round(vv.height)+'px');r.setProperty('--home-vv-top',Math.round(vv.offsetTop||0)+'px');}
-  else{r.setProperty('--home-vh','100dvh');r.setProperty('--home-vv-top','0px');}
-  const a=document.activeElement,l=document.querySelector('.page.active .conversation-log');if(kb&&l&&a&&(a.id==='naturalInput'||a.id==='chatInput'))l.scrollTop=l.scrollHeight;};
- const settle=()=>{apply();clearTimeout(t);t=setTimeout(()=>{apply();if(!document.body.classList.contains('kb'))window.scrollTo(0,0);},250);};
- if(vv){vv.addEventListener('resize',settle);vv.addEventListener('scroll',apply);}
- window.addEventListener('resize',settle);window.addEventListener('pageshow',settle);window.addEventListener('orientationchange',()=>setTimeout(settle,150));
- document.addEventListener('focusout',()=>setTimeout(settle,120));apply();})();
+(function(){const vv=window.visualViewport,root=document.documentElement,r=root.style;let raf=0,until=0,calm=0,last='';
+ const sinkPx=()=>{const v=r.getPropertyValue('--sink')||'0px',m=v.match(/^(-?[\d.]+)(dvh|px)$/);return m?(m[2]==='px'?+m[1]:+m[1]*window.innerHeight/100):0;};
+ const apply=()=>{const H=window.innerHeight,h=vv?vv.height:H,top=vv?vv.offsetTop:0,kb=!!vv&&(H-h>120),locked=document.body.classList.contains('home-locked');
+  document.body.classList.toggle('kb',kb);
+  const eff=Math.round(h),tp=Math.round(kb?top:0),pr=document.getElementById('safeProbe'),safe=pr?parseFloat(getComputedStyle(pr).paddingBottom)||0:0,pad=kb?8:Math.max(6,Math.round(10+safe-sinkPx())),key=eff+'|'+tp+'|'+pad;
+  if(key!==last){last=key;r.setProperty('--home-vh',eff+'px');r.setProperty('--home-vv-top',tp+'px');r.setProperty('--cpad',pad+'px');
+   const a=document.activeElement,l=document.querySelector('.page.active .conversation-log');if(kb&&l&&a&&(a.id==='naturalInput'||a.id==='chatInput'))l.scrollTop=l.scrollHeight;return true;}return false;};
+ window.__applyVV=()=>{last='';apply();};
+ const loop=()=>{raf=0;calm=apply()?0:calm+1;if(performance.now()<until||calm<10){raf=requestAnimationFrame(loop);}else if(!document.body.classList.contains('kb'))window.scrollTo(0,0);};
+ const kick=()=>{until=performance.now()+900;calm=0;if(!raf)raf=requestAnimationFrame(loop);};
+ if(vv){vv.addEventListener('resize',kick);vv.addEventListener('scroll',kick);}
+ window.addEventListener('resize',kick);window.addEventListener('pageshow',kick);window.addEventListener('orientationchange',()=>setTimeout(kick,150));
+ document.addEventListener('focusin',kick);document.addEventListener('focusout',()=>setTimeout(kick,60));apply();})();
 
 /* ---------- 工具 ---------- */
 const uid=()=>crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);
@@ -1130,6 +1137,8 @@ async function analyzeText(){
  finally{clearInterval(tm);streaming=null;busyAI=false;busy($('analyzeText'),false);renderConversation(true);}}
 function clearComposer(){const ta=$('naturalInput');ta.value='';ta.style.height='';images=[];renderAttachments();hideSuggest();}
 function setFocus(f){focusTx=f;const b=$('focusBar');if(f){$('focusText').textContent='✎ 正在修改：'+f.label;b.hidden=false;}else b.hidden=true;}
+let chatQuote=null;
+function setChatQuote(q){chatQuote=q;const b=$('chatQuoteBar');if(q){$('chatQuoteText').textContent='引用 '+q.who+'：'+q.text.slice(0,80);b.hidden=false;}else b.hidden=true;}
 function setQuote(q){quoteMsg=q;const b=$('quoteBar');if(q){$('quoteText').textContent='引用 '+q.who+'：'+q.text.slice(0,80);b.hidden=false;}else b.hidden=true;}
 function hideSuggest(){const s=$('accountSuggestions');s.innerHTML='';s.hidden=true;}
 async function updateSuggest(){const ta=$('naturalInput'),v=ta.value,m=v.match(/@([^\s@]*)$/);if(!m){hideSuggest();return;}
@@ -1170,7 +1179,7 @@ async function fileToAtt(f){const name=f.name||'附件',id=uid();
  return att;}
 async function addFiles(files){for(const f of Array.from(files||[])){if(images.length>=4){toast('最多添加 4 个附件');break;}try{images.push(await fileToAtt(f));}catch(e){toast(e.message,'error');}}renderAttachments();}
 let attachTarget='home',chatAtts=[];
-function attachMenu(t){attachTarget=t;openSheet('添加附件','图片、PDF、Word、Excel、PPT、文本','',[{text:'拍照',fn:()=>{closeSheet();$('camInput').click();}},{text:'相册 / 文件',cls:'primary',fn:()=>{closeSheet();$('imageInput').click();}}]);}
+function attachMenu(t){attachTarget=t;$('imageInput').click();}
 async function addTo(t,files){if(t==='home')return addFiles(files);for(const f of Array.from(files||[])){if(chatAtts.length>=4){toast('最多添加 4 个附件');break;}try{chatAtts.push(await fileToAtt(f));}catch(e){toast(e.message,'error');}}renderChatAtts();}
 function renderChatAtts(){const host=$('chatAtts');if(!chatAtts.length){host.innerHTML='';return;}host.innerHTML=chatAtts.map((a,i)=>'<div class="attachment">'+(a.kind==='image'&&a.thumb?'<img src="'+a.thumb+'" alt="">':CLIP)+'<span>'+esc(a.name)+'</span><button type="button" data-i="'+i+'" aria-label="移除">×</button></div>').join('');host.querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{chatAtts.splice(+b.dataset.i,1);renderChatAtts();});}
 async function purgeAtt(){try{const cut=Date.now()-7*DAY;for(const r of await all('attachments'))if(Number(r.createdAt||0)<cut)await del('attachments',r.id);}catch(e){}}
@@ -1182,7 +1191,8 @@ async function openAtt(id){const r=await new Promise(ok=>{const q=db.transaction
   html=/pdf/i.test((r.mime||'')+r.name)?'<iframe src="'+url+'" title="pdf"></iframe>':'<div class="note" style="padding:20px">此文件类型无法在页面内预览。</div>';
   html+='<a class="btn primary dl" href="'+url+'" target="_blank" rel="noopener" download="'+esc(r.name||'file')+'">在新页面打开 / 下载</a>';}
  body.innerHTML=html;v.hidden=false;const im=$('viewerImg');if(im)im.onclick=()=>im.classList.toggle('zoom');}
-function showMsgMenu(b){const m=$('msgMenu'),r=b.getBoundingClientRect(),id=b.dataset.id,row=history.find(h=>h.id===id);if(!row)return;m.dataset.id=id;m.hidden=false;
+const findMsg=id=>history.find(h=>h.id===id)||chatHist.find(h=>h.id===id);
+function showMsgMenu(b){const m=$('msgMenu'),r=b.getBoundingClientRect(),id=b.dataset.id,row=findMsg(id);if(!row)return;m.dataset.id=id;m.hidden=false;
  const w=m.offsetWidth,hh=m.offsetHeight;let top=r.top-hh-6;if(top<8)top=r.bottom+6;m.style.top=Math.min(window.innerHeight-hh-8,top)+'px';m.style.left=Math.max(8,Math.min(window.innerWidth-w-8,row.role==='user'?r.right-w:r.left))+'px';}
 function hideMsgMenu(){const m=$('msgMenu');if(m)m.hidden=true;}
 
@@ -1200,7 +1210,8 @@ function renderChat(force){const log=$('chatLog');if(!log)return;const stick=for
 async function sendPure(){
  if(busyChat)return;const ta=$('chatInput'),raw=clean(ta.value),list=chatAtts.slice();if(!raw&&!list.length)return;ta.value='';ta.style.height='';chatAtts=[];renderChatAtts();
  const meta=[];for(const a of list){try{await put('attachments',{id:a.id,name:a.name,kind:a.kind,mime:a.mime,size:a.size,dataUrl:a.dataUrl,thumb:a.thumb,createdAt:Date.now()});}catch(e){}if(a.thumb)thumbCache.set(a.id,a.thumb);meta.push({id:a.id,name:a.name,kind:a.kind,size:a.size,at:Date.now()});}
- chatPush('user',raw||('[附件 '+list.length+']'),{atts:meta.length?meta:undefined});busyChat=true;busy($('chatSend'),true);
+ const cq=chatQuote;setChatQuote(null);
+ chatPush('user',raw||('[附件 '+list.length+']'),{atts:meta.length?meta:undefined,quote:cq?{who:cq.who,text:cq.text}:undefined});busyChat=true;busy($('chatSend'),true);
  chatStream={text:'',status:'',sec:0};renderChat(true);const tm=setInterval(()=>{if(chatStream){chatStream.sec++;renderChat();}},1000);
  try{
   const S=settings();if(!S.key)throw new Error('还没有填写 API Key，请到“设置”里填写');
@@ -1210,7 +1221,7 @@ async function sendPure(){
   const sys='你是 Atron🤖，一位开放、理性、温暖、博学的聊天伙伴。这是“纯聊天”页面：你没有任何记账、改账、预算、账户操作的能力，不要输出 JSON 或操作指令；用户想记账或改账时，友好地请他回到“记账”页面。只有用户主动问及自己的消费或账户情况时，下方才会提供只读的账本数据，请据此如实回答；其他时候不要提及账本。每条回复至少含一个 emoji；用户用中文、English 或日本語就用同一种语言回复。简单问题简短回答，复杂问题再展开；每句话尽量独立成行。需要最新信息时可联网搜索，搜索词不得包含账号、余额等隐私。不确定就如实说，不要编造。回答不要使用 Markdown 符号（不要 ** # ` 等），用纯文本分行。【查单词】用户查英文单词/短语时（如“apple 什么意思”“查 resilient”“define x”），严格按下面分行格式回答，每项各占一行或多行，不要使用任何 Markdown 符号（不要 ** # ` 等）：\n📖 单词\n英标：英 /…/ · 美 /…/\n音节：ap·ple\n柯林斯英文释义（Collins 风格，一句话英文释义，按词性分条）：\n1. (noun) …\n2. (verb) …\n中文释义：\n1. 名词：…\n2. 动词：…\n例句：\n1. English sentence. — 中文翻译\n2. …\n给 2–3 个常用释义、2–3 条例句；不确定的读音或释义要如实说明，不要编造。\n当前时间：'+new Date().toLocaleString('zh-CN',{hour12:false})+(localStorage.getItem('ledger.style')?'\n用户的说话风格：'+localStorage.getItem('ledger.style'):'')+ledger;
   const prior=chatHist.slice(0,-1).slice(-24);let used=0,keep=[];for(let i=prior.length-1;i>=0;i--){const c=String(prior[i].content||'').slice(0,1500);if(used+c.length>9000)break;used+=c.length;keep.unshift({role:prior[i].role==='user'?'user':'assistant',content:c});}
   const built=await buildParts(list,S,false),notes=built.notes.slice();if(built.usedFile)pl.kind+='+file';
-  const utext=(raw||'（只发送了附件，请先说明你看到了什么，并询问我想怎么处理）')+built.extra,msgs=[{role:'system',content:sys},...keep,{role:'user',content:built.parts.length?[{type:'text',text:utext},...built.parts]:utext}];
+  const utext=(cq?'（引用'+cq.who+'的话：「'+String(cq.text).slice(0,300)+'」）\n':'')+(raw||'（只发送了附件，请先说明你看到了什么，并询问我想怎么处理）')+built.extra,msgs=[{role:'system',content:sys},...keep,{role:'user',content:built.parts.length?[{type:'text',text:utext},...built.parts]:utext}];
   let pend=false;const cb=u=>{if(u.content!==undefined&&u.content)chatStream.text=u.content;if(u.thinking)chatStream.status='深度思考中…';if(u.event)chatStream.status='正在联网搜索…';if(u.content)chatStream.status='';
    if(!pend){pend=true;setTimeout(()=>{pend=false;if(chatStream)renderChat();},100);}};
   const out=await chatWithFallback(S,msgs,pl,cb,notes),u=out.usage||{};
@@ -1425,18 +1436,14 @@ async function importData(file){let o;try{o=JSON.parse(await file.text());}catch
 
 /* ---------- 导航与事件 ---------- */
 function showPage(name){
- qa('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+name));qa('.fab-item').forEach(b=>b.classList.toggle('active',b.dataset.page===name));{const fb=$('fabBall'),it=qa('.fab-item').find(b=>b.dataset.page===name);if(fb&&it)fb.textContent=it.dataset.short;const fm=$('fabMenu');if(fm)fm.hidden=true;}
+ qa('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+name));qa('.fab-item').forEach(b=>b.classList.toggle('active',b.dataset.page===name));{const fb=$('fabBall'),it=qa('.fab-item').find(b=>b.dataset.page===name);if(fb&&it)fb.innerHTML=it.querySelector('svg').outerHTML;const fm=$('fabMenu');if(fm)fm.hidden=true;}
  const home=name==='home',lock=home||name==='chat';document.body.classList.toggle('home-locked',lock);document.documentElement.classList.toggle('home-locked',lock);window.scrollTo(0,0);
  if(name==='chat'){setTimeout(fitSink,0);renderChat(true);}
  if(home){setTimeout(fitSink,0);renderHome();const l=$('conversationLog');if(l)l.scrollTop=l.scrollHeight;}
  else if(name==='transactions')renderTransactions();else if(name==='analytics')renderAnalytics();else if(name==='accounts')renderAccounts();else if(name==='settings')renderSettings();}
 function shiftDetail(dir){const b=detailBase;if(detailRange==='day')detailBase=new Date(b.getFullYear(),b.getMonth(),b.getDate()+dir);else if(detailRange==='week')detailBase=new Date(b.getFullYear(),b.getMonth(),b.getDate()+7*dir);else detailBase=new Date(b.getFullYear(),b.getMonth()+dir,1);renderTransactions();}
 function sinkWanted(){const sk=localStorage.getItem('ledger.sink');return sk==null?8:Math.max(0,Math.min(15,parseInt(sk,10)||0));}
-function fitSink(){/* 下沉只用在页面确实放得下的范围内，绝不把输入框挤出屏幕 */
- const root=document.documentElement,want=sinkWanted();root.style.setProperty('--sink',want+'dvh');
- if(document.body.classList.contains('kb')||!document.body.classList.contains('home-locked'))return;
- const c=document.querySelector('.page.active .chat');if(!c)return;const over=c.getBoundingClientRect().bottom-window.innerHeight+4;
- if(over>0)root.style.setProperty('--sink',Math.max(0,want*window.innerHeight/100-over)+'px');}
+function fitSink(){/* 输入区底部间距由滑块控制，始终留在屏幕内 */document.documentElement.style.setProperty('--sink',sinkWanted()+'dvh');if(window.__applyVV)window.__applyVV();}
 window.addEventListener('resize',()=>setTimeout(fitSink,60));window.addEventListener('pageshow',()=>setTimeout(fitSink,60));
 function initFab(){
  const ball=$('fabBall'),menu=$('fabMenu'),S=48,M=8;
@@ -1477,11 +1484,13 @@ function bindEvents(){
  $('sheet').onclick=e=>{if(e.target===$('sheet'))closeSheet();};
  qa('[data-act="close"]').forEach(b=>b.onclick=closeSheet);
 $('analyzeText').onclick=analyzeText;
- $('conversationLog').onclick=e=>{const at=e.target.closest('[data-att]');if(at){openAtt(at.dataset.att);return;}if(e.target.closest('a,summary,details'))return;const q=e.target.closest('.quote');if(q){q.classList.toggle('open');return;}const b=e.target.closest('.chat-bubble[data-id]');if(!b){hideMsgMenu();return;}const m=$('msgMenu');if(m.hidden||m.dataset.id!==b.dataset.id)showMsgMenu(b);else hideMsgMenu();};
+ const logClick=e=>{const at=e.target.closest('[data-att]');if(at){openAtt(at.dataset.att);return;}if(e.target.closest('a,summary,details'))return;const q=e.target.closest('.quote');if(q){q.classList.toggle('open');return;}const b=e.target.closest('.chat-bubble[data-id]');if(!b){hideMsgMenu();return;}const m=$('msgMenu');if(m.hidden||m.dataset.id!==b.dataset.id)showMsgMenu(b);else hideMsgMenu();};
+ $('conversationLog').onclick=logClick;$('chatLog').onclick=logClick;$('chatLog').addEventListener('scroll',hideMsgMenu,{passive:true});
  $('conversationLog').addEventListener('scroll',hideMsgMenu,{passive:true});
  document.addEventListener('pointerdown',e=>{const m=$('msgMenu');if(!m.hidden&&!m.contains(e.target)&&!e.target.closest('.chat-bubble'))hideMsgMenu();});
- $('mmQuote').onclick=()=>{const row=history.find(h=>h.id===$('msgMenu').dataset.id);hideMsgMenu();if(!row)return;setQuote({who:row.role==='user'?'我':'Atron',text:String(row.content).replace(/\s+/g,' ').slice(0,300)});$('naturalInput').focus();};
- $('mmCopy').onclick=async()=>{const row=history.find(h=>h.id===$('msgMenu').dataset.id);hideMsgMenu();if(!row)return;try{await navigator.clipboard.writeText(row.content);toast('已复制');}catch(e){toast('复制失败','error');}};
+ $('mmQuote').onclick=()=>{const row=findMsg($('msgMenu').dataset.id);hideMsgMenu();if(!row)return;const q={who:row.role==='user'?'我':'Atron',text:String(row.content).replace(/\s+/g,' ').slice(0,300)};if(row.ch==='pure'){setChatQuote(q);$('chatInput').focus();}else{setQuote(q);$('naturalInput').focus();}};
+ $('chatQuoteClear').onclick=()=>setChatQuote(null);
+ $('mmCopy').onclick=async()=>{const row=findMsg($('msgMenu').dataset.id);hideMsgMenu();if(!row)return;try{await navigator.clipboard.writeText(row.content);toast('已复制');}catch(e){toast('复制失败','error');}};
  $('quoteClear').onclick=()=>setQuote(null);
  $('viewerClose').onclick=()=>{$('viewer').hidden=true;$('viewerBody').innerHTML='';};
  $('modeEnd').onclick=()=>{setOpen(false);pushHist('assistant','已回到记账模式 🧾');};
@@ -1506,7 +1515,7 @@ $('analyzeText').onclick=analyzeText;
  {const ci=$('chatInput');ci.oninput=()=>{ci.style.height='auto';ci.style.height=Math.min(ci.scrollHeight,120)+'px';};ci.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229&&!('ontouchstart' in window)){e.preventDefault();sendPure();}};}
  $('clearPure').onclick=async()=>{if(!chatHist.length){toast('纯聊天没有记录');return;}if(!await askDlg('清空纯聊天的全部记录？','清空纯聊天',{ok:'清空',danger:true}))return;for(const r of chatHist)await del('conversationHistory',r.id).catch(()=>{});chatHist=[];renderChat(true);toast('已清空');};
  $('pickImages').onclick=()=>attachMenu('home');$('chatPick').onclick=()=>attachMenu('chat');
- $('imageInput').onchange=async e=>{const fi=e.target;await addTo(attachTarget,fi.files);fi.value='';};$('camInput').onchange=async e=>{const fi=e.target;await addTo(attachTarget,fi.files);fi.value='';};
+ $('imageInput').onchange=async e=>{const fi=e.target;await addTo(attachTarget,fi.files);fi.value='';};
  const ta=$('naturalInput');
  ta.oninput=()=>{updateSuggest();};
  ta.onpaste=async e=>{const fs=Array.from((e.clipboardData&&e.clipboardData.files)||[]);if(!fs.length)return;e.preventDefault();await addFiles(fs);};
