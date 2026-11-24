@@ -40,7 +40,7 @@ body.home-locked.kb{top:var(--home-vv-top);bottom:auto;height:var(--home-vh)}
 body.home-locked #app{height:100%;min-height:0;display:flex;flex-direction:column;padding-bottom:0;overflow:hidden}
 body.home-locked.kb #app{padding-bottom:8px}
 body.home-locked main{flex:1 1 0;min-height:0;display:flex}
-#page-home.active{display:flex;flex-direction:column;flex:1;min-width:0;width:100%;min-height:0;animation:none}
+#page-home.active,#page-chat.active{display:flex;flex-direction:column;flex:1;min-width:0;width:100%;min-height:0;animation:none}
 .overview{flex:none;padding:10px 12px 4px;background:transparent}
 .ring-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .ring{text-align:center;min-width:0}
@@ -81,7 +81,9 @@ body.home-locked main{flex:1 1 0;min-height:0;display:flex}
 .composer textarea{display:block;width:100%;height:42px;border:1px solid var(--line);border-radius:21px;background:var(--surface);padding:10px 42px 10px 15px;font-size:16px;line-height:20px;resize:none;outline:0;overflow:hidden}
 .expand-btn{position:absolute;right:5px;top:5px;width:32px;height:32px;border:0;border-radius:50%;background:transparent;color:var(--muted);display:grid;place-items:center}
 .expand-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-body.kb .ring-visual{width:40px;margin-bottom:2px}body.kb .ring-meta,body.kb .ring-center small{display:none}body.kb .ring-spent{font-size:10.5px}body.kb .ring-center b{font-size:10px}body.kb .overview{padding:5px 12px}
+body.home-locked #app{padding-left:0;padding-right:0}
+body.home-locked .chat{background:transparent;border:0;border-radius:0;box-shadow:none}
+.overview{padding-left:calc(var(--gx) + 4px);padding-right:calc(var(--gx) + 4px)}
 .composer textarea::placeholder{white-space:nowrap}
 .expand{position:fixed;z-index:90;left:0;right:0;top:var(--home-vv-top);height:var(--home-vh);background:var(--bg);display:flex;flex-direction:column;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 12px;max-width:760px;margin:auto}
 .expand[hidden]{display:none}
@@ -116,7 +118,8 @@ textarea::placeholder,input::placeholder{color:var(--muted)}
 .day-head{display:flex;justify-content:space-between;margin:14px 4px 6px;font-size:12.5px;color:var(--muted);font-weight:650}
 .item{display:flex;align-items:center;gap:11px;padding:11px 0;min-width:0;border-bottom:1px solid var(--line);cursor:pointer}
 .item:last-child{border-bottom:0}
-.symbol{width:40px;height:40px;border-radius:13px;background:var(--soft);display:grid;place-items:center;flex:none;font-size:18px}
+.symbol{width:40px;height:40px;border-radius:13px;background:var(--soft);display:grid;place-items:center;flex:none;font-size:18px;color:var(--text)}
+.symbol svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .item-main{flex:1;min-width:0}
 .item-main b{display:block;font-size:calc(15px*var(--font-scale));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .item-main small,.item-right small{display:block;color:var(--muted);font-size:calc(12px*var(--font-scale));margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -153,6 +156,7 @@ textarea::placeholder,input::placeholder{color:var(--muted)}
 .account-total>div{min-width:0;padding:11px 9px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
 .account-total small{display:block;color:var(--muted);font-size:11px}.account-total b{display:block;margin-top:4px;font-size:clamp(13px,3.6vw,17px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .acct-card{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--line);border-radius:15px;margin-bottom:8px;display:flex;align-items:center;gap:10px;padding:11px 12px;cursor:pointer}
+.bank-mark.logo{padding:0;background:#333;overflow:hidden}.bank-mark.logo svg{width:100%;height:100%;display:block}
 .bank-mark{width:40px;height:40px;display:grid;place-items:center;border-radius:13px;background:var(--soft);font-size:14px;font-weight:800;flex:none}
 .acct-main{flex:1;min-width:0}.acct-top{display:flex;justify-content:space-between;gap:10px}.acct-top b{font-size:15px}
 .acct-main small{display:block;color:var(--muted);font-size:12px;margin-top:4px}
@@ -214,6 +218,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .mrow-head b{flex:none;font-size:13px}
 .mrow small{display:block;color:var(--muted);font-size:11.5px;margin-top:3px}
 .mrow .track{height:6px;margin-top:6px}.mrow .track i{background:var(--text)}
+.pure-head{display:flex;align-items:center;gap:8px;padding:12px 14px 6px;font-size:13px;color:var(--muted)}.pure-head b{color:var(--text);font-size:16px}.pure-head span{flex:1}.pure-head button{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:99px;padding:5px 13px;font-size:12px}
+#chatInput{width:100%;resize:none;max-height:120px}
 /* ---- Atron 新增样式 ---- */
 .chat-bubble .lbl{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;border:1px solid currentColor;opacity:.7;margin-bottom:6px}
 .chat-bubble .quote{border-left:3px solid currentColor;padding:2px 0 2px 9px;margin:0 0 8px;font-size:.82em;opacity:.72;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
@@ -274,6 +280,17 @@ input[type=range]{width:100%;accent-color:var(--accent)}
    <button class="send-btn" id="analyzeText" aria-label="发送"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
   </div>
   <input type="file" id="imageInput" accept="image/*,.pdf,application/pdf,.txt,.csv,.md,.json,.doc,.docx,.xls,.xlsx,.ppt,.pptx" multiple>
+ </div>
+</section>
+
+<section class="page" id="page-chat">
+ <div class="chat">
+  <div class="pure-head"><b>纯聊天</b><span>不记账 · 不改账本</span><button id="chatClear" type="button">清空</button></div>
+  <div id="chatLog" class="conversation-log" aria-live="polite"></div>
+  <div class="composer">
+   <div class="ta-wrap"><textarea id="chatInput" rows="1" placeholder="想聊什么都可以"></textarea></div>
+   <button class="send-btn" id="chatSend" aria-label="发送"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+  </div>
  </div>
 </section>
 
@@ -378,6 +395,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 <button class="fab-ball" id="fabBall" type="button" aria-label="导航（可拖动）">记</button>
 <div class="fab-menu" id="fabMenu" hidden>
  <button class="fab-item active" data-page="home" data-short="记"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>记账</button>
+ <button class="fab-item" data-page="chat" data-short="聊"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8.5 10h7"/></svg>纯聊天</button>
  <button class="fab-item" data-page="transactions" data-short="明"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>明细</button>
  <button class="fab-item" data-page="analytics" data-short="析"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h17M8 15l4-5 3 2 5-7"/></svg>分析</button>
  <button class="fab-item" data-page="accounts" data-short="户"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg>账户</button>
@@ -396,7 +414,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 const $=id=>document.getElementById(id),qa=s=>Array.from(document.querySelectorAll(s));
 const DB='ai-ledger-v1',VERSION=7,STORES=['accounts','transactions','budgets','tokenUsage','settings','reconciliations','dailyBudgets','conversationHistory','projects','budgetOverrides','attachments'],SNAP=['accounts','transactions','budgets','reconciliations','dailyBudgets','projects','budgetOverrides'];
 const MONEY=['expense','income','transfer','refund'],DAY=864e5;
-let db=null,pending=null,images=[],range='month',detailRange='day',detailBase=new Date(),filter='all',undoSnap=null,undoTimer=null,busyAI=false,focusTx=null,activeFocusId=null,historyReady=false,history=[],quoteMsg=null;
+let db=null,pending=null,images=[],range='month',detailRange='day',detailBase=new Date(),filter='all',undoSnap=null,undoTimer=null,busyAI=false,focusTx=null,activeFocusId=null,historyReady=false,history=[],quoteMsg=null,chatHist=[],busyChat=false,chatStream=null;
 let calMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);
 let hideAmt=false;try{hideAmt=localStorage.getItem('ledger.hideAmounts')==='1';}catch(e){}
 try{const s=JSON.parse(localStorage.getItem('ledger.hist')||'[]');if(Array.isArray(s))history=s;}catch(e){}
@@ -406,7 +424,7 @@ try{const s=JSON.parse(localStorage.getItem('ledger.hist')||'[]');if(Array.isArr
  const apply=()=>{const kb=!!vv&&(window.innerHeight-vv.height>120);document.body.classList.toggle('kb',kb);
   if(kb){r.setProperty('--home-vh',Math.round(vv.height)+'px');r.setProperty('--home-vv-top',Math.round(vv.offsetTop||0)+'px');}
   else{r.setProperty('--home-vh','100dvh');r.setProperty('--home-vv-top','0px');}
-  const l=document.getElementById('conversationLog'),a=document.activeElement;if(kb&&l&&a&&a.id==='naturalInput')l.scrollTop=l.scrollHeight;};
+  const a=document.activeElement,l=document.querySelector('.page.active .conversation-log');if(kb&&l&&a&&(a.id==='naturalInput'||a.id==='chatInput'))l.scrollTop=l.scrollHeight;};
  const settle=()=>{apply();clearTimeout(t);t=setTimeout(()=>{apply();if(!document.body.classList.contains('kb'))window.scrollTo(0,0);},250);};
  if(vv){vv.addEventListener('resize',settle);vv.addEventListener('scroll',apply);}
  window.addEventListener('resize',settle);window.addEventListener('pageshow',settle);window.addEventListener('orientationchange',()=>setTimeout(settle,150));
@@ -445,6 +463,11 @@ function periods(now){now=now||new Date();const y=now.getFullYear(),m=now.getMon
  return{day:[new Date(y,m,d).getTime(),new Date(y,m,d+1).getTime()-1],week:[new Date(y,m,d-dow).getTime(),new Date(y,m,d-dow+7).getTime()-1],month:[new Date(y,m,1).getTime(),new Date(y,m+1,1).getTime()-1]};}
 const daysInMonth=(y,m)=>new Date(y,m+1,0).getDate();
 function catIcon(c,type){const s=clean(c);if(type==='transfer')return'⇄';if(type==='refund')return'↩';const m=[[/瑞幸|星巴克|咖啡|拿铁|奶茶|茶饮/,'☕'],[/icloud|云盘|会员|订阅|netflix|spotify|vip/i,'♛'],[/加油|油站|充电/,'⛽'],[/保险|保费/,'🛡'],[/高速|通行费|停车|打车|地铁|公交|交通|高铁|机票/,'🚇'],[/房租|租房|物业|水电|电费|燃气|话费|网费/,'🏠'],[/餐|饭|吃|外卖|零食|饮|早|午|晚/,'🍜'],[/购物|服饰|衣|数码|网购|日用/,'🛍'],[/娱乐|游戏|电影|旅/,'🎮'],[/医|药|健康|健身/,'💊'],[/教育|学|书|培训/,'📚'],[/工资|薪|奖金|理财|利息/,'💰'],[/红包|礼|人情/,'🧧'],[/借|还|垫/,'🤝']];for(const[r,i]of m)if(r.test(s))return i;return type==='income'?'＋':'🧾';}
+const ICO={coffee:'M5 9h11v5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4z M16 10h1.5a2.5 2.5 0 0 1 0 5H16 M8 3v2 M12 3v2',food:'M7 3v8 M5 3v5a2 2 0 0 0 4 0V3 M7 11v10 M17 3c-2 2-2 6 0 8v10',bus:'M5 5h14v11H5z M5 11h14 M8 19v2 M16 19v2 M8 14h.01 M16 14h.01',home:'M4 11l8-7 8 7 M6 10v10h12V10 M10 20v-5h4v5',bag:'M5 8h14l-1 12H6z M9 8V6a3 3 0 0 1 6 0v2',game:'M6 8h12a3 3 0 0 1 3 3v3a3 3 0 0 1-5 2l-1-2H9l-1 2a3 3 0 0 1-5-2v-3a3 3 0 0 1 3-3z M8 11v3 M6.5 12.5h3 M16 12h.01 M18 13.5h.01',med:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M12 8v8 M8 12h8',book:'M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z M4 19V5 M9 7h6',coin:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M9 9l3 4 3-4 M9 13h6 M9 16h6 M12 13v5',gift:'M5 8h14v12H5z M5 12h14 M12 8v12 M12 8c-3 0-4-4-1.5-4 1.5 0 1.5 2 1.5 4 0-2 0-4 1.5-4 2.5 0 1.5 4-1.5 4',people:'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M3 20c0-3 3-5 6-5s6 2 6 5 M17 8a2.5 2.5 0 1 1 0 5 M18 15c2 .5 3 2 3 4',crown:'M4 18h16 M4 18L3 8l5 4 4-7 4 7 5-4-1 10',fuel:'M6 20V5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v15 M4 20h13 M15 9h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V9l-3-3 M8 8h5',shield:'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z',swap:'M4 8h14l-3-3 M20 16H6l3 3',refund:'M9 14L4 9l5-5 M4 9h10a6 6 0 0 1 0 12h-3',up:'M12 19V5 M6 11l6-6 6 6',receipt:'M6 3h12v18l-3-2-3 2-3-2-3 2z M9 8h6 M9 12h6'};
+function catSvg(c,type){const s=clean(c);let k=null;if(type==='transfer')k='swap';else if(type==='refund')k='refund';else{
+ const m=[[/瑞幸|星巴克|咖啡|拿铁|奶茶|茶饮/,'coffee'],[/icloud|云盘|会员|订阅|netflix|spotify|vip/i,'crown'],[/加油|油站|充电/,'fuel'],[/保险|保费/,'shield'],[/高速|通行费|停车|打车|地铁|公交|交通|高铁|机票|滴滴/,'bus'],[/房租|租房|物业|水电|电费|燃气|话费|网费/,'home'],[/餐|饭|吃|外卖|零食|饮|早|午|晚/,'food'],[/购物|服饰|衣|数码|网购|日用|京东|淘宝|拼多多/,'bag'],[/娱乐|游戏|电影|旅/,'game'],[/医|药|健康|健身/,'med'],[/教育|学|书|培训/,'book'],[/工资|薪|奖金|理财|利息/,'coin'],[/红包|礼|人情/,'gift'],[/借|还|垫/,'people']];
+ for(const[r,i]of m)if(r.test(s)){k=i;break;}if(!k)k=type==='income'?'up':'receipt';}
+ return'<svg viewBox="0 0 24 24" aria-hidden="true">'+ICO[k].split(' M').map((d,i)=>'<path d="'+(i?'M':'')+d+'"/>').join('')+'</svg>';}
 let toastTimer=null;
 function toast(s,type){const e=$('toast');e.textContent=s;e.className='show'+(type?' '+type:'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>{e.className='';},2200);}
 function busy(b,on){if(!b)return;if(on){b.dataset.prev=b.innerHTML;b.disabled=true;b.innerHTML='<span class="spinner"></span>';}else{b.disabled=false;if(b.dataset.prev){b.innerHTML=b.dataset.prev;delete b.dataset.prev;}}}
@@ -477,18 +500,20 @@ function persistRow(row){if(db&&historyReady)put('conversationHistory',row).catc
 function pushHist(role,content,extra){extra=(extra&&!Array.isArray(extra))?extra:{};content=String(content);if(role==='assistant')content=ensureEmoji(content);
  const row=Object.assign({id:uid(),role,content,createdAt:Date.now()},extra);Object.keys(row).forEach(k=>{if(row[k]===undefined)delete row[k];});
  history.push(row);persistRow(row);setHistCount();renderConversation(true);return row;}
-async function loadHistory(){const rows=await all('conversationHistory');if(rows.length)history=rows.sort((a,b)=>Number(a.createdAt||0)-Number(b.createdAt||0));historyReady=true;setHistCount();renderConversation(true);}
+async function loadHistory(){const rows=(await all('conversationHistory')).sort((a,b)=>Number(a.createdAt||0)-Number(b.createdAt||0));chatHist=rows.filter(r=>r.ch==='pure');if(rows.length)history=rows.filter(r=>r.ch!=='pure');historyReady=true;setHistCount();renderConversation(true);}
 function setHistCount(){const e=$('histCount');if(e)e.textContent=history.length+' 条';}
 function splitParas(t){const out=[];String(t).split(/\n+/).forEach(line=>{line=line.trim();if(!line)return;(line.match(/[^。！？!?；;]+[。！？!?；;]*[”’」』）)]*/g)||[line]).forEach(p=>{p=p.trim();if(p)out.push(p);});});return out;}
 const CLIP='<svg viewBox="0 0 24 24"><path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/></svg>';
 function attChip(a){const exp=Date.now()-Number(a.at||0)>7*DAY;const nm=esc(a.name||(a.kind==='image'?'图片':'文件'));
  return exp?'<span class="att off">'+CLIP+'<span>'+nm+'（已过期）</span></span>':'<button type="button" class="att" data-att="'+esc(a.id)+'">'+CLIP+'<span>'+nm+'</span></button>';}
 function safeUrl(u){u=String(u||'').trim();return /^https?:\/\//i.test(u)?u:'';}
+const AMT_RX=/[-+−]?[¥￥$€£]\s?\d[\d,]*(?:\.\d+)?(?:\s?[万kK])?|[-+−]?\d[\d,]*(?:\.\d+)?\s?(?:元|块钱|块|万元|円|CNY|RMB|USD|JPY)/g;
+const maskAmt=t=>hideAmt?String(t).replace(AMT_RX,'••••'):t;
 function bubbleHTML(h){const side=h.role==='user'?'user':'assistant';let inner='';
  if(h.tags&&h.tags.includes('non_ledger'))inner+='<span class="lbl">非记账</span>';
  if(h.quote)inner+='<div class="quote"><b>'+esc(h.quote.who||'')+'</b>'+esc(h.quote.text||'')+'</div>';
  if(h.atts&&h.atts.length)inner+='<div class="atts">'+h.atts.map(attChip).join('')+'</div>';
- const txt=/^\[附件 \d+\]$/.test(h.content)?'':splitParas(h.content).map(p=>'<p>'+esc(p)+'</p>').join('');inner+=txt;
+ const txt=/^\[附件 \d+\]$/.test(h.content)?'':splitParas(maskAmt(h.content)).map(p=>'<p>'+esc(p)+'</p>').join('');inner+=txt;
  const src=(h.sources||[]).filter(s=>safeUrl(s.url));
  if(src.length)inner+='<details class="srcs"><summary>来源 · '+src.length+'</summary>'+src.map(s=>'<a href="'+esc(safeUrl(s.url))+'" target="_blank" rel="noopener noreferrer">'+esc(s.title||s.url)+'</a>').join('')+'</details>';
  return'<div class="chat-bubble '+side+((!txt&&!h.quote&&!h.tags)?' att-only':'')+'" data-id="'+esc(h.id)+'">'+inner+'</div>';}
@@ -496,7 +521,7 @@ function renderConversation(force){const log=$('conversationLog');if(!log)return
  const stick=force||log.scrollHeight-log.scrollTop-log.clientHeight<90,keep=log.scrollTop;
  let html=history.slice(-60).map(bubbleHTML).join('');
  if(!history.length&&!streaming)html='<div class="welcome"><b>我是 Atron 🤖</b>你的记账管家，也能陪你聊任何事<br>记账 · 查询 · 报告 · 规划 · 联网搜索<br>也可以发账单截图或 PDF<br><br>试试：午饭 28 微信 / 2.5，网商，可乐<br>统计今天 / 300 元能撑几天 / 开放聊天</div>';
- if(streaming){const t=streaming.text?splitParas(streaming.text).map(p=>'<p>'+esc(p)+'</p>').join(''):'<div class="typing"><span></span><span></span><span></span></div>';
+ if(streaming){const t=streaming.text?splitParas(maskAmt(streaming.text)).map(p=>'<p>'+esc(p)+'</p>').join(''):'<div class="typing"><span></span><span></span><span></span></div>';
   html+='<div class="chat-bubble assistant">'+t+(streaming.status?'<div class="status">'+esc(streaming.status)+(streaming.sec?' '+streaming.sec+'s':'')+'</div>':'')+'</div>';}
  else if(busyAI)html+='<div class="chat-bubble assistant typing"><span></span><span></span><span></span></div>';
  log.innerHTML=html;log.scrollTop=stick?log.scrollHeight:keep;}
@@ -605,7 +630,7 @@ async function applyEffect(t,sign){
  for(const a of touched.values())await put('accounts',a);}
 
 /* ---------- AI 上下文 ---------- */
-async function context(q){
+async function context(q,o){o=o||{};
  await loadMeta();
  const[accounts,budgets,recs,tx]=await Promise.all([all('accounts'),all('budgets'),all('reconciliations'),all('transactions')]);
  const now=new Date(),p=periods(now),S=settings(),sc=S.txScope,scopeCut=sc==='all'?0:Date.now()-(Number(sc)||3650)*DAY;
@@ -619,13 +644,13 @@ async function context(q){
  tx.forEach(t=>{const k=dayKey(time(t)).slice(0,7),m=monthly[k]||(monthly[k]={income:0,expense:0});m.income=r2(m.income+(pl(t)&&t.type==='income'?amt(t):0));m.expense=r2(m.expense+spendOf(t));});
  const lastTx=tx.reduce((m,t)=>!m||(t.createdAt||0)>(m.createdAt||0)?t:m,null),lastRec=lastTx?txRow(lastTx):null;
  const habitList=Object.values(habits()).sort((a,b)=>(b.n||0)-(a.n||0)||(b.at||0)-(a.at||0)).slice(0,60).map(e=>({m:e.merchant,c:e.category||'',a:e.account||''}));
- const recent=tx.filter(t=>time(t)>=scopeCut).sort((a,b)=>time(b)-time(a)).slice(0,150),ids=new Set(recent.map(t=>t.id));
+ const recent=tx.filter(t=>time(t)>=scopeCut).sort((a,b)=>time(b)-time(a)).slice(0,o.slim?40:150),ids=new Set(recent.map(t=>t.id));
  const first=tx.reduce((m,t)=>Math.min(m,time(t)),Infinity);
  const avg=n=>{const from=Date.now()-n*DAY,span=Math.max(1,Math.min(n,Math.ceil((Date.now()-first)/DAY)));return r2(expDaily(tx.filter(t=>time(t)>=from))/span);};
  return{
   today:dayKey(now.getTime())+' '+WD[now.getDay()],mode:isOpen()?'open':'ledger',style:localStorage.getItem('ledger.style')||'',
   recordsSince:tx.length?dayKey(first):null,recentScope:sc==='all'?'自有记录以来（最多150条）':'近'+sc+'天（最多150条）',
-  monthly:Object.fromEntries(Object.entries(monthly).sort().slice(-24)),lastRecorded:lastRec,habits:habitList,
+  monthly:Object.fromEntries(Object.entries(monthly).sort().slice(o.slim?-4:-24)),lastRecorded:lastRec,habits:habitList,
   accounts:accounts.map(a=>({name:a.name,balance:a.balance,currency:a.currency||'CNY',accountType:a.accountType||guessAccountType(a.name),institution:a.institution||'',last4:a.last4||'',verifiedAt:a.verifiedAt||null})),
   totalBalance:r2(accounts.reduce((s,a)=>s+Number(a.balance||0),0)),
   recent:recent.map(txRow),retrieved:searchTx(tx.filter(t=>!ids.has(t.id)),q,25).map(txRow),retrievedMsgs:searchHistory(q,12,6),
@@ -719,12 +744,12 @@ const RX_PLAN=/旅游|旅行|出行|行程|规划|方案|流向|复盘|trip|trav
 function planFor(text,list,S,open){const t=String(text||''),len=t.length,hasAtt=list&&list.length>0;
  const quick=len<=24&&!RX_COMPLEX.test(t)&&!RX_WEB.test(t)&&!hasAtt&&!open;
  const ledgerish=/\d+(\.\d+)?|记|花|买|转|余额|预算|账户|校准/.test(t);
- const web=S.web&&(RX_WEB.test(t)||(open&&/[?？]|吗|什么|怎么|如何|为什么|哪/.test(t))||(!ledgerish&&len>=6&&/[?？]|吗|什么|怎么|如何|为什么|哪|谁|多少/.test(t)));
- const think=S.think&&!quick&&(RX_COMPLEX.test(t)||len>60||hasAtt||(web&&len>20));
+ const explicit=/联网|搜索|搜一下|查一下|查查|最新|新闻|天气|汇率|search|latest|news/i.test(t),web=S.web&&!hasAtt&&((RX_WEB.test(t)&&(explicit||!RX_LEDGERQ.test(t)))||(!ledgerish&&len>=12&&/最近|现在|今年|本周|目前|有没有|哪家|推荐|排名|多少钱|能不能|是不是真的/.test(t)));
+ const think=S.think&&!quick&&(RX_COMPLEX.test(t)||len>120||(hasAtt&&len>=6));
  let effort=S.effort!=='auto'?S.effort:(think?(RX_PLAN.test(t)||len>200?'max':RX_COMPLEX.test(t)||hasAtt?'high':'low'):'low');
  const maxTokens=think?S.maxTokens:Math.min(S.maxTokens,quick?2048:8192);
  const kind=think&&web?'think+web':think?'think':web?'web':'chat';
- return{think,effort,web,maxTokens,kind};}
+ return{think,effort,web,maxTokens,kind,quick};}
 function apiErr(status,raw){const e=new Error(apiError(status,raw));e.status=status;return e;}
 async function streamChat(S,body,cb){
  const ctl=new AbortController();let idle=null;const kick=()=>{clearTimeout(idle);idle=setTimeout(()=>ctl.abort(),150000);};kick();
@@ -787,7 +812,7 @@ function collectSources(out,reply){const m=new Map(),host=u=>{try{return new URL
  return[...m.values()].slice(0,20);}
 async function askAtron(text,list,opt){
  const S=settings(),pl=planFor(text,list,S,opt.open);
- const ctx=await context(text),sys=prompt(ctx,{open:opt.open,screenshotOnly:opt.screenshotOnly});
+ const ctx=await context(text,{slim:pl.quick&&!list.length}),sys=prompt(ctx,{open:opt.open,screenshotOnly:opt.screenshotOnly});
  const base='【近期对话】\n'+historyBlock(true)+'\n\n【用户本条消息】\n'+(opt.quote?'（引用'+opt.quote.who+'的话：「'+String(opt.quote.text).slice(0,300)+'」）\n':'')+(text||'（只发送了附件，请判断用途）')+(opt.focus?'\n（本条消息针对这笔流水：id='+opt.focus.id+'，'+opt.focus.label+'）':'');
  let built=await buildParts(list,S,false),extra='',rounds=0,sources=[],notes=built.notes.slice(),env=null,out=null;
  if(built.usedFile)pl.kind+='+file';
@@ -1073,6 +1098,39 @@ function showMsgMenu(b){const m=$('msgMenu'),r=b.getBoundingClientRect(),id=b.da
  const w=m.offsetWidth,hh=m.offsetHeight;let top=r.top-hh-6;if(top<8)top=r.bottom+6;m.style.top=Math.min(window.innerHeight-hh-8,top)+'px';m.style.left=Math.max(8,Math.min(window.innerWidth-w-8,row.role==='user'?r.right-w:r.left))+'px';}
 function hideMsgMenu(){const m=$('msgMenu');if(m)m.hidden=true;}
 
+
+/* ---------- 纯聊天页（无记账工具，共用 API） ---------- */
+const RX_LEDGERQ=/消费|支出|花了|花费|开销|开支|收入|工资|账户|余额|预算|账单|流水|记账|欠款|信用卡|转账|储蓄|存款|资产|负债|月供|我的钱|spend|spent|expense|balance|budget|income|salary/i;
+function chatPush(role,content,extra){content=String(content);if(role==='assistant')content=ensureEmoji(content);
+ const row=Object.assign({id:uid(),role,content,createdAt:Date.now(),ch:'pure'},extra||{});Object.keys(row).forEach(k=>{if(row[k]===undefined)delete row[k];});
+ chatHist.push(row);if(db)put('conversationHistory',row).catch(()=>{});renderChat(true);return row;}
+function renderChat(force){const log=$('chatLog');if(!log)return;const stick=force||log.scrollHeight-log.scrollTop-log.clientHeight<90,keep=log.scrollTop;
+ let html=chatHist.slice(-60).map(bubbleHTML).join('');
+ if(!chatHist.length&&!chatStream)html='<div class="welcome"><b>纯聊天 💬</b>想聊什么都可以<br>这里不会记账，也不会改动你的账本<br>只有你主动问起消费、账户，我才会去看账本<br>需要时会自动联网搜索、深度思考</div>';
+ if(chatStream){const t=chatStream.text?splitParas(maskAmt(chatStream.text)).map(p=>'<p>'+esc(p)+'</p>').join(''):'<div class="typing"><span></span><span></span><span></span></div>';
+  html+='<div class="chat-bubble assistant">'+t+(chatStream.status?'<div class="status">'+esc(chatStream.status)+(chatStream.sec?' '+chatStream.sec+'s':'')+'</div>':'')+'</div>';}
+ log.innerHTML=html;log.scrollTop=stick?log.scrollHeight:keep;}
+async function sendPure(){
+ if(busyChat)return;const ta=$('chatInput'),raw=clean(ta.value);if(!raw)return;ta.value='';ta.style.height='';
+ chatPush('user',raw);busyChat=true;busy($('chatSend'),true);
+ chatStream={text:'',status:'',sec:0};renderChat(true);const tm=setInterval(()=>{if(chatStream){chatStream.sec++;renderChat();}},1000);
+ try{
+  const S=settings();if(!S.key)throw new Error('还没有填写 API Key，请到“设置”里填写');
+  const pl=planFor(raw,[],S,false);
+  if(pl.think)chatStream.status='深度思考中…';
+  let ledger='';if(RX_LEDGERQ.test(raw)){chatStream.status=chatStream.status||'正在查看账本…';const c=await context(raw);ledger='\n\n【用户账本数据（只读，仅因用户提到消费/账户而提供；金额单位见字段，勿编造）】\n'+JSON.stringify(c).slice(0,16000);}
+  const sys='你是 Atron🤖，一位开放、理性、温暖、博学的聊天伙伴。这是“纯聊天”页面：你没有任何记账、改账、预算、账户操作的能力，不要输出 JSON 或操作指令；用户想记账或改账时，友好地请他回到“记账”页面。只有用户主动问及自己的消费或账户情况时，下方才会提供只读的账本数据，请据此如实回答；其他时候不要提及账本。每条回复至少含一个 emoji；用户用中文、English 或日本語就用同一种语言回复。简单问题简短回答，复杂问题再展开；每句话尽量独立成行。需要最新信息时可联网搜索，搜索词不得包含账号、余额等隐私。不确定就如实说，不要编造。\n当前时间：'+new Date().toLocaleString('zh-CN',{hour12:false})+(localStorage.getItem('ledger.style')?'\n用户的说话风格：'+localStorage.getItem('ledger.style'):'')+ledger;
+  const prior=chatHist.slice(0,-1).slice(-24);let used=0,keep=[];for(let i=prior.length-1;i>=0;i--){const c=String(prior[i].content||'').slice(0,1500);if(used+c.length>9000)break;used+=c.length;keep.unshift({role:prior[i].role==='user'?'user':'assistant',content:c});}
+  const msgs=[{role:'system',content:sys},...keep,{role:'user',content:raw}],notes=[];
+  let pend=false;const cb=u=>{if(u.content!==undefined&&u.content)chatStream.text=u.content;if(u.thinking)chatStream.status='深度思考中…';if(u.event)chatStream.status='正在联网搜索…';if(u.content)chatStream.status='';
+   if(!pend){pend=true;setTimeout(()=>{pend=false;if(chatStream)renderChat();},100);}};
+  const out=await chatWithFallback(S,msgs,pl,cb,notes),u=out.usage||{};
+  put('tokenUsage',{id:uid(),promptTokens:u.prompt_tokens||0,completionTokens:u.completion_tokens||0,reasoningTokens:(u.completion_tokens_details&&u.completion_tokens_details.reasoning_tokens)||0,kind:'chat',createdAt:Date.now()}).catch(()=>{});
+  const txt=clean(out.content)||(out.reasoning?'我思考了很久但没能给出最终答案，请重试，或在设置里调大“单次输出上限”。':'（模型没有返回内容，请重试）');
+  const src=collectSources(out,txt);chatStream=null;chatPush('assistant',txt+(notes.length?'\n（'+notes.join('；')+'）':''),{sources:src.length?src:undefined});
+ }catch(e){chatStream=null;const m=String(e&&e.message||e||'');chatPush('assistant','⚠️ '+(/Failed to fetch|NetworkError|Load failed/i.test(m)?'网络连接失败，请检查网络或接口地址后重试 🌐':m||'出了点小问题，请再说一次 🙂'));}
+ finally{clearInterval(tm);chatStream=null;busyChat=false;busy($('chatSend'),false);renderChat(true);}}
+
 /* ---------- 渲染 ---------- */
 async function renderHome(){
  const st=await budgetStats(),host=$('homeBudgetRings');
@@ -1110,7 +1168,7 @@ async function renderTransactions(){
   for(const t of arr){const plus=t.type==='income'||t.type==='refund',neu=t.type==='transfer'&&t.transferKind!=='external';
    const title=t.merchant||t.toPerson||t.category||(t.type==='transfer'?'转账':'未命名');
    const acc=t.account?(t.toAccount&&!t.toPerson?t.account+' → '+t.toAccount:(t.toPerson?t.account+' → '+t.toPerson:t.account)):'';
-   html+='<div class="item'+(isExempt(t)?' hl':'')+'" data-id="'+esc(t.id)+'"><div class="symbol">'+catIcon(t.category||t.merchant,t.type)+'</div><div class="item-main"><b>'+esc(title)+(tagOf(t)?' <em class="tag">'+esc(tagOf(t))+'</em>':'')+'</b><small>'+esc(acc)+(t.category&&acc?' · ':'')+esc(t.category||'')+'</small></div><div class="item-right"><b class="'+(plus?'income-text':neu?'':'expense-text')+'">'+(plus?'+':neu?'':'-')+money(amt(t),t.currency)+'</b><small>'+esc(when(t))+'</small></div></div>';}
+   html+='<div class="item'+(isExempt(t)?' hl':'')+'" data-id="'+esc(t.id)+'"><div class="symbol">'+catSvg(t.category||t.merchant,t.type)+'</div><div class="item-main"><b>'+esc(title)+(tagOf(t)?' <em class="tag">'+esc(tagOf(t))+'</em>':'')+'</b><small>'+esc(acc)+(t.category&&acc?' · ':'')+esc(t.category||'')+'</small></div><div class="item-right"><b class="'+(plus?'income-text':neu?'':'expense-text')+'">'+(plus?'+':neu?'':'-')+money(amt(t),t.currency)+'</b><small>'+esc(when(t))+'</small></div></div>';}
   html+='</div>';}
  host.innerHTML=html;}
 async function renderAnalytics(){
@@ -1163,13 +1221,17 @@ async function renderCalendar(){
  $('calGrid').innerHTML=cells;$('calTitle').textContent=y+'年'+(mo+1)+'月';
  $('calSum').textContent='日常支出 '+money(total)+(hasBudget?' · 超支 '+over+' 天':' · 未设每日预算');
  const c=new Date();$('calNext').disabled=calMonth.getFullYear()===c.getFullYear()&&calMonth.getMonth()===c.getMonth();}
+const BANKS=[[/网商|mybank/i,'#1677ff','网'],[/光大|everbright|ceb/i,'#7a1f8f','光'],[/工商|工行|icbc/i,'#c7000b','工'],[/农业|农行|abc/i,'#00805a','农'],[/邮储|邮政|psbc/i,'#007a3d','邮'],[/招商|招行|cmb/i,'#c8161d','招'],[/兴业|cib/i,'#0a3f8f','兴'],[/平安|pingan/i,'#f26a21','平'],[/建设|建行|ccb/i,'#0b57a4','建'],[/中国银行|中行|boc/i,'#a6192e','中'],[/交通|交行|bocom/i,'#0b4f9e','交'],[/微信|wechat/i,'#07c160','微'],[/支付宝|alipay/i,'#1677ff','支']];
+function bankMark(a){const n=(a.institution||'')+' '+(a.name||''),b=BANKS.find(x=>x[0].test(n));
+ if(!b)return'<div class="bank-mark">'+esc((a.institution||a.name||'?').slice(0,2))+'</div>';
+ return'<div class="bank-mark logo" style="background:'+b[1]+'"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="14.5" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.6"/><text x="20" y="26" text-anchor="middle" font-size="17" font-weight="800" fill="#fff" font-family="system-ui,-apple-system,sans-serif">'+b[2]+'</text></svg></div>';}
 async function renderAccounts(){
- const acs=await all('accounts'),assets=acs.filter(a=>Number(a.balance||0)>=0),liabs=acs.filter(a=>Number(a.balance||0)<0);
+ const acs=await all('accounts'),assets=acs.filter(a=>Number(a.balance||0)>=0).sort((x,y)=>Number(y.balance||0)-Number(x.balance||0)),liabs=acs.filter(a=>Number(a.balance||0)<0).sort((x,y)=>Number(x.balance||0)-Number(y.balance||0));
  const sa=r2(assets.reduce((s,a)=>s+Number(a.balance||0),0)),sl=r2(liabs.reduce((s,a)=>s+Math.abs(Number(a.balance||0)),0));
  $('accountFinancialSummary').innerHTML='<div><small>资产总额</small><b>'+money(sa)+'</b></div><div><small>负债总额</small><b'+(sl>0?' class="expense-text"':'')+'>'+money(sl)+'</b></div><div><small>净资产</small><b'+(sa-sl<0?' class="expense-text"':'')+'>'+money(r2(sa-sl))+'</b></div>';
  $('accountSummary').textContent=acs.length+' 个账户';
  const draw=(arr,host)=>{if(!arr.length){host.innerHTML='<div class="empty">暂无</div>';return;}
-  host.innerHTML=arr.map(a=>{const b=Number(a.balance||0);return'<div class="acct-card" data-id="'+esc(a.id)+'"><div class="bank-mark">'+esc((a.institution||a.name||'?').slice(0,2))+'</div><div class="acct-main"><div class="acct-top"><b>'+esc(a.name)+'</b><b class="'+(b>=0?'income-text':'expense-text')+'">'+money(b,a.currency)+'</b></div><small>'+esc(accountTypeName(a.accountType||guessAccountType(a.name)))+(a.last4?' ·· '+esc(a.last4):'')+(verifiedTime(a)?' · 已校准':'')+'</small></div></div>';}).join('');};
+  host.innerHTML=arr.map(a=>{const b=Number(a.balance||0);return'<div class="acct-card" data-id="'+esc(a.id)+'">'+bankMark(a)+'<div class="acct-main"><div class="acct-top"><b>'+esc(a.name)+'</b><b class="'+(b>=0?'income-text':'expense-text')+'">'+money(b,a.currency)+'</b></div><small>'+esc(accountTypeName(a.accountType||guessAccountType(a.name)))+(a.last4?' ·· '+esc(a.last4):'')+(verifiedTime(a)?' · 已校准':'')+'</small></div></div>';}).join('');};
  draw(assets,$('assetAccounts'));draw(liabs,$('liabilityAccounts'));
  const recs=await all('reconciliations'),rh=$('accountCalibrations');
  rh.innerHTML=recs.length?recs.sort((a,b)=>b.createdAt-a.createdAt).slice(0,15).map(r=>'<div class="acct-card" style="cursor:default;display:block"><div class="kv"><span>'+esc(r.accountName)+'</span><b>'+money(r.statementBalance)+'</b></div><div class="kv"><span>校准前 / 差额</span><b>'+money(r.previousBalance)+' / <span class="'+(r.difference>=0?'income-text':'expense-text')+'">'+money(r.difference)+'</span></b></div></div>').join(''):'<div class="empty">暂无校准记录</div>';}
@@ -1268,7 +1330,8 @@ async function importData(file){let o;try{o=JSON.parse(await file.text());}catch
 /* ---------- 导航与事件 ---------- */
 function showPage(name){
  qa('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+name));qa('.fab-item').forEach(b=>b.classList.toggle('active',b.dataset.page===name));{const fb=$('fabBall'),it=qa('.fab-item').find(b=>b.dataset.page===name);if(fb&&it)fb.textContent=it.dataset.short;const fm=$('fabMenu');if(fm)fm.hidden=true;}
- const home=name==='home';document.body.classList.toggle('home-locked',home);document.documentElement.classList.toggle('home-locked',home);window.scrollTo(0,0);
+ const home=name==='home',lock=home||name==='chat';document.body.classList.toggle('home-locked',lock);document.documentElement.classList.toggle('home-locked',lock);window.scrollTo(0,0);
+ if(name==='chat'){setTimeout(fitSink,0);renderChat(true);}
  if(home){setTimeout(fitSink,0);renderHome();const l=$('conversationLog');if(l)l.scrollTop=l.scrollHeight;}
  else if(name==='transactions')renderTransactions();else if(name==='analytics')renderAnalytics();else if(name==='accounts')renderAccounts();else if(name==='settings')renderSettings();}
 function shiftDetail(dir){const b=detailBase;if(detailRange==='day')detailBase=new Date(b.getFullYear(),b.getMonth(),b.getDate()+dir);else if(detailRange==='week')detailBase=new Date(b.getFullYear(),b.getMonth(),b.getDate()+7*dir);else detailBase=new Date(b.getFullYear(),b.getMonth()+dir,1);renderTransactions();}
@@ -1276,7 +1339,7 @@ function sinkWanted(){const sk=localStorage.getItem('ledger.sink');return sk==nu
 function fitSink(){/* 下沉只用在页面确实放得下的范围内，绝不把输入框挤出屏幕 */
  const root=document.documentElement,want=sinkWanted();root.style.setProperty('--sink',want+'dvh');
  if(document.body.classList.contains('kb')||!document.body.classList.contains('home-locked'))return;
- const c=document.querySelector('.chat');if(!c)return;const over=c.getBoundingClientRect().bottom-window.innerHeight+4;
+ const c=document.querySelector('.page.active .chat');if(!c)return;const over=c.getBoundingClientRect().bottom-window.innerHeight+4;
  if(over>0)root.style.setProperty('--sink',Math.max(0,want*window.innerHeight/100-over)+'px');}
 window.addEventListener('resize',()=>setTimeout(fitSink,60));window.addEventListener('pageshow',()=>setTimeout(fitSink,60));
 function initFab(){
@@ -1300,7 +1363,7 @@ function initFab(){
  ball.addEventListener('pointercancel',()=>{down=false;drag=false;ball.classList.remove('drag');});
  qa('.fab-item[data-page]').forEach(b=>b.onclick=()=>{closeMenu();showPage(b.dataset.page);});
  const eye=$('fabEye'),setEye=()=>{eye.classList.toggle('off',hideAmt);eye.querySelector('span').textContent=hideAmt?'显示金额':'隐藏金额';};
- eye.onclick=()=>{hideAmt=!hideAmt;try{localStorage.setItem('ledger.hideAmounts',hideAmt?'1':'0');}catch(e){}setEye();closeMenu();refreshAll();};setEye();
+ eye.onclick=()=>{hideAmt=!hideAmt;try{localStorage.setItem('ledger.hideAmounts',hideAmt?'1':'0');}catch(e){}setEye();closeMenu();refreshAll();renderConversation();renderChat();};setEye();
  document.addEventListener('pointerdown',e=>{if(!menu.hidden&&!menu.contains(e.target)&&e.target!==ball)closeMenu();});
  window.addEventListener('resize',place);place();}
 function bindEvents(){
@@ -1331,6 +1394,9 @@ $('analyzeText').onclick=analyzeText;
  $('clearPrefs').onclick=()=>{if(!confirm('清空所有已记住的偏好和自动学习的习惯？'))return;savePrefs([]);try{localStorage.removeItem('ledger.habits');}catch(e){}renderPrefs();toast('已清空');};
  $('confirmYes').onclick=()=>confirmPending(true);$('confirmNo').onclick=()=>confirmPending(false);
  $('undoBtn').onclick=doUndo;$('undoClose').onclick=hideUndo;$('focusClear').onclick=()=>setFocus(null);
+ $('chatSend').onclick=sendPure;
+ {const ci=$('chatInput');ci.oninput=()=>{ci.style.height='auto';ci.style.height=Math.min(ci.scrollHeight,120)+'px';};ci.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229&&!('ontouchstart' in window)){e.preventDefault();sendPure();}};}
+ $('chatClear').onclick=async()=>{if(!chatHist.length||!confirm('清空纯聊天记录？'))return;for(const r of chatHist)await del('conversationHistory',r.id).catch(()=>{});chatHist=[];renderChat(true);};
  $('pickImages').onclick=()=>$('imageInput').click();
  $('imageInput').onchange=async e=>{const fi=e.target;await addFiles(fi.files);fi.value='';};
  const ta=$('naturalInput');
@@ -1354,7 +1420,7 @@ $('analyzeText').onclick=analyzeText;
  $('saveSettings').onclick=()=>{localStorage.setItem('ledger.endpoint',$('apiEndpoint').value.trim());localStorage.setItem('ledger.key',$('apiKey').value.trim());localStorage.setItem('ledger.model',$('apiModel').value.trim());toast('已保存');};
  $('saveRules').onclick=()=>{localStorage.setItem('ledger.rules',$('rulesInput').value);toast('已保存偏好');};
  $('autoSave').onchange=()=>localStorage.setItem('ledger.autosave',$('autoSave').checked?'1':'0');
- $('clearHist').onclick=async()=>{if(!confirm('清除全部对话历史？'))return;history=[];await clear('conversationHistory');try{localStorage.removeItem('ledger.hist');}catch(e){}setHistCount();renderConversation();toast('已清除');};
+ $('clearHist').onclick=async()=>{if(!confirm('清除全部对话历史？'))return;history=[];chatHist=[];await clear('conversationHistory');renderChat();try{localStorage.removeItem('ledger.hist');}catch(e){}setHistCount();renderConversation();toast('已清除');};
  $('sinkSlider').oninput=()=>{const v=Math.max(0,Math.min(15,parseInt($('sinkSlider').value,10)||0));$('sinkLabel').textContent=v+'%';try{localStorage.setItem('ledger.sink',String(v));}catch(e){}fitSink();};
  $('fontScaleSlider').oninput=()=>{const v=parseFloat($('fontScaleSlider').value)||1;document.documentElement.style.setProperty('--font-scale',v);$('fontScaleLabel').textContent=Math.round(v*100)+'%';localStorage.setItem('ledger.fontScale',String(v));};
  $('exportData').onclick=()=>exportData().catch(e=>toast(e.message,'error'));
