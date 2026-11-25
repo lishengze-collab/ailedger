@@ -77,6 +77,7 @@ body.home-locked main{flex:1 1 0;min-height:0;display:flex}
 .icon-btn{width:42px;height:42px;flex:none;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;color:var(--muted)}
 .icon-btn svg,.send-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .ta-wrap{position:relative;flex:1;min-width:0}
+.composer textarea{scrollbar-width:none}.composer textarea::-webkit-scrollbar{display:none}
 .composer textarea{display:block;width:100%;height:42px;border:1px solid var(--line);border-radius:21px;background:var(--surface);padding:10px 42px 10px 15px;font-size:16px;line-height:20px;resize:none;outline:0;overflow:hidden}
 .expand-btn{position:absolute;right:5px;top:5px;width:32px;height:32px;border:0;border-radius:50%;background:transparent;color:var(--muted);display:grid;place-items:center}
 .expand-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -225,17 +226,18 @@ html[data-skin=wa] .chat{background:transparent}html[data-skin=wa] .composer{bac
 html[data-skin=wa] .composer textarea{background:var(--card);border-color:transparent;border-radius:22px}
 html[data-skin=wa] .icon-btn{background:transparent;border-color:transparent}
 html[data-skin=wa] .send-btn{background:var(--accent)}
-html[data-skin=wa] .fab-ball{background:var(--accent);color:#fff}
+html[data-skin=wa] .fab-ball{background:var(--accent);opacity:.55}html[data-skin=wa] .fab-ball:after{background:#fff}
 html[data-skin=wa] .fab-item.active{background:var(--accent);color:#fff}
 html[data-skin=wa] .seg button.active{color:var(--accent2)}
 html[data-skin=wa] .chat-bubble .lbl,html[data-skin=wa] .chat-bubble .quote{border-color:var(--accent)}
 html[data-skin=wa] .pill-bar{background:var(--card)}
 html[data-skin=wa] .welcome{background:#fff3c4;color:#54656f;border-radius:10px;padding:10px 14px;box-shadow:0 1px .5px rgba(11,20,26,.13)}html[data-skin=wa] .welcome b{color:#111b21}
 html[data-skin=wa] .typing{background:var(--ba-bg);border-radius:8px}
-.fab-ball{position:fixed;z-index:70;left:0;top:0;width:48px;height:48px;border-radius:50%;border:0;outline:0;background:var(--text);color:var(--bg);font-size:17px;font-weight:800;display:grid;place-items:center;box-shadow:0 3px 10px rgba(0,0,0,.28);touch-action:none;user-select:none;-webkit-user-select:none;transition:left .22s ease,top .22s ease}
-.fab-ball[hidden]{display:none}.fab-tab{position:fixed;z-index:70;width:16px;height:54px;border:0;padding:0;background:var(--text);opacity:.3;border-radius:12px 0 0 12px;right:0}.fab-tab.l{left:0;right:auto;border-radius:0 12px 12px 0}.fab-tab[hidden]{display:none}.fab-tab:active{opacity:.6}
-.fab-ball svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
-.fab-ball.drag{transition:none;transform:scale(1.08)}
+.fab-ball{position:fixed;z-index:70;left:0;top:0;width:16px;height:58px;padding:0;border:0;outline:0;background:var(--text);opacity:.34;border-radius:12px 0 0 12px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;transition:left .22s ease,top .22s ease,opacity .15s}
+.fab-ball.l{border-radius:0 12px 12px 0}.fab-ball:active,.fab-ball.drag{opacity:.7}.fab-ball.drag{transition:none}
+.fab-ball:before{content:"";position:absolute;inset:-10px -16px -10px -16px}
+.fab-ball:after{content:"";position:absolute;left:50%;top:50%;width:3px;height:22px;border-radius:2px;background:var(--bg);transform:translate(-50%,-50%);opacity:.9}
+.fab-ball svg{display:none}
 .fab-menu{position:fixed;z-index:69;min-width:150px;display:grid;gap:4px;padding:8px;border-radius:20px;background:var(--card);border:1px solid var(--line);box-shadow:0 14px 40px rgba(0,0,0,.28)}
 .fab-menu[hidden]{display:none}
 .fab-item{height:42px;border:0;border-radius:13px;background:transparent;color:var(--muted);display:flex;align-items:center;gap:11px;padding:0 12px;text-align:left;font-size:14px;font-weight:650}
@@ -335,7 +337,7 @@ html[data-skin=wa] .typing{background:var(--ba-bg);border-radius:8px}
   <div class="attachments" id="chatAtts"></div>
   <div class="composer">
    <button class="icon-btn" id="chatPick" aria-label="添加附件（拍照、图片、文件）"><svg viewBox="0 0 24 24"><path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/></svg></button>
-   <div class="ta-wrap"><textarea id="chatInput" rows="1" placeholder="想聊什么都可以"></textarea></div>
+   <div class="ta-wrap"><textarea id="chatInput" rows="1"></textarea></div>
    <button class="send-btn" id="chatSend" aria-label="发送"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
   </div>
  </div>
@@ -397,7 +399,7 @@ html[data-skin=wa] .typing{background:var(--ba-bg);border-radius:8px}
  <div class="setting"><h3>Atron 能力</h3>
   <div class="setting-row"><span>深度思考（自动判断）</span><label class="switch"><input type="checkbox" id="thinkSwitch"><span></span></label></div>
   <div class="setting-row"><span>联网搜索（自动判断）</span><label class="switch"><input type="checkbox" id="webSwitch"><span></span></label></div>
-  <label class="label" for="effortSel">思考强度</label><select class="input" id="effortSel"><option value="auto">自动（推荐）</option><option value="low">低</option><option value="high">高</option><option value="max">最大</option></select>
+  <label class="label" for="effortSel">思考强度</label><select class="input" id="effortSel"><option value="auto">自动（记账页默认中等）</option><option value="low">低</option><option value="medium">中等</option><option value="high">高</option><option value="max">最大</option></select>
   <label class="label" for="maxTokInput">单次输出上限（tokens）</label><input class="input" id="maxTokInput" type="number" inputmode="numeric" min="1024" max="393216" placeholder="32768">
   <div class="note">默认全部开启，由 Atron 按问题难度自动判断是否使用；简单记账不会触发思考或联网。思考与联网由 DeepSeek 接口提供，接口不支持时会自动降级为普通对话。</div>
  </div>
@@ -420,11 +422,12 @@ html[data-skin=wa] .typing{background:var(--ba-bg);border-radius:8px}
  </div>
  <div class="setting"><h3>对话历史</h3>
   <div class="setting-row"><span>已保存对话</span><b id="histCount">0 条</b></div>
+  <div class="setting-row"><span>纯聊天长期记忆</span><b id="memCount">0 条</b></div>
+  <div class="btnrow" style="margin-top:0"><button class="btn flex" id="clearMem">清空纯聊天记忆</button></div>
   <div class="btnrow" style="margin-top:0"><button class="btn flex" id="clearHist">清除全部对话历史</button></div>
   <div class="btnrow" style="margin-top:8px"><button class="btn flex" id="clearPure">仅清空纯聊天</button></div>
  </div>
  <div class="setting"><h3>外观</h3>
-  <div class="setting-row"><span>显示悬浮球</span><label class="switch"><input type="checkbox" id="fabSwitch" checked><span></span></label></div>
   <div class="setting-row"><span>聊天气泡字号</span><b id="bubbleLabel">17px</b></div><input id="bubbleSlider" type="range" min="13" max="24" step="1" value="17">
   <label class="label">界面风格</label><div class="seg" id="skinSeg" style="margin:6px 0 4px"><button data-skin="classic">经典黑白</button><button data-skin="wa">Whatsup 绿聊</button></div>
   <label class="label">输入框占位符显示（可多选）</label>
@@ -442,8 +445,7 @@ html[data-skin=wa] .typing{background:var(--ba-bg);border-radius:8px}
 </main>
 
 <div class="modal-backdrop" id="sheet" hidden><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-head"><div><b id="sheetTitle"></b><small id="sheetSub"></small></div><button class="icon" data-act="close" aria-label="关闭">×</button></div><div class="sheet-body" id="sheetBody"></div><div class="sheet-foot" id="sheetFoot"></div></div></div>
-<button class="fab-ball" id="fabBall" type="button" aria-label="导航（可拖动）"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></button>
-<button class="fab-tab" id="fabTab" type="button" aria-label="显示悬浮球" hidden></button>
+<button class="fab-ball" id="fabBall" type="button" aria-label="导航（贴边，可上下拖动或拖到另一侧）"></button>
 <div class="fab-menu" id="fabMenu" hidden>
  <button class="fab-item active" data-page="home" data-short="记"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>记账</button>
  <button class="fab-item" data-page="chat" data-short="聊"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8.5 10h7"/></svg>纯聊天</button>
@@ -452,7 +454,6 @@ html[data-skin=wa] .typing{background:var(--ba-bg);border-radius:8px}
  <button class="fab-item" data-page="accounts" data-short="户"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg>账户</button>
  <button class="fab-item" data-page="settings" data-short="设"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>设置</button>
  <div class="fab-sep"></div>
- <button class="fab-item" id="fabHide" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M8 12h8"/></svg><span>隐藏悬浮球</span></button>
  <button class="fab-item" id="fabEye" type="button"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path class="slash" d="M3 3l18 18"/></svg><span>隐藏金额</span></button>
 </div>
 <div class="expand" id="expandSheet" hidden><textarea id="expandText" placeholder="输入更长的内容…"></textarea><div class="expand-bar"><button class="btn flex" id="expandClose" type="button">收起</button><button class="btn primary flex" id="expandSend" type="button">发送</button></div></div>
@@ -465,6 +466,16 @@ html[data-skin=wa] .typing{background:var(--ba-bg);border-radius:8px}
 <script>
 (function(){
 'use strict';
+let TOFF=0,TCAL=0,TOK=null;
+const Date=class extends globalThis.Date{constructor(...a){if(a.length===0)super(globalThis.Date.now()+TOFF);else super(...a);}static now(){return globalThis.Date.now()+TOFF;}};
+async function calibrateTime(force){const RD=globalThis.Date;if(!force&&TOK!==null&&RD.now()-TCAL<20000)return TOK;const t0=RD.now();
+ const get=(u,pick)=>fetch(u,{cache:'no-store',signal:(AbortSignal.timeout?AbortSignal.timeout(2500):undefined)}).then(r=>r.text()).then(pick);
+ const srcs=[()=>get('https://www.cloudflare.com/cdn-cgi/trace',t=>{const m=t.match(/ts=(\d+(?:\.\d+)?)/);if(!m)throw new Error('x');return +m[1]*1000;}),
+  ()=>get('https://worldtimeapi.org/api/ip',t=>{const v=JSON.parse(t).unixtime;if(!v)throw new Error('x');return v*1000;}),
+  ()=>get('https://timeapi.io/api/Time/current/zone?timeZone=UTC',t=>{const v=RD.parse(JSON.parse(t).dateTime+'Z');if(!v)throw new Error('x');return v;})];
+ try{const srv=await Promise.any(srcs.map(f=>f())),t1=RD.now();TOFF=Math.round(srv+(t1-t0)/2-t1);TOK=true;}catch(e){TOK=false;}
+ TCAL=RD.now();return TOK;}
+const timeNote=()=>TOK?'已联网校准'+(Math.abs(TOFF)>3000?'（设备时钟偏差 '+Math.round(TOFF/1000)+' 秒，已按校准后时间为准）':''):'联网校时失败，暂用设备时间';
 const $=id=>document.getElementById(id),qa=s=>Array.from(document.querySelectorAll(s));
 const DB='ai-ledger-v1',VERSION=7,STORES=['accounts','transactions','budgets','tokenUsage','settings','reconciliations','dailyBudgets','conversationHistory','projects','budgetOverrides','attachments'],SNAP=['accounts','transactions','budgets','reconciliations','dailyBudgets','projects','budgetOverrides'];
 const MONEY=['expense','income','transfer','refund'],DAY=864e5;
@@ -558,8 +569,8 @@ function persistRow(row){if(db&&historyReady)put('conversationHistory',row).catc
 function pushHist(role,content,extra){extra=(extra&&!Array.isArray(extra))?extra:{};content=String(content);if(role==='assistant')content=ensureEmoji(content);
  const row=Object.assign({id:uid(),role,content,createdAt:Date.now()},extra);Object.keys(row).forEach(k=>{if(row[k]===undefined)delete row[k];});
  history.push(row);persistRow(row);setHistCount();renderConversation(true);return row;}
-async function loadHistory(){const rows=(await all('conversationHistory')).sort((a,b)=>Number(a.createdAt||0)-Number(b.createdAt||0));chatHist=rows.filter(r=>r.ch==='pure');if(rows.length)history=rows.filter(r=>r.ch!=='pure');historyReady=true;setHistCount();renderConversation(true);}
-function setHistCount(){const e=$('histCount');if(e)e.textContent=history.length+' 条';}
+async function loadHistory(){const rows=(await all('conversationHistory')).sort((a,b)=>Number(a.createdAt||0)-Number(b.createdAt||0));chatHist=rows.filter(r=>r.ch==='pure').concat(chatHist.filter(x=>!rows.some(r=>r.id===x.id)));const mine=rows.filter(r=>r.ch!=='pure');history=mine.concat(history.filter(x=>!mine.some(r=>r.id===x.id)));historyReady=true;setHistCount();renderConversation(true);}
+function setHistCount(){const e=$('histCount');if(e)e.textContent='记账 '+history.length+' · 纯聊天 '+chatHist.length+' 条';}
 function splitParas(t){const out=[];String(t).split(/\n+/).forEach(line=>{line=line.trim();if(!line)return;(line.match(/[^。！？!?；;]+[。！？!?；;]*[”’」』）)]*/g)||[line]).forEach(p=>{p=p.trim();if(p)out.push(p);});});return out;}
 const CLIP='<svg viewBox="0 0 24 24"><path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/></svg>';
 const thumbCache=new Map();
@@ -762,7 +773,7 @@ function prompt(ctx,opt){opt=opt||{};
  '【查单词】用户查英文单词/短语时（如“apple 什么意思”“查 resilient”“define x”），严格按下面分行格式回答，每项各占一行或多行，不要使用任何 Markdown 符号（不要 ** # ` 等）：\n📖 单词\n英标：英 /…/ · 美 /…/\n音节：ap·ple\n柯林斯英文释义（Collins 风格，一句话英文释义，按词性分条）：\n1. (noun) …\n2. (verb) …\n中文释义：\n1. 名词：…\n2. 动词：…\n例句：\n1. English sentence. — 中文翻译\n2. …\n给 2–3 个常用释义、2–3 条例句；不确定的读音或释义要如实说明，不要编造。',
  '【联网与思考】需要最新信息（汇率、价格、新闻、地点、攻略等）时可使用联网搜索，用自己的话归纳；来源链接由系统折叠展示，reply 里不必罗列 URL。搜索词里不要包含账号、余额、姓名等隐私，只写必要的公开关键词。简单问题简短回答，复杂问题再展开。',
  '【偏好与记忆】context.habits 是用户历史习惯（m=商户，c=常用分类，a=常用账户）：同一商户优先沿用，除非用户本次明确指定。用户表达长期习惯（含“以后/默认/总是/一般/都算/每次”）或连续纠正同类错误时，在 actions 末尾追加 preference（note 写成完整、可独立理解的一句话，已有偏好不要重复）；用户说“忘记/不要再…/取消那个偏好”用 forget_preference（note 填关键词）；用户提供信用卡额度 set_credit_limit(account,creditLimit)；账户改名 rename_account(account,newName)；删除账户 delete_account(account)（流水保留）。',
- '当前时间：'+new Date().toLocaleString('zh-CN',{hour12:false})+'；时区：'+Intl.DateTimeFormat().resolvedOptions().timeZone+'；手动偏好：'+(settings().rules||'无')+'；记忆偏好：'+preferenceMemory()+'；context：'+JSON.stringify(ctx),
+ '当前时间（'+timeNote()+'，后续记录、回复和分析一律以此为准）：'+new Date().toLocaleString('zh-CN',{hour12:false})+'；时区：'+Intl.DateTimeFormat().resolvedOptions().timeZone+'；手动偏好：'+(settings().rules||'无')+'；记忆偏好：'+preferenceMemory()+'；context：'+JSON.stringify(ctx),
  'actions 元素格式：{"type":"expense|income|transfer|refund|create_account|budget|daily_budget|budget_override|clear_budget_override|balance_snapshot|update_transaction|delete_transaction|mark_special|create_project|delete_project|rename_account|set_credit_limit|delete_account|preference|forget_preference|report|set_mode","amount":null,"expr":"","balance":null,"currency":"CNY","fxRate":null,"account":"","toAccount":"","merchant":"","category":"","occurredAt":"","budgetName":"","accountType":"credit_card|savings_card|payment|wallet|cash|other","institution":"","last4":"","availableCredit":null,"creditLimit":null,"targetId":"","changes":{},"newName":"","neutral":false,"special":false,"tag":"","name":"","from":"","to":"","dates":[],"groupBy":"","accountAmount":null,"toAmount":null,"confidence":0.9,"note":"","transferKind":"internal|external","toPerson":"","effectiveFrom":"YYYY-MM-DD"}。无操作时 actions=[]。'];
  return L.join('\n');}
 function parseAmount(v){if(v==null||v==='')return null;if(typeof v==='number')return Number.isFinite(v)?v:null;let s=String(v).normalize('NFKC').replace(/[￥¥$人民币元,，\s]/g,'').replace(/负/g,'-'),m=1;const u=s.match(/(万|千|百)$/);if(u){m=u[1]==='万'?1e4:u[1]==='千'?1e3:100;s=s.slice(0,-1);}const n=Number(s.replace(/[^\d.-]/g,''));return Number.isFinite(n)&&/\d/.test(s)?r2(n*m):null;}
@@ -808,13 +819,13 @@ const RX_COMPLEX=/分析|报告|流向|统计|建议|计划|方案|规划|为什
 const RX_WEB=/联网|搜索|搜一下|查一下|查查|最新|新闻|天气|汇率|价格|多少钱|攻略|景点|机票|酒店|营业时间|怎么走|什么意思|翻译|百科|谁是|什么时候|https?:\/\/|www\.|search|latest|news|weather|exchange rate|検索|最新/i;
 const RX_PLAN=/旅游|旅行|出行|行程|规划|方案|流向|复盘|trip|travel|itinerary/i;
 const RX_WORD=/^(?:查(?:一下|询)?(?:单词)?|查查|define|meaning of|what(?:'s| is| does)(?: the meaning of)?)?\s*[A-Za-z][A-Za-z'’-]{1,28}(?:\s+[A-Za-z'’-]{1,20}){0,2}\s*(?:是什么意思|什么意思|的意思|怎么读|meaning|means?)?\s*[?？]?$/i;
-function planFor(text,list,S,open){const t=String(text||''),len=t.length,hasAtt=list&&list.length>0;
+function planFor(text,list,S,open,pure){const t=String(text||''),len=t.length,hasAtt=list&&list.length>0;
  const quick=len<=24&&!RX_COMPLEX.test(t)&&!RX_WEB.test(t)&&!hasAtt&&!open;
  const ledgerish=/\d+(\.\d+)?|记|花|买|转|余额|预算|账户|校准/.test(t);
  const isWord=RX_WORD.test(t.trim())&&!/^(hi|hello|hey|ok|okay|yes|no|thanks|thank you|bye)$/i.test(t.trim().replace(/[?？!！.]/g,''));
  const explicit=/联网|搜索|搜一下|查一下|查查|最新|新闻|天气|汇率|search|latest|news/i.test(t),web=S.web&&!hasAtt&&((RX_WEB.test(t)&&(explicit||!RX_LEDGERQ.test(t)))||(!ledgerish&&len>=12&&/最近|现在|今年|本周|目前|有没有|哪家|推荐|排名|多少钱|能不能|是不是真的/.test(t)));
- const think=S.think&&!quick&&(RX_COMPLEX.test(t)||len>120||(hasAtt&&len>=6));
- let effort=S.effort!=='auto'?S.effort:(think?(RX_PLAN.test(t)||len>200?'max':RX_COMPLEX.test(t)||hasAtt?'high':'low'):'low');
+ const think=S.think&&(pure?(!quick&&(RX_COMPLEX.test(t)||len>120||(hasAtt&&len>=6))):true);
+ let effort=S.effort!=='auto'?S.effort:(think?(RX_PLAN.test(t)||len>200?'max':RX_COMPLEX.test(t)||hasAtt?'high':pure?'low':'medium'):'low');
  const maxTokens=think?S.maxTokens:Math.min(S.maxTokens,quick?2048:8192);
  const kind=think&&web?'think+web':think?'think':web?'web':'chat';
  if(isWord){return{think:false,effort:'low',web:false,maxTokens:Math.min(S.maxTokens,2048),kind:'chat',quick:true};}
@@ -879,9 +890,9 @@ function collectSources(out,reply){const m=new Map(),host=u=>{try{return new URL
  (out.annotations||[]).forEach(a=>{const u=(a&&a.url_citation&&a.url_citation.url)||(a&&a.url)||'',ti=(a&&a.url_citation&&a.url_citation.title)||(a&&a.title)||'';if(safeUrl(u)&&!m.has(u))m.set(u,{url:u,title:ti||host(u)});});
  (String(reply||'').match(/https?:\/\/[^\s)）"'<>]+/g)||[]).forEach(u=>{if(!m.has(u))m.set(u,{url:u,title:host(u)});});
  return[...m.values()].slice(0,20);}
-async function askAtron(text,list,opt){
+async function askAtron(text,list,opt){const calP=calibrateTime();
  const S=settings(),pl=planFor(text,list,S,opt.open);
- const ctx=await context(text,{slim:pl.quick&&!list.length}),sys=prompt(ctx,{open:opt.open,screenshotOnly:opt.screenshotOnly});
+ await calP;const ctx=await context(text,{slim:pl.quick&&!list.length}),sys=prompt(ctx,{open:opt.open,screenshotOnly:opt.screenshotOnly});
  const base='【近期对话】\n'+historyBlock(true)+'\n\n【用户本条消息】\n'+(opt.quote?'（引用'+opt.quote.who+'的话：「'+String(opt.quote.text).slice(0,300)+'」）\n':'')+(text||'（只发送了附件，请判断用途）')+(opt.focus?'\n（本条消息针对这笔流水：id='+opt.focus.id+'，'+opt.focus.label+'）':'');
  let built=await buildParts(list,S,false),extra='',rounds=0,sources=[],notes=built.notes.slice(),env=null,out=null;
  if(built.usedFile)pl.kind+='+file';
@@ -1135,7 +1146,8 @@ async function analyzeText(){
   await handleResult(result,{focus,forceConfirm:shot,sources:result._sources,notes:result._notes});
  }catch(e){streaming=null;const m=String(e&&e.message||e||'');pushHist('assistant','⚠️ '+(/Failed to fetch|NetworkError|Load failed/i.test(m)?'网络连接失败，请检查网络或接口地址后重试 🌐':m||'出了点小问题，请再说一次 🙂'));}
  finally{clearInterval(tm);streaming=null;busyAI=false;busy($('analyzeText'),false);renderConversation(true);}}
-function clearComposer(){const ta=$('naturalInput');ta.value='';ta.style.height='';images=[];renderAttachments();hideSuggest();}
+function grow(el){el.style.height='42px';const h=Math.min(el.scrollHeight+2,112);el.style.height=Math.max(42,h)+'px';el.style.overflowY=el.scrollHeight>114?'auto':'hidden';if(document.activeElement===el&&el.selectionStart>=el.value.length-1)el.scrollTop=el.scrollHeight;}
+function clearComposer(){const ta=$('naturalInput');ta.value='';ta.style.height='';ta.style.overflowY='hidden';images=[];renderAttachments();hideSuggest();}
 function setFocus(f){focusTx=f;const b=$('focusBar');if(f){$('focusText').textContent='✎ 正在修改：'+f.label;b.hidden=false;}else b.hidden=true;}
 let chatQuote=null;
 function setChatQuote(q){chatQuote=q;const b=$('chatQuoteBar');if(q){$('chatQuoteText').textContent='引用 '+q.who+'：'+q.text.slice(0,80);b.hidden=false;}else b.hidden=true;}
@@ -1199,33 +1211,51 @@ function hideMsgMenu(){const m=$('msgMenu');if(m)m.hidden=true;}
 
 /* ---------- 纯聊天页（无记账工具，共用 API） ---------- */
 const RX_LEDGERQ=/消费|支出|花了|花费|开销|开支|收入|工资|账户|余额|预算|账单|流水|记账|欠款|信用卡|转账|储蓄|存款|资产|负债|月供|我的钱|spend|spent|expense|balance|budget|income|salary/i;
+const CMEM='ledger.chatMem';
+function chatMem(){try{const a=JSON.parse(localStorage.getItem(CMEM)||'[]');return Array.isArray(a)?a:[];}catch(e){return[];}}
+function saveMem(notes){if(!notes.length)return;let a=chatMem();for(let n of notes){n=n.replace(/\s+/g,' ').trim().slice(0,140);if(n.length<4)continue;if(a.some(x=>x===n||x.includes(n)||n.includes(x))){a=a.map(x=>(n.includes(x)&&n.length>=x.length)?n:x);continue;}a.push(n);}a=Array.from(new Set(a)).slice(-60);try{localStorage.setItem(CMEM,JSON.stringify(a));}catch(e){}renderMemCount();}
+function renderMemCount(){const e=$('memCount');if(e)e.textContent=chatMem().length+' 条';}
+const MEM_RX=/\[\[\s*记忆\s*[:：]\s*([^\]]+?)\s*\]\]/g;
+const hideMem=t=>String(t).replace(MEM_RX,'').replace(/\[\[[^\]]*$/,'').replace(/\s+$/,'');
+function userStats(){const us=chatHist.concat(history).filter(h=>h.role==='user'&&h.content&&!/^\[附件/.test(h.content)).slice(-40).map(h=>String(h.content));if(us.length<3)return'';
+ const avg=Math.round(us.reduce((a,x)=>a+x.length,0)/us.length),all=us.join(''),cjk=(all.match(/[一-鿿]/g)||[]).length,lat=(all.match(/[A-Za-z]/g)||[]).length,kana=(all.match(/[぀-ヿ]/g)||[]).length,emo=us.filter(x=>/\p{Extended_Pictographic}/u.test(x)).length,q=us.filter(x=>/[?？吗呢]/.test(x)).length;
+ return'平均每条约 '+avg+' 字（'+(avg<=12?'偏简短':avg<=40?'适中':'偏详细')+'）；主要语言：'+(kana>cjk*.3?'日语':cjk>=lat?'中文':'English')+'；'+(emo/us.length>.25?'常用 emoji':'很少用 emoji')+'；'+(q/us.length>.5?'爱提问':'陈述多于提问')+'。';}
+function relevantOlder(raw,before,rangeMs,n){const ks=kw(raw);if(!ks.length)return[];const now=Date.now(),pool=chatHist.filter(h=>h.createdAt<before&&now-h.createdAt<=rangeMs),sc=[];
+ pool.forEach((h,i)=>{const t=String(h.content||'').toLowerCase();let v=0;for(const k of ks)if(t.includes(k))v+=k.length>2?2:1;if(v>0)sc.push([v,i]);});
+ sc.sort((a,b)=>b[0]-a[0]);const pick=new Set();sc.slice(0,n).forEach(([,i])=>{pick.add(i);if(pool[i].role==='user'&&pool[i+1])pick.add(i+1);if(pool[i].role!=='user'&&pool[i-1])pick.add(i-1);});
+ return[...pick].sort((a,b)=>a-b).map(i=>pool[i]);}
 function chatPush(role,content,extra){content=String(content);if(role==='assistant')content=ensureEmoji(content);
  const row=Object.assign({id:uid(),role,content,createdAt:Date.now(),ch:'pure'},extra||{});Object.keys(row).forEach(k=>{if(row[k]===undefined)delete row[k];});
- chatHist.push(row);if(db)put('conversationHistory',row).catch(()=>{});renderChat(true);return row;}
+ chatHist.push(row);if(db)put('conversationHistory',row).catch(()=>{toast('聊天记录保存失败（存储空间可能不足）','error');});setHistCount();renderChat(true);return row;}
 function renderChat(force){const log=$('chatLog');if(!log)return;const stick=force||log.scrollHeight-log.scrollTop-log.clientHeight<90,keep=log.scrollTop;
  let html=chatHist.slice(-60).map(bubbleHTML).join('');
  if(chatStream){const t=chatStream.text?splitParas(maskAmt(plainMd(chatStream.text))).map(p=>'<p>'+esc(p)+'</p>').join(''):'<div class="typing"><span></span><span></span><span></span></div>';
   html+='<div class="chat-bubble assistant">'+t+(chatStream.status?'<div class="status">'+esc(chatStream.status)+(chatStream.sec?' '+chatStream.sec+'s':'')+'</div>':'')+'</div>';}
  log.innerHTML=html;hydrateThumbs(log);log.scrollTop=stick?log.scrollHeight:keep;}
 async function sendPure(){
- if(busyChat)return;const ta=$('chatInput'),raw=clean(ta.value),list=chatAtts.slice();if(!raw&&!list.length)return;ta.value='';ta.style.height='';chatAtts=[];renderChatAtts();
+ if(busyChat)return;const ta=$('chatInput'),raw=clean(ta.value),list=chatAtts.slice();if(!raw&&!list.length)return;ta.value='';ta.style.height='';ta.style.overflowY='hidden';chatAtts=[];renderChatAtts();
  const meta=[];for(const a of list){try{await put('attachments',{id:a.id,name:a.name,kind:a.kind,mime:a.mime,size:a.size,dataUrl:a.dataUrl,thumb:a.thumb,createdAt:Date.now()});}catch(e){}if(a.thumb)thumbCache.set(a.id,a.thumb);meta.push({id:a.id,name:a.name,kind:a.kind,size:a.size,at:Date.now()});}
  const cq=chatQuote;setChatQuote(null);
  chatPush('user',raw||('[附件 '+list.length+']'),{atts:meta.length?meta:undefined,quote:cq?{who:cq.who,text:cq.text}:undefined});busyChat=true;busy($('chatSend'),true);
  chatStream={text:'',status:'',sec:0};renderChat(true);const tm=setInterval(()=>{if(chatStream){chatStream.sec++;renderChat();}},1000);
  try{
   const S=settings();if(!S.key)throw new Error('还没有填写 API Key，请到“设置”里填写');
-  const pl=planFor(raw,list,S,false);
+  const calP=calibrateTime(),pl=planFor(raw,list,S,false,true);await calP;
   if(pl.think)chatStream.status='深度思考中…';
   let ledger='';if(RX_LEDGERQ.test(raw)){chatStream.status=chatStream.status||'正在查看账本…';const c=await context(raw);ledger='\n\n【用户账本数据（只读，仅因用户提到消费/账户而提供；金额单位见字段，勿编造）】\n'+JSON.stringify(c).slice(0,16000);}
-  const sys='你是 Atron🤖，一位开放、理性、温暖、博学的聊天伙伴。这是“纯聊天”页面：你没有任何记账、改账、预算、账户操作的能力，不要输出 JSON 或操作指令；用户想记账或改账时，友好地请他回到“记账”页面。只有用户主动问及自己的消费或账户情况时，下方才会提供只读的账本数据，请据此如实回答；其他时候不要提及账本。每条回复至少含一个 emoji；用户用中文、English 或日本語就用同一种语言回复。简单问题简短回答，复杂问题再展开；每句话尽量独立成行。需要最新信息时可联网搜索，搜索词不得包含账号、余额等隐私。不确定就如实说，不要编造。回答不要使用 Markdown 符号（不要 ** # ` 等），用纯文本分行。【查单词】用户查英文单词/短语时（如“apple 什么意思”“查 resilient”“define x”），严格按下面分行格式回答，每项各占一行或多行，不要使用任何 Markdown 符号（不要 ** # ` 等）：\n📖 单词\n英标：英 /…/ · 美 /…/\n音节：ap·ple\n柯林斯英文释义（Collins 风格，一句话英文释义，按词性分条）：\n1. (noun) …\n2. (verb) …\n中文释义：\n1. 名词：…\n2. 动词：…\n例句：\n1. English sentence. — 中文翻译\n2. …\n给 2–3 个常用释义、2–3 条例句；不确定的读音或释义要如实说明，不要编造。\n当前时间：'+new Date().toLocaleString('zh-CN',{hour12:false})+(localStorage.getItem('ledger.style')?'\n用户的说话风格：'+localStorage.getItem('ledger.style'):'')+ledger;
-  const prior=chatHist.slice(0,-1).slice(-24);let used=0,keep=[];for(let i=prior.length-1;i>=0;i--){const c=String(prior[i].content||'').slice(0,1500);if(used+c.length>9000)break;used+=c.length;keep.unshift({role:prior[i].role==='user'?'user':'assistant',content:c});}
+  const nowT=Date.now(),H48=48*3600000,cutoff=nowT-H48,past=chatHist.slice(0,-1);
+  let rec=past.filter(h=>h.createdAt>=cutoff).slice(-90),used=0;const keep=[];for(let i=rec.length-1;i>=0;i--){const c=String(rec[i].content||'').slice(0,2500);if(used+c.length>28000)break;used+=c.length;keep.unshift({role:rec[i].role==='user'?'user':'assistant',content:c});}
+  const older=relevantOlder(raw+' '+(cq?cq.text:''),cutoff,Math.max(S.histDays*DAY,H48),8);
+  const olderBlock=older.length?'\n\n【48 小时之前、与当前话题可能相关的对话（仅供参考，由系统在你设置的 '+S.histDays+' 天范围内检索）】\n'+older.map(h=>'['+new Date(h.createdAt).toLocaleString('zh-CN',{hour12:false})+'] '+(h.role==='user'?'我':'Atron')+'：'+String(h.content).replace(/\s+/g,' ').slice(0,260)).join('\n'):'';
+  const mem=chatMem(),us=userStats(),memBlock='\n\n【用户画像与长期记忆（必须遵循并持续补充）】\n'+(mem.length?mem.map((m,i)=>(i+1)+'. '+m).join('\n'):'（暂无，请从本次对话开始学习）')+(us?'\n本地统计的说话习惯：'+us:'');
+  const sys='你是 Atron🤖，一位开放、理性、温暖、博学的聊天伙伴。【强制规则】每次回复前，先对照随后给出的最近 48 小时对话，判断当前消息与其是否有关联（追问、指代、延续话题），有关联就自然衔接，不要让用户重复背景。【强制学习】持续学习用户的语言习惯、表达风格和偏好（称呼、语气、长短、常用词、兴趣、禁忌），并按其风格回复；发现新的稳定信息时，在回复最末尾另起一行写 [[记忆：一句话]]（可多条，每条一个标记，没有新发现就不写），标记不会展示给用户，正文里不要提及“记忆”。这是“纯聊天”页面：你没有任何记账、改账、预算、账户操作的能力，不要输出 JSON 或操作指令；用户想记账或改账时，友好地请他回到“记账”页面。只有用户主动问及自己的消费或账户情况时，下方才会提供只读的账本数据，请据此如实回答；其他时候不要提及账本。每条回复至少含一个 emoji；用户用中文、English 或日本語就用同一种语言回复。简单问题简短回答，复杂问题再展开；每句话尽量独立成行。需要最新信息时可联网搜索，搜索词不得包含账号、余额等隐私。不确定就如实说，不要编造。回答不要使用 Markdown 符号（不要 ** # ` 等），用纯文本分行。【查单词】用户查英文单词/短语时（如“apple 什么意思”“查 resilient”“define x”），严格按下面分行格式回答，每项各占一行或多行，不要使用任何 Markdown 符号（不要 ** # ` 等）：\n📖 单词\n英标：英 /…/ · 美 /…/\n音节：ap·ple\n柯林斯英文释义（Collins 风格，一句话英文释义，按词性分条）：\n1. (noun) …\n2. (verb) …\n中文释义：\n1. 名词：…\n2. 动词：…\n例句：\n1. English sentence. — 中文翻译\n2. …\n给 2–3 个常用释义、2–3 条例句；不确定的读音或释义要如实说明，不要编造。\n当前时间（'+timeNote()+'，一律以此为准）：'+new Date().toLocaleString('zh-CN',{hour12:false})+memBlock+olderBlock+ledger;
   const built=await buildParts(list,S,false),notes=built.notes.slice();if(built.usedFile)pl.kind+='+file';
   const utext=(cq?'（引用'+cq.who+'的话：「'+String(cq.text).slice(0,300)+'」）\n':'')+(raw||'（只发送了附件，请先说明你看到了什么，并询问我想怎么处理）')+built.extra,msgs=[{role:'system',content:sys},...keep,{role:'user',content:built.parts.length?[{type:'text',text:utext},...built.parts]:utext}];
-  let pend=false;const cb=u=>{if(u.content!==undefined&&u.content)chatStream.text=u.content;if(u.thinking)chatStream.status='深度思考中…';if(u.event)chatStream.status='正在联网搜索…';if(u.content)chatStream.status='';
+  let pend=false;const cb=u=>{if(u.content!==undefined&&u.content)chatStream.text=hideMem(u.content);if(u.thinking)chatStream.status='深度思考中…';if(u.event)chatStream.status='正在联网搜索…';if(u.content)chatStream.status='';
    if(!pend){pend=true;setTimeout(()=>{pend=false;if(chatStream)renderChat();},100);}};
   const out=await chatWithFallback(S,msgs,pl,cb,notes),u=out.usage||{};
   put('tokenUsage',{id:uid(),promptTokens:u.prompt_tokens||0,completionTokens:u.completion_tokens||0,reasoningTokens:(u.completion_tokens_details&&u.completion_tokens_details.reasoning_tokens)||0,kind:'chat',createdAt:Date.now()}).catch(()=>{});
+  const rawOut=String(out.content||''),memNotes=[...rawOut.matchAll(MEM_RX)].map(m=>m[1]);saveMem(memNotes);out.content=hideMem(rawOut);
   const txt=clean(out.content)||(out.reasoning?'我思考了很久但没能给出最终答案，请重试，或在设置里调大“单次输出上限”。':'（模型没有返回内容，请重试）');
   const src=collectSources(out,txt);chatStream=null;chatPush('assistant',txt+(notes.length?'\n（'+notes.join('；')+'）':''),{sources:src.length?src:undefined});
  }catch(e){chatStream=null;const m=String(e&&e.message||e||'');chatPush('assistant','⚠️ '+(/Failed to fetch|NetworkError|Load failed/i.test(m)?'网络连接失败，请检查网络或接口地址后重试 🌐':m||'出了点小问题，请再说一次 🙂'));}
@@ -1340,10 +1370,10 @@ async function renderAccounts(){
  $('calCnt').textContent=recs.length+' 条';
  rh.innerHTML=Object.keys(by).sort().reverse().map((d,i)=>'<details class="cal-group"'+(i===0?' open':'')+'><summary><span>'+d+' '+WD[new Date(d+'T00:00:00').getDay()]+'</span><small>'+by[d].length+' 条</small></summary>'+by[d].map(r=>'<div class="acct-card" style="cursor:default;display:block"><div class="kv"><span>'+esc(r.accountName)+' · '+new Date(r.createdAt).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false})+'</span><b>'+money(r.statementBalance)+'</b></div><div class="kv"><span>校准前 / 差额</span><b>'+money(r.previousBalance)+' / <span class="'+(r.difference>=0?'income-text':'expense-text')+'">'+money(r.difference)+'</span></b></div></div>').join('')+'</details>').join('');}
 async function renderSettings(){
- const s=settings();$('apiState').textContent=s.key?' · 已配置':' · 未配置';$('apiEndpoint').value=s.endpoint;$('apiKey').value=s.key;$('apiModel').value=s.model;$('rulesInput').value=s.rules;$('autoSave').checked=s.auto;$('histDays').value=s.histDays;$('txScope').value=s.txScope;setHistCount();renderPrefs();
- $('fabSwitch').checked=localStorage.getItem('ledger.fabHidden')!=='1';$('thinkSwitch').checked=s.think;$('webSwitch').checked=s.web;$('effortSel').value=s.effort;$('maxTokInput').value=s.maxTokens;$('bubbleSlider').value=s.bubblePx;$('bubbleLabel').textContent=s.bubblePx+'px';qa('[data-ph]').forEach(c=>c.checked=s.ph.includes(c.dataset.ph));renderTokens();
+ const s=settings();$('apiState').textContent=s.key?' · 已配置':' · 未配置';$('apiEndpoint').value=s.endpoint;$('apiKey').value=s.key;$('apiModel').value=s.model;$('rulesInput').value=s.rules;$('autoSave').checked=s.auto;$('histDays').value=s.histDays;$('txScope').value=s.txScope;setHistCount();renderMemCount();renderPrefs();
+ $('thinkSwitch').checked=s.think;$('webSwitch').checked=s.web;$('effortSel').value=s.effort;$('maxTokInput').value=s.maxTokens;$('bubbleSlider').value=s.bubblePx;$('bubbleLabel').textContent=s.bubblePx+'px';qa('[data-ph]').forEach(c=>c.checked=s.ph.includes(c.dataset.ph));renderTokens();
  const u=await all('tokenUsage'),p=u.reduce((a,x)=>a+Number(x.promptTokens||0),0),c=u.reduce((a,x)=>a+Number(x.completionTokens||0),0);
- $('promptTokens').textContent=p;$('completionTokens').textContent=c;$('totalTokens').textContent=p+c;$('requestCount').textContent=u.length;
+ $('promptTokens').textContent=fmtTok(p);$('completionTokens').textContent=fmtTok(c);$('totalTokens').textContent=fmtTok(p+c);$('requestCount').textContent=u.length;
  {const sk=localStorage.getItem('ledger.sink'),v=sk==null?8:Math.max(0,Math.min(15,parseInt(sk,10)||0));$('sinkSlider').value=v;$('sinkLabel').textContent=v+'%';}
  const fs=parseFloat(localStorage.getItem('ledger.fontScale')||'1');$('fontScaleSlider').value=fs;$('fontScaleLabel').textContent=Math.round(fs*100)+'%';}
 async function refreshAll(){await loadMeta();await Promise.all([renderHome(),renderTransactions(),renderAccounts(),renderAnalytics()]);}
@@ -1384,7 +1414,7 @@ async function renderTokens(){const host=$('tokChart');if(!host)return;const u=a
  const mx=Math.max(1,...keys.map(k=>m[k].p+m[k].c)),step=keys.length>14?Math.ceil(keys.length/7):1;
  host.innerHTML=keys.map((k,i)=>{const e=m[k],ph=e.p/mx*92,ch=e.c/mx*92;return'<div class="col" title="'+k+'：输入 '+e.p+' / 输出 '+e.c+'"><i style="height:'+ch.toFixed(1)+'%;background:var(--muted)"></i><i style="height:'+ph.toFixed(1)+'%;background:var(--text)"></i><span>'+(i%step===0?k.slice(5):'')+'</span></div>';}).join('');
  const tot=Object.values(kinds).reduce((s,v)=>s+v,0);
- $('tokKinds').innerHTML=tot?Object.entries(kinds).sort((a,b)=>b[1]-a[1]).map(([k,v])=>'<div class="kv"><span>'+esc(KIND_NAME[k]||k)+'</span><b>'+v.toLocaleString()+'（'+Math.round(v/tot*100)+'%）</b></div>').join(''):'<div class="note" style="margin:0">所选周期内暂无使用记录</div>';
+ $('tokKinds').innerHTML=tot?Object.entries(kinds).sort((a,b)=>b[1]-a[1]).map(([k,v])=>'<div class="kv"><span>'+esc(KIND_NAME[k]||k)+'</span><b>'+fmtTok(v)+'（'+Math.round(v/tot*100)+'%）</b></div>').join(''):'<div class="note" style="margin:0">所选周期内暂无使用记录</div>';
  qa('[data-tok]').forEach(b=>b.classList.toggle('active',+b.dataset.tok===tokRange));}
 /* ---------- Excel 导出（纯前端生成 .xlsx，无外部依赖） ---------- */
 const CRC_T=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
@@ -1409,6 +1439,7 @@ function buildXlsx(sheets){const nm=sheets.map(s=>s.name.slice(0,31));
   {name:'xl/_rels/workbook.xml.rels',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+sheets.map((s,i)=>'<Relationship Id="rId'+(i+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet'+(i+1)+'.xml"/>').join('')+'<Relationship Id="rId'+(sheets.length+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'},
   {name:'xl/styles.xml',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="#,##0.00"/></numFmts><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFEDEDED"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs></styleSheet>'}];
  sheets.forEach((s,i)=>files.push({name:'xl/worksheets/sheet'+(i+1)+'.xml',data:sheetXml(s.rows,s.widths)}));return zipStore(files);}
+function fmtTok(n){n=Number(n)||0;const a=Math.abs(n),U=[[1e15,'P'],[1e12,'T'],[1e9,'B'],[1e7,'M']];for(const[v,u]of U)if(a>=v)return(n/(u==='M'?1e6:v)).toFixed(2).replace(/\.?0+$/,'')+u;return n.toLocaleString();}
 const TYPE_NAME={expense:'支出',income:'收入',transfer:'转账',refund:'退款'};
 async function exportXlsx(){
  const[tx,acs]=await Promise.all([all('transactions'),all('accounts')]);await loadMeta();
@@ -1423,20 +1454,22 @@ async function exportXlsx(){
  const cat=[['分类','笔数','金额','占比 %']];Object.entries(cm).sort((a,b)=>b[1].v-a[1].v).forEach(([k,e])=>cat.push([k,e.n,r2(e.v),r2(e.v/tot*100)]));
  const sp=[['区间名称','开始','结束','标签']];PROJ.forEach(p=>sp.push([p.name,p.from,p.to,p.tag||p.name]));sp.push([]);sp.push(['专项/区间交易日期','商户','金额','标签']);
  tx.filter(t=>isExempt(t)&&spendOf(t)).forEach(t=>sp.push([dayKey(time(t)),t.merchant||t.toPerson||'',r2(spendOf(t)),tagOf(t)]));
- const blob=buildXlsx([{name:'明细',rows:detail,widths:[12,8,16,12,8,18,18,18,12,12,28]},{name:'账户',rows:accSheet,widths:[20,12,14,8,14,8,20]},{name:'月度汇总',rows:mon,widths:[10,14,14,14,14,16]},{name:'分类汇总',rows:cat,widths:[16,8,14,10]},{name:'专项与区间',rows:sp,widths:[22,18,14,14]}]);
+ const convRows=(await all('conversationHistory')).sort((a,b)=>Number(a.createdAt||0)-Number(b.createdAt||0)),chatSheet=[['时间','频道','角色','内容','附件','引用','来源链接']];
+ convRows.forEach(r=>chatSheet.push([new Date(r.createdAt||0).toLocaleString('zh-CN',{hour12:false}),r.ch==='pure'?'纯聊天':'记账',r.role==='user'?'我':'Atron',String(r.content||''),(r.atts||[]).map(a=>a.name).join('、'),r.quote?(r.quote.who+'：'+r.quote.text):'',(r.sources||[]).map(x=>x.url||x).join('\n')]));
+ const blob=buildXlsx([{name:'明细',rows:detail,widths:[12,8,16,12,8,18,18,18,12,12,28]},{name:'账户',rows:accSheet,widths:[20,12,14,8,14,8,20]},{name:'月度汇总',rows:mon,widths:[10,14,14,14,14,16]},{name:'分类汇总',rows:cat,widths:[16,8,14,10]},{name:'聊天记录',rows:chatSheet,widths:[20,8,8,70,20,30,40]},{name:'专项与区间',rows:sp,widths:[22,18,14,14]}]);
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ai-ledger-'+dayKey(Date.now())+'.xlsx';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast('已导出 Excel');}
 
 /* ---------- 备份 ---------- */
-async function exportData(){const o=await snapshot();o.exportedAt=new Date().toISOString();o.app='ai-ledger';const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o)],{type:'application/json'}));a.download='ai-ledger-'+dayKey(Date.now())+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);toast('已导出备份');}
+async function exportData(){const o=await snapshot();o.conversationHistory=await all('conversationHistory');o.chatMem=localStorage.getItem('ledger.chatMem')||'[]';o.exportedAt=new Date().toISOString();o.app='ai-ledger';const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o)],{type:'application/json'}));a.download='ai-ledger-'+dayKey(Date.now())+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);toast('已导出备份');}
 async function importData(file){let o;try{o=JSON.parse(await file.text());}catch(e){throw new Error('文件不是有效的 JSON');}
  if(!o||!Array.isArray(o.accounts)||!Array.isArray(o.transactions))throw new Error('不是有效的 AI Ledger 备份');
  for(const s of SNAP)if(o[s]!==undefined&&(!Array.isArray(o[s])||o[s].some(x=>!x||!x.id)))throw new Error('备份数据格式错误：'+s);
  if(!await askDlg('导入将覆盖当前全部数据：账户 '+o.accounts.length+' 个、流水 '+o.transactions.length+' 笔。导入后可在聊天里发“撤销”恢复一次。','导入备份',{ok:'导入并覆盖',danger:true}))return;
- undoSnap=await snapshot();await restore(o);await refreshAll();toast('导入完成');}
+ undoSnap=await snapshot();await restore(o);if(Array.isArray(o.conversationHistory)){await clear('conversationHistory');for(const r of o.conversationHistory)if(r&&r.id)await put('conversationHistory',r);history=[];chatHist=[];await loadHistory();renderChat(true);}if(typeof o.chatMem==='string'){try{localStorage.setItem('ledger.chatMem',o.chatMem);}catch(e){}}await refreshAll();toast('导入完成');}
 
 /* ---------- 导航与事件 ---------- */
 function showPage(name){
- qa('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+name));qa('.fab-item').forEach(b=>b.classList.toggle('active',b.dataset.page===name));{const fb=$('fabBall'),it=qa('.fab-item').find(b=>b.dataset.page===name);if(fb&&it)fb.innerHTML=it.querySelector('svg').outerHTML;const fm=$('fabMenu');if(fm)fm.hidden=true;}
+ qa('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+name));qa('.fab-item').forEach(b=>b.classList.toggle('active',b.dataset.page===name));{const fm=$('fabMenu');if(fm)fm.hidden=true;}
  const home=name==='home',lock=home||name==='chat';document.body.classList.toggle('home-locked',lock);document.documentElement.classList.toggle('home-locked',lock);window.scrollTo(0,0);
  if(name==='chat'){setTimeout(fitSink,0);renderChat(true);}
  if(home){setTimeout(fitSink,0);renderHome();const l=$('conversationLog');if(l)l.scrollTop=l.scrollHeight;}
@@ -1446,12 +1479,10 @@ function sinkWanted(){const sk=localStorage.getItem('ledger.sink');return sk==nu
 function fitSink(){/* 输入区底部间距由滑块控制，始终留在屏幕内 */document.documentElement.style.setProperty('--sink',sinkWanted()+'dvh');if(window.__applyVV)window.__applyVV();}
 window.addEventListener('resize',()=>setTimeout(fitSink,60));window.addEventListener('pageshow',()=>setTimeout(fitSink,60));
 function initFab(){
- const ball=$('fabBall'),menu=$('fabMenu'),S=48,M=8;
+ const ball=$('fabBall'),menu=$('fabMenu'),S=58,FW=16,M=8;
  let pos={rx:1,ry:.62};try{const p=JSON.parse(localStorage.getItem('ledger.fabPos')||'null');if(p&&isFinite(p.rx)&&isFinite(p.ry))pos=p;}catch(e){}
  const lim=()=>({w:Math.max(0,window.innerWidth-S-2*M),h:Math.max(0,window.innerHeight-S-2*M)});
- const tab=$('fabTab'),place=()=>{const l=lim();ball.style.left=(M+pos.rx*l.w)+'px';ball.style.top=(M+pos.ry*l.h)+'px';tab.style.top=(M+pos.ry*l.h-3)+'px';tab.classList.toggle('l',pos.rx===0);};
- const setHidden=h=>{ball.hidden=h;tab.hidden=!h;menu.hidden=true;try{localStorage.setItem('ledger.fabHidden',h?'1':'0');}catch(e){}const sw=$('fabSwitch');if(sw)sw.checked=!h;if(!h)place();};
- window.setFabHidden=setHidden;
+ const place=()=>{const l=lim();ball.style.left=(pos.rx?window.innerWidth-FW:0)+'px';ball.style.top=(M+pos.ry*l.h)+'px';ball.classList.toggle('l',!pos.rx);};
  const save=()=>{try{localStorage.setItem('ledger.fabPos',JSON.stringify(pos));}catch(e){}};
  const closeMenu=()=>{menu.hidden=true;};
  const openMenu=()=>{menu.hidden=false;const r=ball.getBoundingClientRect(),mw=menu.offsetWidth,mh=menu.offsetHeight,W=window.innerWidth,H=window.innerHeight;
@@ -1461,7 +1492,7 @@ function initFab(){
  ball.addEventListener('pointerdown',e=>{down=true;drag=false;sx=e.clientX;sy=e.clientY;const r=ball.getBoundingClientRect();ox=r.left;oy=r.top;try{ball.setPointerCapture(e.pointerId);}catch(_){}});
  ball.addEventListener('pointermove',e=>{if(!down)return;const dx=e.clientX-sx,dy=e.clientY-sy;
   if(!drag&&Math.hypot(dx,dy)>6){drag=true;ball.classList.add('drag');closeMenu();}
-  if(drag){const l=lim();ball.style.left=Math.max(M,Math.min(M+l.w,ox+dx))+'px';ball.style.top=Math.max(M,Math.min(M+l.h,oy+dy))+'px';}});
+  if(drag){const l=lim();ball.style.left=Math.max(0,Math.min(window.innerWidth-FW,ox+dx))+'px';ball.style.top=Math.max(M,Math.min(M+l.h,oy+dy))+'px';}});
  ball.addEventListener('pointerup',e=>{if(!down)return;down=false;try{ball.releasePointerCapture(e.pointerId);}catch(_){}
   if(drag){ball.classList.remove('drag');const l=lim(),r=ball.getBoundingClientRect();pos={rx:(r.left+r.width/2>window.innerWidth/2)?1:0,ry:l.h?Math.max(0,Math.min(1,(r.top-M)/l.h)):0};place();save();}
   else{menu.hidden?openMenu():closeMenu();}});
@@ -1470,8 +1501,7 @@ function initFab(){
  const eye=$('fabEye'),setEye=()=>{eye.classList.toggle('off',hideAmt);eye.querySelector('span').textContent=hideAmt?'显示金额':'隐藏金额';};
  eye.onclick=()=>{hideAmt=!hideAmt;try{localStorage.setItem('ledger.hideAmounts',hideAmt?'1':'0');}catch(e){}setEye();closeMenu();refreshAll();renderConversation();renderChat();};setEye();
  document.addEventListener('pointerdown',e=>{if(!menu.hidden&&!menu.contains(e.target)&&e.target!==ball)closeMenu();});
- $('fabHide').onclick=()=>{setHidden(true);toast('已隐藏，点屏幕边缘的细条可恢复，或在设置里开启');};tab.onclick=()=>setHidden(false);
- window.addEventListener('resize',place);place();{let h=false;try{h=localStorage.getItem('ledger.fabHidden')==='1';}catch(e){}setHidden(h);}}
+ window.addEventListener('resize',place);place();}
 function foldState(){try{return JSON.parse(localStorage.getItem('ledger.fold')||'{}');}catch(e){return{};}}
 function initFolds(){const st=foldState();qa('.setting,.chart[data-fold]').forEach((el,i)=>{const h=el.querySelector(':scope>h3');if(!h||el.dataset.folded)return;el.dataset.folded='1';
   const key=el.dataset.fold||('s'+(h.firstChild?h.firstChild.textContent:i)),body=document.createElement('div');body.className='cbody';
@@ -1509,15 +1539,15 @@ $('analyzeText').onclick=analyzeText;
  $('clearPrefs').onclick=async()=>{if(!await askDlg('清空所有已记住的偏好和自动学习的习惯？'))return;savePrefs([]);try{localStorage.removeItem('ledger.habits');}catch(e){}renderPrefs();toast('已清空');};
  $('confirmYes').onclick=()=>confirmPending(true);$('confirmNo').onclick=()=>confirmPending(false);
  $('undoBtn').onclick=doUndo;$('undoClose').onclick=hideUndo;$('focusClear').onclick=()=>setFocus(null);
- $('fabSwitch').onchange=()=>window.setFabHidden&&window.setFabHidden(!$('fabSwitch').checked);
  $('chatSend').onclick=sendPure;
  qa('#skinSeg button').forEach(b=>b.onclick=()=>{try{localStorage.setItem('ledger.skin',b.dataset.skin);}catch(e){}applySkin();});
- {const ci=$('chatInput');ci.oninput=()=>{ci.style.height='auto';ci.style.height=Math.min(ci.scrollHeight,120)+'px';};ci.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229&&!('ontouchstart' in window)){e.preventDefault();sendPure();}};}
+ {const ci=$('chatInput');ci.oninput=()=>grow(ci);ci.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229&&!('ontouchstart' in window)){e.preventDefault();sendPure();}};}
+ $('clearMem').onclick=async()=>{if(!chatMem().length){toast('还没有记忆');return;}if(!await askDlg('清空 Atron 在纯聊天里学到的全部语言习惯与偏好？','清空记忆',{ok:'清空',danger:true}))return;localStorage.removeItem(CMEM);renderMemCount();toast('已清空');};
  $('clearPure').onclick=async()=>{if(!chatHist.length){toast('纯聊天没有记录');return;}if(!await askDlg('清空纯聊天的全部记录？','清空纯聊天',{ok:'清空',danger:true}))return;for(const r of chatHist)await del('conversationHistory',r.id).catch(()=>{});chatHist=[];renderChat(true);toast('已清空');};
  $('pickImages').onclick=()=>attachMenu('home');$('chatPick').onclick=()=>attachMenu('chat');
  $('imageInput').onchange=async e=>{const fi=e.target;await addTo(attachTarget,fi.files);fi.value='';};
  const ta=$('naturalInput');
- ta.oninput=()=>{updateSuggest();};
+ ta.oninput=()=>{grow(ta);updateSuggest();};
  ta.onpaste=async e=>{const fs=Array.from((e.clipboardData&&e.clipboardData.files)||[]);if(!fs.length)return;e.preventDefault();await addFiles(fs);};
  const big=$('expandText'),exp=$('expandSheet');
  $('expandBtn').onclick=()=>{big.value=ta.value;exp.hidden=false;setTimeout(()=>{big.focus();const n=big.value.length;try{big.setSelectionRange(n,n);}catch(e){}},30);};
@@ -1555,6 +1585,7 @@ function applySkin(){let k='classic';try{k=localStorage.getItem('ledger.skin')==
  qa('[data-skin]').forEach(b=>{if(b.tagName==='BUTTON')b.classList.toggle('active',b.dataset.skin===k);});}
 function applyBubble(){document.documentElement.style.setProperty('--bubble-px',settings().bubblePx+'px');}
 async function init(){
+ calibrateTime(true).then(ok=>{if(ok&&Math.abs(TOFF)>2000)refreshAll();});try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}
  try{await openDB();await loadHistory();applyBubble();applySkin();renderModeBar();purgeAtt();setInterval(purgeAtt,1800000);const fs=parseFloat(localStorage.getItem('ledger.fontScale')||'1');document.documentElement.style.setProperty('--font-scale',fs);bindEvents();initFolds();await refreshAll();fitSink();}
  catch(e){const l=$('conversationLog');if(l)l.innerHTML='<div class="chat-bubble assistant">⚠️ 初始化失败：'+esc(e.message)+'</div>';}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
